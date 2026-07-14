@@ -69,17 +69,14 @@ video{width:100%;border-radius:8px;background:#000;pointer-events:none}
 <input type="text" name="website" class="honeypot" id="hpField" tabindex="-1" autocomplete="off">
 <div class="blocked-screen" id="blockedScreen"><div><h1 style="color:#f66;margin-bottom:16px">Accesso Negato</h1><p>Attivita sospetta rilevata.</p></div></div>
 <div id="loginScreen"><div class="login-box"><h1>Music Video Generator</h1><p>Accedi con Google per continuare</p><button class="google" id="googleLogin"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google"> Accedi con Google</button><p id="loginError" style="color:#f66;margin-top:16px;display:none"></p></div></div>
-
 <div class="container" id="appMain" style="display:none">
 <h1>Music Video Generator</h1>
 <p class="subtitle">100+ stili visivi · Audio reattivo · Galleria video persistente</p>
-
 <div class="panel">
 <h2>Libreria Audio</h2>
 <div class="upload-zone" id="uploadZone"><p>Trascina qui i file audio o clicca per selezionarli</p><p style="font-size:.72rem;margin-top:5px">MP3, WAV, OGG, M4A</p><input type="file" id="audioUpload" accept="audio/*" multiple></div>
 <div id="trackList" class="track-list"></div>
 </div>
-
 <div class="panel">
 <h2>Genera Video <span id="selectedBadge" class="badge" style="display:none">Selezionata</span></h2>
 <span class="no-track-hint" id="noTrackHint">Prima carica un file audio, poi clicca "Usa" sulla traccia.</span>
@@ -182,7 +179,7 @@ video{width:100%;border-radius:8px;background:#000;pointer-events:none}
 <option value="hard light, sharp shadows, high contrast, dramatic, intense, sunny desert feel">Hard Light</option>
 </optgroup>
 <optgroup label="Colore">
-<option value="teal and orange color grade, Hollywood blockbuste color grading, complementary contrast">Teal and Orange</option>
+<option value="teal and orange color grade, Hollywood blockbuster color grading, complementary contrast">Teal and Orange</option>
 <option value="monochromatic, single color palette, shades of one hue, artistic, unified">Monocromatico</option>
 <option value="pastel color palette, soft muted colors, gentle, dreamy, light and airy">Pastello</option>
 <option value="HDR look, high dynamic range, vivid colors, extreme detail in shadows and highlights">HDR</option>
@@ -209,27 +206,22 @@ video{width:100%;border-radius:8px;background:#000;pointer-events:none}
 <div class="progress" id="progress"><div class="progress-bar" id="progressBar"></div></div>
 <div class="status" id="status"></div>
 </div>
-
 <div class="panel preview-wrap" id="previewWrap">
 <h2>Anteprima</h2>
 <video id="preview" controls></video>
 <a id="downloadBtn" class="button sec" style="display:none;margin-top:12px;text-decoration:none" download="music-video.webm">Scarica Video</a>
 </div>
-
 <div class="panel">
 <h2>Galleria Video</h2>
 <div id="videoGallery" class="video-grid"></div>
 </div>
-
 <div class="panel" style="cursor:pointer" onclick="document.getElementById('debugLog').style.display=document.getElementById('debugLog').style.display==='none'?'block':'none'">
 <h2 style="color:#666">Debug Log</h2>
 <div class="debug-panel" id="debugLog"></div>
 </div>
 </div>
-
 <div class="error-toast" id="errorToast"></div>
 <div class="success-toast" id="successToast"></div>
-
 <script>
 var SU1='https://jescfkahkgcyuhffyycw.supabase.co';
 var SK1='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Implc2Nma2Foa2djeXVoZmZ5eWN3Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4Mzk4ODU5NywiZXhwIjoyMDk5NTY0NTk3fQ.';
@@ -277,12 +269,12 @@ var sT=null;function sS(m){var t=document.getElementById('successToast');t.textC
 var uZ=document.getElementById('uploadZone');var aU=document.getElementById('audioUpload');
 var tL=document.getElementById('trackList');var lI=document.getElementById('lyrics');
 var sH=document.getElementById('styleHint');var gB=document.getElementById('generateBtn');
-var sB=document.getElementById('selectedBadge');var aSH=document.getElementById('autoSaveHint');
+var sBd=document.getElementById('selectedBadge');var aSH=document.getElementById('autoSaveHint');
 var nTH=document.getElementById('noTrackHint');var pE=document.getElementById('progress');
 var pB=document.getElementById('progressBar');var sEl=document.getElementById('status');
 var pW=document.getElementById('previewWrap');var pv=document.getElementById('preview');
 var dB=document.getElementById('downloadBtn');var vG=document.getElementById('videoGallery');
-var sT2=null;aC={};sT3=null;
+var sT3=null;aC={};svT=null;
 
 uZ.addEventListener('click',function(){aU.click()});
 uZ.addEventListener('dragover',function(e){e.preventDefault();uZ.classList.add('dragover')});
@@ -313,66 +305,34 @@ async function rL(){
   }catch(e){tL.innerHTML='<div class="empty-library" style="color:#f66">'+e.message+'</div>'}
 }
 async function gAU(id){if(aC[id])return aC[id];var t=sT3&&sT3.id===id?sT3:(await sb.from('tracks').select('storage_path').eq('id',id).single()).data;if(!t)throw 0;var r=await sb.storage.from('audio').createSignedUrl(t.storage_path,7200);aC[id]=r.data.signedUrl;return r.data.signedUrl}
-async function sTr(id){var r=await sb.from('tracks').select('*').eq('id',id).single();if(r.error)throw r.error;sT3=r.data;lI.value=sT3.lyrics||'';gB.disabled=false;sB.style.display='inline';nTH.classList.add('hidden');await rL()}
-async function dTr(id){if(!confirm('Eliminare?'))return;var r=await sb.from('tracks').select('storage_path').eq('id',id).single();if(r.data)await sb.storage.from('audio').remove([r.data.storage_path]);await sb.from('tracks').delete().eq('id',id);delete aC[id];if(sT3&&sT3.id===id){sT3=null;lI.value='';gB.disabled=true;sB.style.display='none';nTH.classList.remove('hidden')}sS('Eliminata');await rL()}
-var svT=null;lI.addEventListener('input',function(){if(!sT3)return;aSH.textContent='...';clearTimeout(svT);svT=setTimeout(async function(){await sb.from('tracks').update({lyrics:lI.value}).eq('id',sT3.id);aSH.textContent='salvato';setTimeout(function(){aSH.textContent=''},2000)},600)});
+async function sTr(id){var r=await sb.from('tracks').select('*').eq('id',id).single();if(r.error)throw r.error;sT3=r.data;lI.value=sT3.lyrics||'';gB.disabled=false;sBd.style.display='inline';nTH.classList.add('hidden');await rL()}
+async function dTr(id){if(!confirm('Eliminare?'))return;var r=await sb.from('tracks').select('storage_path').eq('id',id).single();if(r.data)await sb.storage.from('audio').remove([r.data.storage_path]);await sb.from('tracks').delete().eq('id',id);delete aC[id];if(sT3&&sT3.id===id){sT3=null;lI.value='';gB.disabled=true;sBd.style.display='none';nTH.classList.remove('hidden')}sS('Eliminata');await rL()}
+svT=null;lI.addEventListener('input',function(){if(!sT3)return;aSH.textContent='...';clearTimeout(svT);svT=setTimeout(async function(){await sb.from('tracks').update({lyrics:lI.value}).eq('id',sT3.id);aSH.textContent='salvato';setTimeout(function(){aSH.textContent=''},2000)},600)});
 
-// === GALLERIA VIDEO ===
 async function rG(){
   try{
-    var r=await sb.from('videos').select('*');
-    if(r.error)throw r.error;
-    var vids=r.data;
-    log('Video salvati: '+vids.length);
+    var r=await sb.from('videos').select('*');if(r.error)throw r.error;var vids=r.data;log('Video salvati: '+vids.length);
     if(!vids.length){vG.innerHTML='<div class="empty-library">Nessun video generato ancora.</div>';return}
-    var h='';
-    for(var i=0;i<vids.length;i++){
-      var v=vids[i];
-      h+='<div class="video-card" data-vid="'+v.id+'" data-path="'+v.storage_path+'">';
-      h+='<video controls preload="metadata" data-vid="'+v.id+'"></video>';
-      h+='<div class="video-card-info"><span>'+v.track_name+(v.style?' · '+v.style:'')+'</span>';
-      h+='<div class="video-card-actions"><span style="font-size:.7rem;color:#555">'+fS(v.size)+'</span>';
-      h+='<a class="button sec" data-dl="'+v.id+'" style="padding:4px 10px;font-size:.72rem;text-decoration:none" download>DL</a>';
-      h+='<button class="del" data-rmvid="'+v.id+'" style="padding:4px 8px">&#10005;</button></div></div></div>';
-    }
+    var h='';for(var i=0;i<vids.length;i++){var v=vids[i];
+      h+='<div class="video-card" data-vid="'+v.id+'" data-path="'+v.storage_path+'"><video controls preload="metadata" data-vid="'+v.id+'"></video><div class="video-card-info"><span>'+v.track_name+(v.style?' · '+v.style:'')+'</span><div class="video-card-actions"><span style="font-size:.7rem;color:#555">'+fS(v.size)+'</span><a class="button sec" data-dl="'+v.id+'" style="padding:4px 10px;font-size:.72rem;text-decoration:none" download>DL</a><button class="del" data-rmvid="'+v.id+'" style="padding:4px 8px">&#10005;</button></div></div></div>'}
     vG.innerHTML=h;
-
-    var vvids=vG.querySelectorAll('video[data-vid]');
-    for(var j=0;j<vvids.length;j++){(function(el){
-      var path=el.closest('.video-card').dataset.path;
-      sb.storage.from('audio').createSignedUrl(path,7200).then(function(r){el.src=r.data.signedUrl}).catch(function(){});
-    })(vvids[j])}
-    var dls=vG.querySelectorAll('[data-dl]');for(var k=0;k<dls.length;k++){(function(b){
-      var path=b.closest('.video-card').dataset.path;
-      b.addEventListener('click',function(e){e.preventDefault();sb.storage.from('audio').createSignedUrl(path,7200).then(function(r){var a=document.createElement('a');a.href=r.data.signedUrl;a.download='video.webm';a.click()}).catch(function(){sE('Download fallito')})});
-    })(dls)}
-    var rms=vG.querySelectorAll('[data-rmvid]');for(var m=0;m<rms.length;m++){(function(b){
-      b.addEventListener('click',async function(){
-        if(!confirm('Eliminare questo video?'))return;
-        var vid=b.dataset.rmvid;
-        var card=b.closest('.video-card');var path=card.dataset.path;
-        await sb.storage.from('audio').remove([path]);
-        await sb.from('videos').delete().eq('id',vid);
-        sS('Video eliminato');rG();
-      });
-    })(rms)}
+    var vvids=vG.querySelectorAll('video[data-vid]');for(var j=0;j<vvids.length;j++){(function(el){var path=el.closest('.video-card').dataset.path;sb.storage.from('audio').createSignedUrl(path,7200).then(function(r){el.src=r.data.signedUrl}).catch(function(){})})(vvids[j])}
+    var dls=vG.querySelectorAll('[data-dl]');for(var k=0;k<dls.length;k++){(function(b){b.addEventListener('click',function(e){e.preventDefault();var path=b.closest('.video-card').dataset.path;sb.storage.from('audio').createSignedUrl(path,7200).then(function(r){var a=document.createElement('a');a.href=r.data.signedUrl;a.download='video.webm';a.click()}).catch(function(){sE('Download fallito')})})})(dls)}
+    var rms=vG.querySelectorAll('[data-rmvid]');for(var m=0;m<rms.length;m++){(function(b){b.addEventListener('click',async function(){if(!confirm('Eliminare?'))return;var vid=b.dataset.rmvid;var path=b.closest('.video-card').dataset.path;await sb.storage.from('audio').remove([path]);await sb.from('videos').delete().eq('id',vid);sS('Eliminato');rG()})})(rms)}
   }catch(e){vG.innerHTML='<div class="empty-library" style="color:#f66">'+e.message+'</div>'}
 }
 
-// === SALVA VIDEO ===
 async function saveVideo(blob,trackName,style,duration){
-  sEl.textContent='Salvataggio video...';
+  sEl.textContent='Salvataggio video su cloud...';
   var path='videos/'+Date.now()+'-'+Math.random().toString(36).slice(2)+'.webm';
   var file=new File([blob],path,{type:'video/webm'});
   var r=await sb.storage.from('audio').upload(path,file,{upsert:true,contentType:'video/webm'});
-  if(r.error){log('Salvataggio video fallito: '+r.error.message);return}
+  if(r.error){log('Salvataggio fallito: '+r.error.message);return}
   var r2=await sb.from('videos').insert({track_name:trackName,style:style||'',duration:duration,size:blob.size,storage_path:path}).select().single();
-  if(r2.error)log('Salvataggio metadati fallito: '+r2.error.message);
-  else log('Video salvato!');
+  if(r2.error)log('Metadati fallito: '+r2.error.message);else log('Video salvato!');
   await rG();
 }
 
-// === ANALISI INTELLIGENTE ===
 var MW={amore:['amore','ama','ami','t amo','ti amo','amami','amor','cuore','cuor','core','passione','bacio','abbraccia','desiderio','tesoro'],dolore:['dolore','male','fa male','soffre','piangere','lacrime','ferita','sangue','lutto','perso','persa','perdita'],nostalgia:['ricordo','ricorda','memoria','rimpianto','manchi','manca','vorrei','se fossi','una volta','prima','infanzia','ritorno'],notte:['notte','buio','scuro','luna','stelle','sogno','dormire','mezzanotte','ombra','silenzio','finestra','balcone'],rabbia:['rabbia','odio','furia','vendetta','guerra','brucia','fuoco','urla','grida','rotto','spacca'],gioia:['felice','felicita','ridere','riso','sorride','allegro','contento','vita','balla','festa','liberta'],solitudine:['solo','sola','solitudine','nessuno','nisciuno','abbandona','lontano','vuoto','deserto','senza di te','sparito'],desiderio:['voglio','voglia','desiderio','aspetto','cerco','trovare','ho bisogno','fame','sete','bramo'],mare:['mare','o mare','spiaggia','onda','costa','riva','porto','barca','nave','vela','isola','scoglio'],citta:['citta','vicolo','strada','palazzo','tetto','chiesa','piazza','neon','marciapied','asfalto','mur','muri','napoli'],urban:['rap','trap','beat','basso','flow','mic','microfono','strofa','ritornello','hook','verse','street']};
 var VM={amore:{p:'intimate close-up hands intertwined warm golden hour light sheer curtains soft bokeh rose petals anamorphic lens flare',c:['#2d1b2e','#8b2252','#f4a261']},dolore:{p:'solitary figure edge of empty bed cold blue-gray tones harsh side lighting dust particles minimalist room grief desaturated wide shot',c:['#0a0f1a','#1a2a3a','#3a4a5a']},nostalgia:{p:'old photographs scattered wooden table warm sepia tones faded colors soft afternoon light lace curtains vintage objects slight lens fog overhead',c:['#2d1f0e','#6b4423','#d4a574']},notte:{p:'city rooftops at night warm orange streetlights lone figure silhouetted deep blue purple fog rolling between buildings moonlight rim light cinematic wide',c:['#0a0a1a','#1a1a3e','#2d1b69']},rabbia:{p:'shattered glass mid-air red orange dramatic lighting smoke debris aggressive low angle high contrast saturated red concrete wall raw energy ultra-wide',c:['#1a0000','#8b0000','#ff4500']},gioia:{p:'person dancing freely open field golden hour arms spread sun flares warm yellow green grass wind lens flare movement blur low angle hero shot',c:['#1a2e0a','#4a7c2e','#f4e04d']},solitudine:{p:'single small figure vast empty landscape extreme wide muted desaturated overcast sky fog mist scale isolation negative space cold temperature',c:['#0a0a0a','#2a2a2a','#4a4a4a']},desiderio:{p:'hand reaching through foggy glass window condensation droplets blurred figure behind warm amber cool blue split lighting intimate medium close-up',c:['#1a0a2e','#4a2a5e','#d4a060']},mare:{p:'dramatic sea waves crashing dark rocks twilight long exposure water motion deep blue teal white foam moody overcast powerful nature cinematic low camera',c:['#0a1a2e','#1a3a5e','#2a6a8e']},citta:{p:'narrow alley old Italian city dusk warm light doorways clotheslines wet cobblestones reflecting golden light deep shadows figure walking distance anamorphic',c:['#1a0f0a','#3a2a1a','#d4874d']},urban:{p:'gritty urban rooftop night neon signs wet concrete smoke figure leaning railing city skyline teal orange color grade atmospheric haze medium',c:['#0a0a1a','#1a3a4a','#ff6b35']}};
 var NM={'vaseme':'two hands reaching toward each other intimate gesture close-up',"'o mare":'gulf of Naples panorama Mediterranean blue Castel dell Ovo',"'a luna":'moon over Naples old buildings Vesuvius silhouette','strobe':'strobe lights club flashing lights dark bright flashes','scuro':'figure emerging from darkness single light source','nzocca':'sharp close-up face intense expression high contrast','pazz':'chaotic scene blurred motion disorienting Dutch tilt','guagliona':'young woman confident pose street style golden hour','sfaccimm':'bold close-up direct eye contact unapologetic','torn':'figure at distance approaching doorway silhouette','spine':'close-up roses thorns red on black pain','veleno':'toxic green liquid dramatic lighting danger','cazzimma':'figure walking confidence low angle swagger','rota':'spinning wheel circular motion blurred rotation','scure':'darkness descending fading light silhouette last light'};
@@ -380,41 +340,17 @@ var NM={'vaseme':'two hands reaching toward each other intimate gesture close-up
 function aS(lyrics,duration,style){
   log('Analisi testo...');var blocks=lyrics.split(/\n\s*\n/).filter(function(b){return b.trim()});if(!blocks.length)blocks=[lyrics];
   var sc=Math.max(12,Math.min(25,Math.round(duration/12)));var sd=duration/sc;var scenes=[];
-  for(var i=0;i<sc;i++){
-    var s0=Math.floor(i*blocks.length/sc);var s1=Math.floor((i+1)*blocks.length/sc);
-    var txt=blocks.slice(s0,s1).join('\n\n');if(!txt.trim())txt=blocks[Math.min(i,blocks.length-1)]||'';
-    var mood=aM(txt);var vis=VM[mood.pm]||VM.nostalgia;var nh=fNH(txt);
-    var prompt=bP(vis,nh,style,txt,i,sc);
-    scenes.push({text:txt.trim(),prompt:prompt,mood:mood.pm,colors:vis.c,intensity:mood.intensity,start:i*sd,end:(i+1)*sd});
-  }
+  for(var i=0;i<sc;i++){var s0=Math.floor(i*blocks.length/sc);var s1=Math.floor((i+1)*blocks.length/sc);var txt=blocks.slice(s0,s1).join('\n\n');if(!txt.trim())txt=blocks[Math.min(i,blocks.length-1)]||'';var mood=aM(txt);var vis=VM[mood.pm]||VM.nostalgia;var nh=fNH(txt);var prompt=bP(vis,nh,style,txt,i,sc);scenes.push({text:txt.trim(),prompt:prompt,mood:mood.pm,colors:vis.c,intensity:mood.intensity,start:i*sd,end:(i+1)*sd})}
   log('Scene: '+scenes.length);return scenes;
 }
-
-function aM(text){
-  var lower=text.toLowerCase();var scores={};var keys=Object.keys(MW);
-  for(var i=0;i<keys.length;i++){var m=keys[i];var words=MW[m];var score=0;for(var j=0;j<words.length;j++){if(lower.indexOf(words[j])!==-1)score++}if(score>0)scores[m]=score}
-  var sorted=Object.keys(scores).sort(function(a,b){return scores[b]-scores[a]});
-  var pm=sorted.length>0?sorted[0]:'nostalgia';var intensity=Math.min(1,(sorted.length>0?scores[sorted[0]]:1)/4);
-  if(lower.match(/!\!/))intensity=Math.min(1,intensity+0.3);if(lower.match(/\.\.\./))intensity=Math.max(0,intensity-0.1);
-  return{pm:pm,intensity:intensity};
-}
-
+function aM(text){var lower=text.toLowerCase();var scores={};var keys=Object.keys(MW);for(var i=0;i<keys.length;i++){var m=keys[i];var words=MW[m];var score=0;for(var j=0;j<words.length;j++){if(lower.indexOf(words[j])!==-1)score++}if(score>0)scores[m]=score}var sorted=Object.keys(scores).sort(function(a,b){return scores[b]-scores[a]});var pm=sorted.length>0?sorted[0]:'nostalgia';var intensity=Math.min(1,(sorted.length>0?scores[sorted[0]]:1)/4);if(lower.match(/!\!/))intensity=Math.min(1,intensity+0.3);if(lower.match(/\.\.\./))intensity=Math.max(0,intensity-0.1);return{pm:pm,intensity:intensity}}
 function fNH(text){var lower=text.toLowerCase();var hints=[];var keys=Object.keys(NM);for(var i=0;i<keys.length;i++){if(lower.indexOf(keys[i])!==-1)hints.push(NM[keys[i]])}return hints}
+function bP(vis,hints,style,text,idx,total){var parts=['cinematic music video still'];if(style)parts.push(style);parts.push(vis.p);if(hints.length>0)parts.push(hints[0]);var p=idx/Math.max(1,total-1);if(p<0.2)parts.push('opening scene establishing shot building atmosphere');else if(p>0.4&&p<0.6)parts.push('climactic moment peak emotion maximum visual intensity');else if(p>0.85)parts.push('closing scene fading out reflective gentle resolution');return parts.join(', ')}
 
-function bP(vis,hints,style,text,idx,total){
-  var parts=['cinematic music video still'];if(style)parts.push(style);parts.push(vis.p);if(hints.length>0)parts.push(hints[0]);
-  var p=idx/Math.max(1,total-1);if(p<0.2)parts.push('opening scene establishing shot building atmosphere');
-  else if(p>0.4&&p<0.6)parts.push('climactic moment peak emotion maximum visual intensity');
-  else if(p>0.85)parts.push('closing scene fading out reflective gentle resolution');
-  return parts.join(', ');
-}
-
-// === IMMAGINI ===
 function lIP(prompt){var clean=prompt.replace(/'/g,'').substring(0,350);return new Promise(function(r,j){var img=new Image();img.crossOrigin='anonymous';img.src='https://image.pollinations.ai/prompt/'+encodeURIComponent(clean)+'?width=1280&height=720&seed='+Math.floor(Math.random()*999999)+'&nologo=true';img.onload=function(){r(img)};img.onerror=function(){j(new Error('fail'))};setTimeout(function(){j(new Error('timeout'))},50000})}
 async function lIR(prompt,mr){mr=mr||3;for(var i=0;i<=mr;i++){try{if(i>0){log('Retry '+i+'/'+mr);await sl(5000)}return await lIP(prompt)}catch(e){if(i===mr)return null;await sl(5000)}}return null}
 async function gAI(scenes){var images=new Array(scenes.length).fill(null);for(var i=0;i<scenes.length;i+=2){var batch=[];for(var j=i;j<Math.min(i+2,scenes.length);j++)batch.push({idx:j,prompt:scenes[j].prompt});sEl.textContent='Immagini '+(i+1)+'-'+Math.min(i+2,scenes.length)+'/'+scenes.length+'...';pB.style.width=(10+((i+2)/scenes.length)*45)+'%';var results=await Promise.all(batch.map(function(b){return lIR(b.prompt,3)}));for(var k=0;k<results.length;k++){images[i+k]=results[k];if(results[k])log('Img '+(i+k+1)+' OK');else log('Img '+(i+k+1)+' fallita')}if(i+2<scenes.length)await sl(3000)}var ok=images.filter(function(x){return x}).length;log('Immagini: '+ok+'/'+scenes.length);return images}
 
-// === RENDERING ===
 function AA(audio){this.audio=audio;this.ctx=null;this.analyser=null;this.data=null;this.sourceNode=null;this.bass=0;this.mid=0;this.high=0;this.energy=0;this.prevEnergy=0;this.beat=false}
 AA.prototype.init=function(){this.ctx=new(window.AudioContext||window.webkitAudioContext)();this.sourceNode=this.ctx.createMediaElementSource(this.audio);this.analyser=this.ctx.createAnalyser();this.analyser.fftSize=256;this.sourceNode.connect(this.analyser);this.analyser.connect(this.ctx.destination);this.data=new Uint8Array(this.analyser.frequencyBinCount)};
 AA.prototype.update=function(){if(!this.analyser)return;this.analyser.getByteFrequencyData(this.data);var l=this.data.length;var b=0,m=0,h=0;var be=Math.floor(l*0.15);var me=Math.floor(l*0.5);for(var i=0;i<be;i++)b+=this.data[i];for(var i=be;i<me;i++)m+=this.data[i];for(var i=me;i<l;i++)h+=this.data[i];this.prevEnergy=this.energy;this.bass=b/(be*255);this.mid=m/((me-be)*255);this.high=h/((l-me)*255);this.energy=(this.bass+this.mid+this.high)/3;this.beat=this.energy-this.prevEnergy>0.12&&this.energy>0.25};
@@ -441,7 +377,6 @@ async function generate(){
   var mM='video/webm;codecs=vp9,opus';if(!MediaRecorder.isTypeSupported(mM))mM='video/webm;codecs=vp8,opus';if(!MediaRecorder.isTypeSupported(mM))mM='video/webm';
   var rec=new MediaRecorder(cS,{mimeType:mM,videoBitsPerSecond:5000000});var chunks=[];rec.ondataavailable=function(e){if(e.data.size>0)chunks.push(e.data)};var done=new Promise(function(r){rec.onstop=function(){r(new Blob(chunks,{type:'video/webm'}))}});
   var titleDur=3;
-
   function render(ts){
     if(!st)st=ts;var el=(ts-st)/1000;analyzer.update();fc++;if(fc%3===0)uG();
     if(el<titleDur){ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);var tA=el<1?el:el>titleDur-1?(titleDur-el):1;ctx.globalAlpha=tA;ctx.font='bold 52px -apple-system,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='rgba(247,37,133,'+tA+')';ctx.fillText(sT3.name.replace(/\.[^.]+$/,''),W/2,H/2-20);ctx.font='18px -apple-system,sans-serif';ctx.fillStyle='rgba(200,200,200,'+tA*0.7+')';ctx.fillText('Music Video'+(style?' · '+style:''),W/2,H/2+30);ctx.globalAlpha=1;pB.style.width=(el/titleDur*10)+'%';sEl.textContent='Titolo...';requestAnimationFrame(render);return}
@@ -462,14 +397,14 @@ async function generate(){
     if(vt<duration)requestAnimationFrame(render);else{rec.stop();audio.pause();log('Finita!')}
   }
   sEl.textContent='Registrazione...';rec.start(1000);audio.play();requestAnimationFrame(render);
-  var blob=await done;sEl.textContent='Salvataggio video...';
+  var blob=await done;sEl.textContent='Salvataggio video su cloud...';
   await saveVideo(blob,sT3.name,style,duration);
   var url=URL.createObjectURL(blob);pv.src=url;pW.style.display='block';dB.href=url;dB.style.display='inline-block';dB.download=sT3.name.replace(/\.[^.]+$/,'')+'-video.webm';
   pE.style.display='none';sEl.textContent='Video pronto!';gB.disabled=false;log('Video: '+fS(blob.size));
 }
 
 gB.addEventListener('click',generate);
-log('App avviata (100+ Styles + Gallery v7)');
+log('App v7');
 rL();rG();
 </script>
 </body>
