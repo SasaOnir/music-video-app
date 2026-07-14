@@ -33,7 +33,7 @@ video{width:100%;border-radius:8px;background:#000}
 .upload-zone p{color:#888;font-size:.88rem}
 .upload-zone input{display:none}
 .track-list{display:flex;flex-direction:column;gap:8px}
-.track-item{background:#0a0a0f;border:1px solid #2a2a3a;border-radius:8px;padding:11px;display:flex;align-items:center;gap:11px}
+.track-item{background:#0a0a0f;border:1px solid #2a2a3a;border-radius:8px;padding:11px;display:flex;align-items:center;gap:11px;transition:border-color .2s,background .2s}
 .track-item.selected{border-color:#f72585;background:rgba(247,37,133,.08)}
 .track-info{flex:1;min-width:0}
 .track-name{font-weight:600;font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -43,12 +43,16 @@ video{width:100%;border-radius:8px;background:#000}
 .empty-library{color:#555;font-size:.83rem;text-align:center;padding:18px;font-style:italic}
 .badge{display:inline-block;background:#f72585;color:#fff;padding:2px 8px;border-radius:4px;font-size:.68rem;margin-left:8px}
 .save-hint{font-weight:normal;color:#666;font-size:.78rem}
-.error-toast{position:fixed;top:20px;right:20px;background:#3a1515;color:#f66;padding:12px 20px;border-radius:8px;font-size:.88rem;z-index:9999;display:none;max-width:400px}
+.no-track-hint{background:rgba(255,165,0,.1);border:1px solid rgba(255,165,0,.3);border-radius:8px;padding:12px 16px;margin-bottom:14px;font-size:.85rem;color:#ffa500;display:block}
+.no-track-hint.hidden{display:none}
+.error-toast{position:fixed;top:20px;right:20px;background:#3a1515;color:#f66;padding:12px 20px;border-radius:8px;font-size:.88rem;z-index:9999;display:none;max-width:400px;word-break:break-word}
+.success-toast{position:fixed;top:20px;right:20px;background:#1a3a1a;color:#4f4;padding:12px 20px;border-radius:8px;font-size:.88rem;z-index:9999;display:none;max-width:400px}
 .loading-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:9998}
 .loading-overlay.active{display:flex}
 .loading-box{background:#14141c;border:1px solid #252535;border-radius:12px;padding:30px 40px;text-align:center}
 .spinner{width:40px;height:40px;border:3px solid #2a2a3a;border-top-color:#f72585;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
 @keyframes spin{to{transform:rotate(360deg)}}
+.debug-panel{margin-top:16px;background:#0a0a0f;border:1px solid #2a2a3a;border-radius:8px;padding:12px;font-family:monospace;font-size:.72rem;color:#0f0;max-height:200px;overflow-y:auto;display:none}
 </style>
 </head>
 <body>
@@ -68,6 +72,7 @@ video{width:100%;border-radius:8px;background:#000}
 
 <div class="panel">
 <h2>Genera Video <span id="selectedBadge" class="badge" style="display:none">Selezionata</span></h2>
+<span class="no-track-hint" id="noTrackHint">Prima carica un file audio sopra, poi clicca "Usa" sulla traccia per selezionarla.</span>
 <label>Testo della canzone <span id="autoSaveHint" class="save-hint"></span></label>
 <textarea id="lyrics" class="text-input" placeholder="Incolla qui il testo della canzone, separando le strofe con righe vuote..."></textarea>
 <label>Stile visivo (opzionale)</label>
@@ -82,9 +87,15 @@ video{width:100%;border-radius:8px;background:#000}
 <video id="preview" controls></video>
 <a id="downloadBtn" class="button sec" style="display:none;margin-top:12px;text-decoration:none" download="music-video.webm">Scarica Video</a>
 </div>
+
+<div class="panel" id="debugPanel" style="cursor:pointer" onclick="this.querySelector('.debug-panel').style.display=this.querySelector('.debug-panel').style.display==='none'?'block':'none'">
+<h2 style="color:#666">Debug Log (clicca per aprire)</h2>
+<div class="debug-panel" id="debugLog"></div>
+</div>
 </div>
 
 <div class="error-toast" id="errorToast"></div>
+<div class="success-toast" id="successToast"></div>
 <div class="loading-overlay" id="loadingOverlay">
 <div class="loading-box">
 <div class="spinner"></div>
@@ -93,23 +104,45 @@ video{width:100%;border-radius:8px;background:#000}
 </div>
 
 <script>
+// === DEBUG ===
+function log(msg){
+  console.log('[MV]',msg);
+  const el=document.getElementById('debugLog');
+  el.style.display='block';
+  const t=new Date().toLocaleTimeString();
+  el.innerHTML+='<div>['+t+'] '+msg+'</div>';
+  el.scrollTop=el.scrollHeight;
+}
+
+// === UTILS ===
 function fmtTime(s){if(!s||!isFinite(s))return'??:??';return Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0')}
 function fmtSize(b){if(b<1024)return b+' B';if(b<1048576)return(b/1024).toFixed(1)+' KB';return(b/1048576).toFixed(1)+' MB'}
 
+let errorTimer=null;
 function showError(msg){
   const t=document.getElementById('errorToast');
   t.textContent=msg;t.style.display='block';
-  setTimeout(()=>t.style.display='none',6000);
+  clearTimeout(errorTimer);
+  errorTimer=setTimeout(()=>t.style.display='none',8000);
+  log('ERRORE: '+msg);
+}
+
+let successTimer=null;
+function showSuccess(msg){
+  const t=document.getElementById('successToast');
+  t.textContent=msg;t.style.display='block';
+  clearTimeout(successTimer);
+  successTimer=setTimeout(()=>t.style.display='none',4000);
+  log('OK: '+msg);
 }
 
 function showLoading(msg){
   document.getElementById('loadingText').textContent=msg||'Caricamento...';
   document.getElementById('loadingOverlay').classList.add('active');
 }
-function hideLoading(){
-  document.getElementById('loadingOverlay').classList.remove('active');
-}
+function hideLoading(){document.getElementById('loadingOverlay').classList.remove('active')}
 
+// === DOM ===
 const uploadZone=document.getElementById('uploadZone');
 const audioUpload=document.getElementById('audioUpload');
 const trackList=document.getElementById('trackList');
@@ -118,6 +151,7 @@ const styleHint=document.getElementById('styleHint');
 const generateBtn=document.getElementById('generateBtn');
 const selectedBadge=document.getElementById('selectedBadge');
 const autoSaveHint=document.getElementById('autoSaveHint');
+const noTrackHint=document.getElementById('noTrackHint');
 const progressEl=document.getElementById('progress');
 const progressBar=document.getElementById('progressBar');
 const statusEl=document.getElementById('status');
@@ -128,6 +162,16 @@ const downloadBtn=document.getElementById('downloadBtn');
 let selectedTrack=null;
 let audioCache={};
 
+// === GENERATE BUTTON: mostra hint se disabilitato ===
+generateBtn.addEventListener('click',function(){
+  if(!selectedTrack){
+    showError('Prima seleziona una traccia dalla libreria: carica un audio e clicca "Usa"');
+    return;
+  }
+});
+// Override: il click vero parte solo se enabled, ma aggiungiamo il check
+generateBtn.addEventListener('click',generate);
+
 // === UPLOAD ===
 uploadZone.addEventListener('click',()=>audioUpload.click());
 uploadZone.addEventListener('dragover',e=>{e.preventDefault();uploadZone.classList.add('dragover')});
@@ -137,48 +181,75 @@ audioUpload.addEventListener('change',e=>{handleFiles(e.target.files);audioUploa
 
 async function handleFiles(files){
   for(const file of files){
+    log('Inizio upload: '+file.name+' ('+fmtSize(file.size)+', '+file.type+')');
     try{
       showLoading('Caricamento '+file.name+'...');
       await uploadTrack(file);
       hideLoading();
+      showSuccess(file.name+' caricato!');
     }catch(err){
       hideLoading();
-      showError('Errore "'+file.name+'": '+err.message);
+      showError('"'+file.name+'": '+err.message);
     }
   }
   await renderLibrary();
 }
 
 async function uploadTrack(file){
+  // 1. Durata
+  log('Rilevamento durata...');
   const duration=await getDuration(file);
+  log('Durata: '+fmtTime(duration));
 
+  // 2. Signed upload URL
+  log('Richiesta signed URL...');
   const urlRes=await fetch('/api/upload-url',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({filename:file.name})
   });
   if(!urlRes.ok){
-    const err=await urlRes.json().catch(()=>({}));
-    throw new Error(err.error||'Errore upload URL');
+    let errMsg='Errore HTTP '+urlRes.status;
+    try{const j=await urlRes.json();errMsg=j.error||errMsg}catch(e){}
+    throw new Error(errMsg);
   }
   const{storagePath,signedUrl}=await urlRes.json();
+  log('Signed URL ottenuta, path: '+storagePath);
 
+  // 3. Upload su Supabase Storage
+  log('Upload su storage...');
   const uploadRes=await fetch(signedUrl,{
     method:'PUT',
     headers:{'Content-Type':file.type||'audio/mpeg','x-upsert':'true'},
     body:file
   });
-  if(!uploadRes.ok&&uploadRes.status!==200) throw new Error('Upload storage fallito (status '+uploadRes.status+')');
+  log('Storage response: '+uploadRes.status+' '+uploadRes.statusText);
+  if(uploadRes.status>=400){
+    let body='';
+    try{body=await uploadRes.text()}catch(e){}
+    throw new Error('Storage errore '+uploadRes.status+(body?': '+body.substring(0,200):''));
+  }
 
+  // 4. Salva metadati
+  log('Salvataggio metadati...');
   const trackRes=await fetch('/api/tracks',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({name:file.name,size:file.size,type:file.type||'audio/mpeg',duration,storage_path:storagePath})
+    body:JSON.stringify({
+      name:file.name,
+      size:file.size,
+      type:file.type||'audio/mpeg',
+      duration:duration,
+      storage_path:storagePath
+    })
   });
   if(!trackRes.ok){
-    const err=await trackRes.json().catch(()=>({}));
-    throw new Error(err.error||'Salvataggio metadati fallito');
+    let errMsg='Errore HTTP '+trackRes.status;
+    try{const j=await trackRes.json();errMsg=j.error||errMsg}catch(e){}
+    throw new Error(errMsg);
   }
+  const saved=await trackRes.json();
+  log('Traccia salvata, ID: '+saved.id);
 }
 
 function getDuration(file){
@@ -187,92 +258,123 @@ function getDuration(file){
     const a=new Audio();a.preload='metadata';
     let done=false;
     const finish=v=>{if(done)return;done=true;clearTimeout(t);URL.revokeObjectURL(url);resolve(v)};
-    const t=setTimeout(()=>finish(0),6000);
-    a.onloadedmetadata=()=>finish(a.duration||0);
-    a.onerror=()=>finish(0);
+    const t=setTimeout(()=>{log('Timeout durata, proseguo con 0');finish(0)},6000);
+    a.onloadedmetadata=()=>{log('Metadata loaded: '+a.duration);finish(a.duration||0)};
+    a.onerror=()=>{log('Errore caricamento metadata');finish(0)};
     a.src=url;
   });
 }
 
 // === RENDER LIBRARY ===
 async function renderLibrary(){
+  log('Caricamento libreria...');
   try{
     const res=await fetch('/api/tracks');
     if(!res.ok)throw new Error('HTTP '+res.status);
     const tracks=await res.json();
+    log('Trovate '+tracks.length+' tracce');
 
     if(!tracks.length){
       trackList.innerHTML='<div class="empty-library">Nessuna traccia. Carica un file audio sopra.</div>';
       return;
     }
 
-    trackList.innerHTML=tracks.map(t=>`
-      <div class="track-item ${selectedTrack&&selectedTrack.id===t.id?'selected':''}">
-        <div class="track-info">
-          <div class="track-name">${t.name}</div>
-          <div class="track-meta">${fmtTime(t.duration)} · ${fmtSize(t.size)}${t.lyrics?' · testo':''}</div>
-        </div>
-        <div class="track-actions">
-          <audio controls preload="metadata" data-tid="${t.id}"></audio>
-          <button class="sec" data-action="select" data-id="${t.id}">Usa</button>
-          <button class="del" data-action="delete" data-id="${t.id}">&#10005;</button>
-        </div>
-      </div>
-    `).join('');
+    trackList.innerHTML=tracks.map(t=>{
+      const sel=selectedTrack&&selectedTrack.id===t.id;
+      return '<div class="track-item '+(sel?'selected':'')+'" data-id="'+t.id+'">'+
+        '<div class="track-info">'+
+          '<div class="track-name">'+t.name+'</div>'+
+          '<div class="track-meta">'+fmtTime(t.duration)+' · '+fmtSize(t.size)+(t.lyrics?' · testo salvato':'')+'</div>'+
+        '</div>'+
+        '<div class="track-actions">'+
+          '<audio controls preload="metadata" data-tid="'+t.id+'"></audio>'+
+          '<button class="sec" data-action="select" data-id="'+t.id+'" style="'+(sel?'background:#f72585;color:#fff':'')+'">'+(sel?'Selezionata':'Usa')+'</button>'+
+          '<button class="del" data-action="delete" data-id="'+t.id+'">&#10005;</button>'+
+        '</div>'+
+      '</div>';
+    }).join('');
 
+    // Carica audio per i mini-player
     trackList.querySelectorAll('audio[data-tid]').forEach(async el=>{
       try{
         const url=await getAudioUrl(el.dataset.tid);
         el.src=url;
-      }catch(e){}
+      }catch(e){log('Mini-player audio fallito per '+el.dataset.tid+': '+e.message)}
     });
 
+    // Event listener per "Usa"
     trackList.querySelectorAll('[data-action="select"]').forEach(btn=>{
-      btn.addEventListener('click',()=>selectTrack(btn.dataset.id));
+      btn.addEventListener('click',function(){
+        log('Click Usa, id: '+this.dataset.id);
+        selectTrack(this.dataset.id);
+      });
     });
+
+    // Event listener per elimina
     trackList.querySelectorAll('[data-action="delete"]').forEach(btn=>{
-      btn.addEventListener('click',()=>deleteTrack(btn.dataset.id));
+      btn.addEventListener('click',function(){
+        deleteTrack(this.dataset.id);
+      });
     });
 
   }catch(e){
-    trackList.innerHTML='<div class="empty-library" style="color:#f66">Errore: '+e.message+'</div>';
+    log('ERRORE libreria: '+e.message);
+    trackList.innerHTML='<div class="empty-library" style="color:#f66">Errore caricamento: '+e.message+'<br>Controlla le variabili d\'ambiente su Vercel.</div>';
   }
 }
 
 async function getAudioUrl(id){
   if(audioCache[id])return audioCache[id];
+  log('Richiesta audio URL per '+id);
   const res=await fetch('/api/track?id='+encodeURIComponent(id));
-  if(!res.ok)throw new Error('URL non disponibile');
+  if(!res.ok)throw new Error('Audio URL non disponibile (HTTP '+res.status+')');
   const data=await res.json();
   audioCache[id]=data.url;
   return data.url;
 }
 
 async function selectTrack(id){
+  log('selectTrack('+id+')');
   try{
     const res=await fetch('/api/tracks');
+    if(!res.ok)throw new Error('HTTP '+res.status);
     const tracks=await res.json();
     selectedTrack=tracks.find(t=>t.id===id);
-    if(!selectedTrack)return;
+
+    if(!selectedTrack){
+      showError('Traccia non trovata nell\'elenco. Ricarica la pagina.');
+      log('Traccia '+id+' non trovata tra: '+tracks.map(t=>t.id).join(', '));
+      return;
+    }
+
+    log('Traccia selezionata: '+selectedTrack.name);
     lyricsInput.value=selectedTrack.lyrics||'';
     generateBtn.disabled=false;
     selectedBadge.style.display='inline';
+    noTrackHint.classList.add('hidden');
     autoSaveHint.textContent='';
     await renderLibrary();
   }catch(e){
     showError('Errore selezione: '+e.message);
+    log('ERRORE selectTrack: '+e.message);
   }
 }
 
 async function deleteTrack(id){
   if(!confirm('Eliminare questa traccia?'))return;
+  log('Eliminazione traccia '+id);
   try{
-    await fetch('/api/track?id='+encodeURIComponent(id),{method:'DELETE'});
+    const res=await fetch('/api/track?id='+encodeURIComponent(id),{method:'DELETE'});
+    if(!res.ok)throw new Error('HTTP '+res.status);
     delete audioCache[id];
     if(selectedTrack&&selectedTrack.id===id){
-      selectedTrack=null;lyricsInput.value='';generateBtn.disabled=true;
+      selectedTrack=null;
+      lyricsInput.value='';
+      generateBtn.disabled=true;
       selectedBadge.style.display='none';
+      noTrackHint.classList.remove('hidden');
     }
+    showSuccess('Traccia eliminata');
     await renderLibrary();
   }catch(e){
     showError('Errore eliminazione: '+e.message);
@@ -287,16 +389,18 @@ lyricsInput.addEventListener('input',()=>{
   clearTimeout(saveTimeout);
   saveTimeout=setTimeout(async()=>{
     try{
-      await fetch('/api/track?id='+encodeURIComponent(selectedTrack.id),{
+      const res=await fetch('/api/track?id='+encodeURIComponent(selectedTrack.id),{
         method:'PUT',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({lyrics:lyricsInput.value})
       });
+      if(!res.ok)throw new Error('HTTP '+res.status);
       selectedTrack.lyrics=lyricsInput.value;
       autoSaveHint.textContent='salvato';
       setTimeout(()=>autoSaveHint.textContent='',2000);
     }catch(e){
       autoSaveHint.textContent='errore salvataggio';
+      log('Errore salvataggio testo: '+e.message);
     }
   },600);
 });
@@ -325,7 +429,7 @@ function parseScenes(lyrics,duration){
 }
 
 function genPrompt(sceneText,style){
-  const s=style?`, ${style} style`:', cinematic style';
+  const s=style?', '+style+' style':', cinematic style';
   const clean=sceneText.replace(/\[.*?\]/g,'').substring(0,200);
   return encodeURIComponent('music video still'+s+', moody atmosphere, dramatic lighting, '+clean);
 }
@@ -390,7 +494,10 @@ class Particle{
 
 // === GENERATE VIDEO ===
 async function generate(){
-  if(!selectedTrack)return showError('Seleziona una traccia');
+  if(!selectedTrack){
+    showError('Seleziona prima una traccia!');
+    return;
+  }
   const lyrics=lyricsInput.value.trim();
   if(!lyrics)return showError('Inserisci il testo della canzone');
   const style=styleHint.value.trim();
@@ -400,10 +507,12 @@ async function generate(){
   progressBar.style.width='0%';
   statusEl.textContent='Caricamento audio...';
   previewWrap.style.display='none';
+  log('Inizio generazione video per: '+selectedTrack.name);
 
   let audioUrl;
   try{
     audioUrl=await getAudioUrl(selectedTrack.id);
+    log('Audio URL ottenuta');
   }catch(e){
     showError('Errore caricamento audio: '+e.message);
     generateBtn.disabled=false;progressEl.style.display='none';return;
@@ -416,23 +525,25 @@ async function generate(){
   try{
     await new Promise((resolve,reject)=>{
       audio.onloadedmetadata=resolve;
-      audio.onerror=()=>reject(new Error('Audio non caricabile'));
+      audio.onerror=()=>reject(new Error('Audio non caricabile (CORS?)'));
     });
   }catch(e){
-    showError('Non riesco a caricare l\'audio. Potrebbe essere un problema CORS.');
+    showError(e.message);
     generateBtn.disabled=false;progressEl.style.display='none';return;
   }
 
   const duration=audio.duration;
+  log('Durata: '+fmtTime(duration));
   statusEl.textContent='Analisi testo...';
   const scenes=parseScenes(lyrics,duration);
+  log('Scene: '+scenes.length);
 
   const images=[];
   for(let i=0;i<scenes.length;i++){
     statusEl.textContent='Generazione immagine '+(i+1)+'/'+scenes.length+'...';
     progressBar.style.width=((i+1)/scenes.length*50)+'%';
-    try{images.push(await loadImage(genPrompt(scenes[i].text,style)))}
-    catch(e){images.push(null)}
+    try{images.push(await loadImage(genPrompt(scenes[i].text,style)));log('Immagine '+(i+1)+' OK')}
+    catch(e){images.push(null);log('Immagine '+(i+1)+' fallita')}
   }
 
   statusEl.textContent='Preparazione canvas...';
@@ -443,11 +554,10 @@ async function generate(){
   const ctx=canvas.getContext('2d');
 
   let analyzer;
-  try{analyzer=new AudioAnalyzer(audio);analyzer.init()}
-  catch(e){showError('Errore inizializzazione audio: '+e.message);generateBtn.disabled=false;progressEl.style.display='none';return}
+  try{analyzer=new AudioAnalyzer(audio);analyzer.init();log('Audio analyzer pronto')}
+  catch(e){showError('Errore audio: '+e.message);generateBtn.disabled=false;progressEl.style.display='none';return}
 
   const particles=[];for(let i=0;i<60;i++)particles.push(new Particle(W,H));
-
   let startTime=null,currentScene=0,kbx=0,kby=0,flashA=0;
 
   const canvasStream=canvas.captureStream(30);
@@ -458,10 +568,9 @@ async function generate(){
   if(aTrack)canvasStream.addTrack(aTrack);
 
   let mimeType='video/webm;codecs=vp9,opus';
-  if(!MediaRecorder.isTypeSupported(mimeType)){
-    mimeType='video/webm;codecs=vp8,opus';
-    if(!MediaRecorder.isTypeSupported(mimeType))mimeType='video/webm';
-  }
+  if(!MediaRecorder.isTypeSupported(mimeType)){mimeType='video/webm;codecs=vp8,opus'}
+  if(!MediaRecorder.isTypeSupported(mimeType)){mimeType='video/webm'}
+  log('Codec: '+mimeType);
 
   const recorder=new MediaRecorder(canvasStream,{mimeType:mimeType,videoBitsPerSecond:4000000});
   const chunks=[];
@@ -522,7 +631,7 @@ async function generate(){
     statusEl.textContent='Registrazione... '+fmtTime(elapsed)+' / '+fmtTime(duration);
 
     if(elapsed<duration)requestAnimationFrame(render);
-    else{recorder.stop();audio.pause()}
+    else{recorder.stop();audio.pause();log('Registrazione finita')}
   }
 
   statusEl.textContent='Registrazione in corso...';
@@ -541,12 +650,12 @@ async function generate(){
   progressEl.style.display='none';
   statusEl.textContent='Video pronto!';
   generateBtn.disabled=false;
+  log('Video generato, size: '+fmtSize(blob.size));
 }
 
-generateBtn.addEventListener('click',generate);
-
 // === INIT ===
-renderLibrary();
+log('App avviata');
+renderLibrary().catch(e=>log('ERRORE init: '+e.message));
 </script>
 </body>
 </html>
