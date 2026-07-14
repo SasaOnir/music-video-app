@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Music Video Generator</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0a0f; color: #e0e0e0; min-height: 100vh; padding: 20px; }
+  .container { max-width: 1000px; margin: 0 auto; }
+  h1 { font-size: 1.6rem; margin-bottom: 6px; background: linear-gradient(90deg, #f72585, #4cc9f0); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  h2 { font-size: 1.05rem; margin-bottom: 12px; color: #ccc; }
+  .subtitle { color: #888; margin-bottom: 20px; font-size: 0.85rem; }
+  .panel { background: #14141c; border: 1px solid #252535; border-radius: 12px; padding: 22px; margin-bottom: 16px; }
+  label { display: block; margin-bottom: 6px; font-size: 0.82rem; color: #aaa; font-weight: 600; }
+  .text-input { width: 100%; background: #0a0a0f; border: 1px solid #2a2a3a; border-radius: 8px; padding: 10px; color: #e0e0e0; font-size: 0.9rem; margin-bottom: 14px; font-family: inherit; }
+  textarea.text-input { min-height: 110px; resize: vertical; }
+  button { background: linear-gradient(90deg, #f72585, #7209b7); border: none; color: white; padding: 11px 26px; border-radius: 8px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
+  button:hover:not(:disabled) { opacity: 0.9; }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  button.sec { background: #2a2a3a; padding: 8px 14px; font-size: 0.82rem; }
+  button.sec:hover:not(:disabled) { background: #353548; }
+  button.del { background: #3a1515; padding: 6px 11px; font-size: 0.78rem; }
+  button.del:hover:not(:disabled) { background: #4a1a1a; }
+  .progress { margin-top: 14px; height: 6px; background: #0a0a0f; border-radius: 3px; overflow: hidden; display: none; }
+  .progress-bar { height: 100%; background: linear-gradient(90deg, #f72585, #4cc9f0); width: 0%; transition: width 0.3s; }
+  .status { margin-top: 10px; font-size: 0.82rem; color: #888; min-height: 18px; }
+  .preview-wrap { margin-top: 16px; display: none; }
+  video { width: 100%; border-radius: 8px; background: #000; }
+  .hint { font-size: 0.78rem; color: #666; margin-top: 6px; }
+  .upload-zone { border: 2px dashed #2a2a3a; border-radius: 8px; padding: 22px; text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s; margin-bottom: 14px; }
+  .upload-zone:hover, .upload-zone.dragover { border-color: #f72585; background: rgba(247,37,133,0.05); }
+  .upload-zone p { color: #888; font-size: 0.88rem; }
+  .track-list { display: flex; flex-direction: column; gap: 8px; }
+  .track-item { background: #0a0a0f; border: 1px solid #2a2a3a; border-radius: 8px; padding: 11px; display: flex; align-items: center; gap: 11px; }
+  .track-item.selected { border-color: #f72585; background: rgba(247,37,133,0.08); }
+  .track-info { flex: 1; min-width: 0; }
+  .track-name { font-weight: 600; font-size: 0.88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .track-meta { font-size: 0.73rem; color: #666; margin-top: 2px; }
+  .track-actions { display: flex; gap: 6px; align-items: center; }
+  .empty-library { color: #555; font-size: 0.83rem; text-align: center; padding: 18px; font-style: italic; }
+  .badge { display: inline-block; background: #f72585; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.68rem; margin-left: 8px; }
+  .save-hint { font-weight: normal; color: #666; font-size: 0.78rem; }
+  .conn-status { font-size: 0.75rem; padding: 4px 10px; border-radius: 4px; display: inline-block; margin-bottom: 12px; }
+  .conn-ok { background: #1a3a1a; color: #4ade80; }
+  .conn-err { background: #3a1a1a; color: #f87171; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Music Video Generator</h1>
+  <p class="subtitle">Cloud · Accessibile da ovunque · Audio reattivo · Immagini AI</p>
+  <div id="connStatus" class="conn-status conn-err">Connessione...</div>
+
+  <div class="panel">
+    <h2>Libreria Audio</h2>
+    <div class="upload-zone" id="uploadZone">
+      <p>Trascina qui i file audio o clicca per selezionarli</p>
+      <p style="font-size:0.72rem; margin-top:5px;">MP3, WAV, OGG, M4A</p>
+      <input type="file" id="audioUpload" accept="audio/*" multiple>
+    </div>
+    <div id="trackList" class="track-list"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Genera Video <span id="selectedBadge" class="badge" style="display:none;">Selezionata</span></h2>
+    <label>Testo della canzone <span id="autoSaveHint" class="save-hint"></span></label>
+    <textarea id="lyrics" class="text-input" placeholder="Incolla qui il testo..."></textarea>
+    <label>Stile visivo (opzionale)</label>
+    <input type="text" id="styleHint" class="text-input" placeholder="cinematografico, anime, cyberpunk...">
+    <button id="generateBtn" disabled>Genera Video</button>
+    <div class="hint">Seleziona una traccia e assicurati che ci sia il testo.</div>
+    <div class="progress" id="progress"><div class="progress-bar" id="progressBar"></div></div>
+    <div class="status" id="status"></div>
+  </div>
+
+  <div class="panel preview-wrap" id="previewWrap">
+    <h2>Anteprima</h2>
+    <video id="preview" controls></video>
+    <a id="downloadLink" download="music-video.webm" style="text-decoration:none;"><button type="button" class="sec">Scarica il video</button></a>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://jescfkahkgcyuhffyycw.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Implc2Nma2Foa2djeXVoZmZ5eWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5ODg1OTcsImV4cCI6MjA5OTU2NDU5N30.uTjj6YJOhqiaFsR4z2iuvl8KGGs2ayG8xnYpDvNI9xU';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const MOODS = {
+  happy: { words:['love','sun','light','happy','joy','smile','dance','amore','sole','luce','felice','gioia','balla'], palette:['#ff6b6b','#feca57','#ff9ff3','#48dbfb'], style:'bright colorful vibrant warm' },
+  sad: { words:['rain','cry','alone','dark','tear','gone','lost','pioggia','piango','solo','buio','lacrima','perso'], palette:['#2c3e50','#34495e','#5d6d7e','#aeb6bf'], style:'melancholic moody dark cold' },
+  energetic: { words:['fire','run','fight','burn','wild','fast','fuoco','corri','combatti','brucia','veloce'], palette:['#e74c3c','#c0392b','#ff6348','#ff4757'], style:'dynamic intense energetic dramatic' },
+  calm: { words:['sea','sky','wind','soft','slow','quiet','mare','cielo','vento','dolce','lento','calma'], palette:['#74b9ff','#a29bfe','#81ecec','#dfe6e9'], style:'serene calm peaceful soft' },
+  dreamy: { words:['dream','night','star','moon','fly','sogno','notte','stella','luna','vola'], palette:['#6c5ce7','#a29bfe','#fd79a8','#fab1a0'], style:'dreamy ethereal surreal magical' },
+  angry: { words:['hate','blood','war','rage','odio','sangue','guerra','rabbia'], palette:['#6e1010','#9b1c1c','#d63031','#2d0a0a'], style:'dark aggressive gritty raw' }
+};
+function detectMood(text) { const l = text.toLowerCase(); let best='calm', bs=0; for (const [m,d] of Object.entries(MOODS)) { let s=0; for (const w of d.words) if (l.includes(w)) s++; if (s>bs){bs=s;best=m;} } return best; }
+
+function generateScenes(lyrics, duration, styleHint) {
+  const stanzas = lyrics.split(/\n\s*\n/).map(s=>s.trim()).filter(s=>s);
+  const segs = stanzas.length > 0 ? stanzas : [lyrics];
+  const sd = duration / segs.length;
+  return segs.map((text, i) => {
+    const mood = detectMood(text);
+    const md = MOODS[mood];
+    const sp = styleHint ? `${styleHint}, ` : '';
+    const pt = `${sp}cinematic music video scene, ${md.style}, inspired by: "${text.slice(0,120)}", high quality, dramatic lighting, 16:9`;
+    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(pt)}?width=1280&height=720&nologo=true&seed=${i*1234+42}`;
+    return { start: i*sd, end: (i+1)*sd, text, mood, moodData: md, imageUrl: url, image: null, loaded: false };
+  });
+}
+function loadImage(url) { return new Promise((res) => { const img = new Image(); img.crossOrigin = 'anonymous'; img.onload = () => res(img); img.onerror = () => res(null); img.src = url; }); }
+async function preloadImages(scenes, onProgress) { let done=0; await Promise.all(scenes.map(async (s) => { s.image = await loadImage(s.imageUrl); s.loaded = !!s.image; done++; onProgress(done/scenes.length); })); }
+
+function avgArr(a, s, e) { let t=0; for (let i=s;i<e;i++) t+=a[i]; return t/Math.max(1,e-s); }
+class AudioAnalyzer {
+  constructor(ctx, source) {
+    this.ctx = ctx;
+    this.analyser = ctx.createAnalyser();
+    this.analyser.fftSize = 2048;
+    this.analyser.smoothingTimeConstant = 0.8;
+    source.connect(this.analyser);
+    this.analyser.connect(ctx.destination);
+    this.dest = ctx.createMediaStreamDestination();
+    this.analyser.connect(this.dest);
+    this.freqData = new Uint8Array(this.analyser.frequencyBinCount);
+    this.timeData = new Uint8Array(this.analyser.fftSize);
+    this.energyHistory = [];
+    this.beatTime = 0;
+  }
+  update() { this.analyser.getByteFrequencyData(this.freqData); this.analyser.getByteTimeDomainData(this.timeData); }
+  getBands() { const n = this.freqData.length; const bass = avgArr(this.freqData,0,Math.floor(n*0.08)); const mid = avgArr(this.freqData,Math.floor(n*0.08),Math.floor(n*0.35)); const high = avgArr(this.freqData,Math.floor(n*0.35),n); return { bass, mid, high, overall: (bass+mid+high)/3 }; }
+  detectBeat() { const { bass } = this.getBands(); const now = this.ctx.currentTime; this.energyHistory.push(bass); if (this.energyHistory.length > 43) this.energyHistory.shift(); const la = this.energyHistory.reduce((a,b)=>a+b,0)/this.energyHistory.length; let beat=false; if (bass > la*1.4 && bass > 50 && now - this.beatTime > 0.25) { beat = true; this.beatTime = now; } return beat; }
+}
+
+class VideoRenderer {
+  constructor(canvas, analyzer, scenes) { this.canvas = canvas; this.ctx = canvas.getContext('2d'); this.analyzer = analyzer; this.scenes = scenes; this.particles = []; this.beatPulse = 0; }
+  getCurrentScene(time) { for (let i=0;i<this.scenes.length;i++) { if (time >= this.scenes[i].start && time < this.scenes[i].end) return i; } return this.scenes.length - 1; }
+  render(time) {
+    this.analyzer.update();
+    const bands = this.analyzer.getBands();
+    const beat = this.analyzer.detectBeat();
+    if (beat) this.beatPulse = 1;
+    this.beatPulse *= 0.9;
+    const idx = this.getCurrentScene(time);
+    const scene = this.scenes[idx] || this.scenes[0];
+    const ctx = this.ctx, w = this.canvas.width, h = this.canvas.height;
+    const c = scene.moodData.palette;
+    const grad = ctx.createRadialGradient(w/2,h/2,0,w/2,h/2,Math.max(w,h));
+    grad.addColorStop(0, c[0]); grad.addColorStop(0.5, c[1]); grad.addColorStop(1, '#0a0a0f');
+    ctx.fillStyle = grad; ctx.fillRect(0,0,w,h);
+    if (scene.image) {
+      const zoom = 1.08 + this.beatPulse*0.06 + (bands.bass/255)*0.04;
+      const progress = (time - scene.start) / (scene.end - scene.start);
+      const panX = Math.sin(progress*Math.PI)*40;
+      const panY = Math.cos(progress*Math.PI*0.7)*25;
+      const iw = scene.image.width, ih = scene.image.height;
+      const scale = Math.max(w/iw, h/ih) * zoom;
+      const dw = iw*scale, dh = ih*scale;
+      ctx.globalAlpha = 0.92;
+      ctx.drawImage(scene.image, (w-dw)/2+panX, (h-dh)/2+panY, dw, dh);
+      ctx.globalAlpha = 1;
+      const vg = ctx.createRadialGradient(w/2,h/2,h*0.3,w/2,h/2,h*0.8);
+      vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(0,0,0,0.55)');
+      ctx.fillStyle = vg; ctx.fillRect(0,0,w,h);
+    }
+    const data = this.analyzer.freqData;
+    const barCount = 64, bw = w/barCount;
+    for (let i=0;i<barCount;i++) { const ii = Math.floor((i/barCount)*(data.length*0.7)); const v = data[ii]/255; const bh = v*h*0.18; const hue = (i/barCount)*60 + (bands.bass>100?0:200); ctx.fillStyle = `hsla(${hue},80%,55%,${0.3+v*0.4})`; ctx.fillRect(i*bw+1, h-bh, bw-2, bh); }
+    ctx.strokeStyle = `rgba(255,255,255,${0.15+(bands.high/255)*0.3})`; ctx.lineWidth = 2; ctx.beginPath();
+    const td = this.analyzer.timeData;
+    for (let i=0;i<td.length;i++) { const x = (i/td.length)*w; const y = h/2 + ((td[i]-128)/128)*h*0.08; if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); }
+    ctx.stroke();
+    if (beat && this.particles.length < 120) { const count = 8 + Math.floor((bands.overall/255)*15); for (let i=0;i<count;i++) { this.particles.push({ x: Math.random()*w, y: h+20, vx: (Math.random()-0.5)*2, vy: -Math.random()*4-2, life: 1, size: Math.random()*4+2, hue: Math.random()*60+(bands.bass>100?0:200) }); } }
+    this.particles = this.particles.filter(p => { p.x+=p.vx; p.y+=p.vy; p.vy+=0.05; p.life-=0.012; if (p.life<=0) return false; ctx.fillStyle = `hsla(${p.hue},80%,65%,${p.life})`; ctx.beginPath(); ctx.arc(p.x,p.y,p.size*p.life,0,Math.PI*2); ctx.fill(); return true; });
+    const progress = (time - scene.start) / (scene.end - scene.start);
+    let alpha = 1;
+    if (progress < 0.1) alpha = progress/0.1; else if (progress > 0.9) alpha = (1-progress)/0.1;
+    if (alpha > 0) {
+      const lines = scene.text.split('\n').slice(0,4);
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      const fs = Math.floor(h*0.045); ctx.font = `600 ${fs}px sans-serif`;
+      const th = lines.length*fs*1.4; const sy = h*0.82 - th/2;
+      lines.forEach((line, i) => { const y = sy + i*fs*1.4; const pulse = 1 + this.beatPulse*0.05; ctx.fillStyle = `rgba(0,0,0,${0.7*alpha})`; ctx.fillText(line, w/2+2, y+2); ctx.fillStyle = `rgba(255,255,255,${0.95*alpha})`; ctx.save(); ctx.translate(w/2,y); ctx.scale(pulse,pulse); ctx.fillText(line,0,0); ctx.restore(); });
+    }
+    if (beat && bands.bass > 130) { ctx.fillStyle = 'rgba(255,255,255,0.08)'; ctx.fillRect(0,0,w,h); }
+  }
+}
+
+let selectedTrackId = null;
+
+async function getDurationFromBlob(blob) {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(blob);
+    const a = new Audio();
+    a.preload = 'metadata';
+    let done = false;
+    const finish = (v) => { if (done) return; done = true; clearTimeout(t); URL.revokeObjectURL(url); resolve(v); };
+    const t = setTimeout(() => finish(0), 8000);
+    a.addEventListener('loadedmetadata', () => { let d = a.duration; if (d === Infinity || isNaN(d)) d = 0; finish(d); });
+    a.addEventListener('error', () => finish(0));
+    a.src = url;
+  });
+}
+
+async function uploadTrack(file) {
+  const filePath = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+  const { error: upErr } = await supabase.storage.from('audio').upload(filePath, file);
+  if (upErr) throw new Error('Upload: ' + upErr.message);
+  const duration = await getDurationFromBlob(file);
+  const { data, error } = await supabase.from('tracks').insert({ name: file.name, file_path: filePath, size: file.size, type: file.type || 'audio/mpeg', duration }).select();
+  if (error) throw new Error('DB: ' + error.message);
+  return data[0];
+}
+async function getAudioUrl(filePath) { const { data } = supabase.storage.from('audio').getPublicUrl(filePath); return data.publicUrl; }
+async function fetchTracks() { const { data, error } = await supabase.from('tracks').select('*').order('date_added', { ascending: false }); if (error) throw error; return data; }
+async function deleteTrack(track) { await supabase.storage.from('audio').remove([track.file_path]); await supabase.from('tracks').delete().eq('id', track.id); }
+async function updateLyrics(id, lyrics) { const { error } = await supabase.from('tracks').update({ lyrics }).eq('id', id); if (error) throw error; }
+
+const connStatus = document.getElementById('connStatus');
+const uploadZone = document.getElementById('uploadZone');
+const audioUpload = document.getElementById('audioUpload');
+const trackList = document.getElementById('trackList');
+const lyricsInput = document.getElementById('lyrics');
+const autoSaveHint = document.getElementById('autoSaveHint');
+const styleInput = document.getElementById('styleHint');
+const generateBtn = document.getElementById('generateBtn');
+const progress = document.getElementById('progress');
+const progressBar = document.getElementById('progressBar');
+const statusEl = document.getElementById('status');
+const previewWrap = document.getElementById('previewWrap');
+const preview = document.getElementById('preview');
+const downloadLink = document.getElementById('downloadLink');
+const selectedBadge = document.getElementById('selectedBadge');
+
+async function renderLibrary() {
+  try {
+    const tracks = await fetchTracks();
+    trackList.innerHTML = '';
+    if (tracks.length === 0) { trackList.innerHTML = '<div class="empty-library">Nessuna traccia. Carica un file per iniziare.</div>'; return; }
+    for (const track of tracks) {
+      const item = document.createElement('div');
+      item.className = 'track-item' + (track.id === selectedTrackId ? ' selected' : '');
+      const info = document.createElement('div'); info.className = 'track-info';
+      const nm = document.createElement('div'); nm.className = 'track-name'; nm.textContent = track.name;
+      const mt = document.createElement('div'); mt.className = 'track-meta';
+      const dm = Math.floor(track.duration/60), ds = Math.floor(track.duration%60).toString().padStart(2,'0');
+      mt.textContent = `${dm}:${ds} · ${(track.size/1048576).toFixed(1)} MB${track.lyrics?' · ✓ testo':''}`;
+      info.appendChild(nm); info.appendChild(mt);
+      const acts = document.createElement('div'); acts.className = 'track-actions';
+      const pubUrl = await getAudioUrl(track.file_path);
+      const audio = document.createElement('audio'); audio.controls = true; audio.style.height='30px'; audio.style.maxWidth='180px'; audio.src = pubUrl; acts.appendChild(audio);
+      const sb = document.createElement('button'); sb.className='sec'; sb.textContent = track.id===selectedTrackId ? '✓' : 'Usa'; sb.onclick = () => selectTrack(track.id, track.lyrics || ''); acts.appendChild(sb);
+      const db = document.createElement('button'); db.className='del'; db.textContent='Elimina'; db.onclick = async () => {
+        if (confirm(`Eliminare "${track.name}"?`)) {
+          try { await deleteTrack(track); if (selectedTrackId===track.id) { selectedTrackId=null; lyricsInput.value=''; autoSaveHint.textContent=''; selectedBadge.style.display='none'; } renderLibrary(); checkReady(); }
+          catch(e) { alert('Errore: ' + e.message); }
+        }
+      }; acts.appendChild(db);
+      item.appendChild(info); item.appendChild(acts); trackList.appendChild(item);
+    }
+  } catch (e) { trackList.innerHTML = '<div class="empty-library">Errore: ' + e.message + '</div>'; }
+}
+
+async function selectTrack(id, lyrics) {
+  selectedTrackId = id;
+  lyricsInput.value = lyrics || '';
+  autoSaveHint.textContent = '— salvato nel cloud';
+  selectedBadge.style.display = 'inline-block';
+  renderLibrary();
+  checkReady();
+}
+
+let saveTimer = null;
+lyricsInput.addEventListener('input', () => {
+  checkReady();
+  if (selectedTrackId !== null) {
+    autoSaveHint.textContent = '— salvataggio...';
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(async () => {
+      try { await updateLyrics(selectedTrackId, lyricsInput.value); autoSaveHint.textContent = '— salvato nel cloud'; renderLibrary(); }
+      catch(e) { autoSaveHint.textContent = '— errore'; }
+    }, 800);
+  }
+});
+
+function checkReady() { generateBtn.disabled = !(selectedTrackId !== null && lyricsInput.value.trim()); }
+
+uploadZone.addEventListener('click', () => audioUpload.click());
+audioUpload.addEventListener('change', async (e) => {
+  const files = Array.from(e.target.files);
+  for (const file of files) {
+    try { statusEl.textContent = `Caricamento "${file.name}"...`; await uploadTrack(file); }
+    catch(err) { alert(`Errore con "${file.name}": ${err.message}`); }
+  }
+  audioUpload.value = ''; statusEl.textContent = ''; renderLibrary();
+});
+uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+uploadZone.addEventListener('drop', async (e) => {
+  e.preventDefault(); uploadZone.classList.remove('dragover');
+  const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('audio/') || f.name.match(/\.(mp3|wav|ogg|m4a|flac)$/i));
+  for (const file of files) { try { await uploadTrack(file); } catch(err) { alert(`Errore: ${err.message}`); } }
+  renderLibrary();
+});
+
+generateBtn.addEventListener('click', async () => {
+  generateBtn.disabled = true; progress.style.display = 'block'; previewWrap.style.display = 'none';
+  try {
+    statusEl.textContent = 'Scaricamento audio...';
+    const { data: track } = await supabase.from('tracks').select('*').eq('id', selectedTrackId).single();
+    const pubUrl = await getAudioUrl(track.file_path);
+    const resp = await fetch(pubUrl);
+    const ab = await resp.arrayBuffer();
+    const ctx = new AudioContext();
+    const audioBuffer = await ctx.decodeAudioData(ab);
+    const duration = audioBuffer.duration;
+    const scenes = generateScenes(lyricsInput.value, duration, styleInput.value.trim());
+    progressBar.style.width = '5%';
+    statusEl.textContent = `Generazione immagini per ${scenes.length} scene...`;
+    await preloadImages(scenes, (p) => { progressBar.style.width = (5+p*70)+'%'; statusEl.textContent = `Immagini... ${Math.round(p*100)}%`; });
+    const loaded = scenes.filter(s => s.loaded).length;
+    if (loaded === 0) statusEl.textContent = 'Attenzione: nessuna immagine. Continuo con sfondi colore.';
+    else statusEl.textContent = `${loaded}/${scenes.length} immagini pronte. Registrazione...`;
+    progressBar.style.width = '78%';
+    const canvas = document.createElement('canvas'); canvas.width = 1280; canvas.height = 720;
+    const source = ctx.createBufferSource(); source.buffer = audioBuffer;
+    const analyzer = new AudioAnalyzer(ctx, source);
+    const renderer = new VideoRenderer(canvas, analyzer, scenes);
+    const cs = canvas.captureStream(30);
+    const at = analyzer.dest.stream.getAudioTracks();
+    const stream = new MediaStream([...cs.getVideoTracks(), ...at]);
+    const mime = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus') ? 'video/webm;codecs=vp9,opus' : 'video/webm;codecs=vp8,opus';
+    const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 4000000 });
+    const chunks = [];
+    rec.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+    const start = ctx.currentTime; source.start(); rec.start();
+    statusEl.textContent = 'Registrazione in corso... non chiudere la finestra';
+    function loop() { const el = ctx.currentTime - start; if (el >= duration) { rec.stop(); return; } renderer.render(el); progressBar.style.width = (78 + (el/duration)*22) + '%'; requestAnimationFrame(loop); }
+    loop();
+    rec.onstop = () => { const blob = new Blob(chunks, { type: 'video/webm' }); const url = URL.createObjectURL(blob); preview.src = url; downloadLink.href = url; previewWrap.style.display = 'block'; progressBar.style.width = '100%'; statusEl.textContent = 'Video pronto!'; generateBtn.disabled = false; ctx.close(); };
+  } catch (err) { statusEl.textContent = 'Errore: ' + err.message; generateBtn.disabled = false; console.error(err); }
+});
+
+(async () => {
+  try {
+    const { data, error } = await supabase.from('tracks').select('id').limit(1);
+    if (error) throw error;
+    connStatus.textContent = '✓ Connesso al database Supabase';
+    connStatus.className = 'conn-status conn-ok';
+    await renderLibrary();
+  } catch (e) {
+    connStatus.textContent = '✗ Errore: ' + e.message;
+    connStatus.className = 'conn-status conn-err';
+  }
+})();
+</script>
+</body>
+</html>
