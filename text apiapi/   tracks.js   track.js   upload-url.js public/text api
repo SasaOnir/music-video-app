@@ -1,8 +1,0 @@
-api/
-  tracks.js
-  track.js
-  upload-url.js
-public/
-  index.html
-package.json
-.env.local
