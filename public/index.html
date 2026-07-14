@@ -282,8 +282,7 @@ async function handleAuth(){
 }
 
 async function verifyAdmin(email){
-  const{data,error}=await sb.from('admin_users').select('email').eq('email',email).single();
-  if(error||!data){
+  if(email!=='sasacaruso84@gmail.com'){
     secLog('UNAUTHORIZED_LOGIN',{email:email});
     await sb.auth.signOut();
     document.getElementById('loginError').textContent='Non sei autorizzato. Solo l\'admin puo accedere.';
