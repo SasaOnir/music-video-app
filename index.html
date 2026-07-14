@@ -5,69 +5,73 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Music Video Generator</title>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0a0f; color: #e0e0e0; min-height: 100vh; padding: 20px; }
-.container { max-width: 1000px; margin: 0 auto; }
-h1 { font-size: 1.6rem; margin-bottom: 6px; background: linear-gradient(90deg, #f72585, #4cc9f0); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-.subtitle { color: #888; margin-bottom: 20px; font-size: 0.85rem; }
-.panel { background: #14141c; border: 1px solid #252535; border-radius: 12px; padding: 22px; margin-bottom: 16px; }
-h2 { font-size: 1.05rem; margin-bottom: 12px; color: #ccc; }
-label { display: block; margin-bottom: 6px; font-size: 0.82rem; color: #aaa; font-weight: 600; }
-.text-input { width: 100%; background: #0a0a0f; border: 1px solid #2a2a3a; border-radius: 8px; padding: 10px; color: #e0e0e0; font-size: 0.9rem; margin-bottom: 14px; font-family: inherit; }
-textarea.text-input { min-height: 110px; resize: vertical; }
-button { background: linear-gradient(90deg, #f72585, #7209b7); border: none; color: white; padding: 11px 26px; border-radius: 8px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
-button:hover:not(:disabled) { opacity: 0.9; }
-button:disabled { opacity: 0.4; cursor: not-allowed; }
-button.sec { background: #2a2a3a; padding: 8px 14px; font-size: 0.82rem; }
-button.sec:hover:not(:disabled) { background: #353548; }
-button.del { background: #3a1515; padding: 6px 11px; font-size: 0.78rem; }
-button.del:hover:not(:disabled) { background: #4a1a1a; }
-.progress { margin-top: 14px; height: 6px; background: #0a0a0f; border-radius: 3px; overflow: hidden; display: none; }
-.progress-bar { height: 100%; background: linear-gradient(90deg, #f72585, #4cc9f0); width: 0%; transition: width 0.3s; }
-.status { margin-top: 10px; font-size: 0.82rem; color: #888; min-height: 18px; }
-.preview-wrap { margin-top: 16px; display: none; }
-video { width: 100%; border-radius: 8px; background: #000; }
-.download-btn { margin-top: 12px; display: inline-block; text-decoration: none; }
-.hint { font-size: 0.78rem; color: #666; margin-top: 6px; }
-.upload-zone { border: 2px dashed #2a2a3a; border-radius: 8px; padding: 22px; text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s; margin-bottom: 14px; }
-.upload-zone:hover, .upload-zone.dragover { border-color: #f72585; background: rgba(247,37,133,0.05); }
-.upload-zone p { color: #888; font-size: 0.88rem; }
-.upload-zone input { display: none; }
-.track-list { display: flex; flex-direction: column; gap: 8px; }
-.track-item { background: #0a0a0f; border: 1px solid #2a2a3a; border-radius: 8px; padding: 11px; display: flex; align-items: center; gap: 11px; }
-.track-item.selected { border-color: #f72585; background: rgba(247,37,133,0.08); }
-.track-info { flex: 1; min-width: 0; }
-.track-name { font-weight: 600; font-size: 0.88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.track-meta { font-size: 0.73rem; color: #666; margin-top: 2px; }
-.track-actions { display: flex; gap: 6px; align-items: center; }
-.track-actions audio { height: 30px; max-width: 180px; }
-.empty-library { color: #555; font-size: 0.83rem; text-align: center; padding: 18px; font-style: italic; }
-.badge { display: inline-block; background: #f72585; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.68rem; margin-left: 8px; }
-.save-hint { font-weight: normal; color: #666; font-size: 0.78rem; }
-.debug-box { position: fixed; bottom: 10px; right: 10px; width: 320px; max-height: 180px; overflow-y: auto; background: #111; color: #0f0; font-family: monospace; font-size: 10px; padding: 8px; border-radius: 6px; border: 1px solid #333; z-index: 9999; display: none; }
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0a0a0f;color:#e0e0e0;min-height:100vh;padding:20px}
+.container{max-width:1000px;margin:0 auto}
+h1{font-size:1.6rem;margin-bottom:6px;background:linear-gradient(90deg,#f72585,#4cc9f0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.subtitle{color:#888;margin-bottom:20px;font-size:.85rem}
+.panel{background:#14141c;border:1px solid #252535;border-radius:12px;padding:22px;margin-bottom:16px}
+h2{font-size:1.05rem;margin-bottom:12px;color:#ccc}
+label{display:block;margin-bottom:6px;font-size:.82rem;color:#aaa;font-weight:600}
+.text-input{width:100%;background:#0a0a0f;border:1px solid #2a2a3a;border-radius:8px;padding:10px;color:#e0e0e0;font-size:.9rem;margin-bottom:14px;font-family:inherit}
+textarea.text-input{min-height:110px;resize:vertical}
+button{background:linear-gradient(90deg,#f72585,#7209b7);border:none;color:#fff;padding:11px 26px;border-radius:8px;font-size:.95rem;font-weight:600;cursor:pointer;transition:opacity .2s}
+button:hover:not(:disabled){opacity:.9}
+button:disabled{opacity:.4;cursor:not-allowed}
+button.sec{background:#2a2a3a;padding:8px 14px;font-size:.82rem}
+button.sec:hover:not(:disabled){background:#353548}
+button.del{background:#3a1515;padding:6px 11px;font-size:.78rem}
+button.del:hover:not(:disabled){background:#4a1a1a}
+.progress{margin-top:14px;height:6px;background:#0a0a0f;border-radius:3px;overflow:hidden;display:none}
+.progress-bar{height:100%;background:linear-gradient(90deg,#f72585,#4cc9f0);width:0%;transition:width .3s}
+.status{margin-top:10px;font-size:.82rem;color:#888;min-height:18px}
+.preview-wrap{margin-top:16px;display:none}
+video{width:100%;border-radius:8px;background:#000}
+.hint{font-size:.78rem;color:#666;margin-top:6px}
+.upload-zone{border:2px dashed #2a2a3a;border-radius:8px;padding:22px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;margin-bottom:14px}
+.upload-zone:hover,.upload-zone.dragover{border-color:#f72585;background:rgba(247,37,133,.05)}
+.upload-zone p{color:#888;font-size:.88rem}
+.upload-zone input{display:none}
+.track-list{display:flex;flex-direction:column;gap:8px}
+.track-item{background:#0a0a0f;border:1px solid #2a2a3a;border-radius:8px;padding:11px;display:flex;align-items:center;gap:11px}
+.track-item.selected{border-color:#f72585;background:rgba(247,37,133,.08)}
+.track-info{flex:1;min-width:0}
+.track-name{font-weight:600;font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.track-meta{font-size:.73rem;color:#666;margin-top:2px}
+.track-actions{display:flex;gap:6px;align-items:center;flex-shrink:0}
+.track-actions audio{height:30px;max-width:180px}
+.empty-library{color:#555;font-size:.83rem;text-align:center;padding:18px;font-style:italic}
+.badge{display:inline-block;background:#f72585;color:#fff;padding:2px 8px;border-radius:4px;font-size:.68rem;margin-left:8px}
+.save-hint{font-weight:normal;color:#666;font-size:.78rem}
+.error-toast{position:fixed;top:20px;right:20px;background:#3a1515;color:#f66;padding:12px 20px;border-radius:8px;font-size:.88rem;z-index:9999;display:none;max-width:400px}
+.loading-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:9998}
+.loading-overlay.active{display:flex}
+.loading-box{background:#14141c;border:1px solid #252535;border-radius:12px;padding:30px 40px;text-align:center}
+.spinner{width:40px;height:40px;border:3px solid #2a2a3a;border-top-color:#f72585;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
 <div class="container">
 <h1>Music Video Generator</h1>
-<p class="subtitle">Gratis · In browser · Libreria persistente · Audio reattivo · Immagini AI</p>
+<p class="subtitle">Gratis · Audio reattivo · Immagini AI · Libreria cloud</p>
 
 <div class="panel">
 <h2>Libreria Audio</h2>
 <div class="upload-zone" id="uploadZone">
 <p>Trascina qui i file audio o clicca per selezionarli</p>
-<p style="font-size:0.72rem; margin-top:5px;">MP3, WAV, OGG, M4A — caricamento multiplo</p>
+<p style="font-size:.72rem;margin-top:5px">MP3, WAV, OGG, M4A</p>
 <input type="file" id="audioUpload" accept="audio/*" multiple>
 </div>
 <div id="trackList" class="track-list"></div>
 </div>
 
 <div class="panel">
-<h2>Genera Video <span id="selectedBadge" class="badge" style="display:none;">Selezionata</span></h2>
+<h2>Genera Video <span id="selectedBadge" class="badge" style="display:none">Selezionata</span></h2>
 <label>Testo della canzone <span id="autoSaveHint" class="save-hint"></span></label>
 <textarea id="lyrics" class="text-input" placeholder="Incolla qui il testo della canzone, separando le strofe con righe vuote..."></textarea>
 <label>Stile visivo (opzionale)</label>
-<input type="text" id="styleHint" class="text-input" placeholder="es: cinematografico, anime, vintage film, cyberpunk...">
+<input type="text" id="styleHint" class="text-input" placeholder="es: cinematografico, anime, vintage, cyberpunk...">
 <button id="generateBtn" disabled>Genera Video</button>
 <div class="progress" id="progress"><div class="progress-bar" id="progressBar"></div></div>
 <div class="status" id="status"></div>
@@ -76,651 +80,473 @@ video { width: 100%; border-radius: 8px; background: #000; }
 <div class="panel preview-wrap" id="previewWrap">
 <h2>Anteprima Video</h2>
 <video id="preview" controls></video>
-<a id="downloadBtn" class="download-btn button sec" style="display:none;" download="music-video.webm">Scarica Video</a>
+<a id="downloadBtn" class="button sec" style="display:none;margin-top:12px;text-decoration:none" download="music-video.webm">Scarica Video</a>
 </div>
 </div>
 
-<div class="debug-box" id="debugBox"></div>
+<div class="error-toast" id="errorToast"></div>
+<div class="loading-overlay" id="loadingOverlay">
+<div class="loading-box">
+<div class="spinner"></div>
+<div id="loadingText">Caricamento...</div>
+</div>
+</div>
 
 <script>
-// === DEBUG LOG ===
-function log(msg) {
-  console.log('[MV]', msg);
-  const box = document.getElementById('debugBox');
-  box.style.display = 'block';
-  const t = new Date().toLocaleTimeString();
-  box.innerHTML += `<div>[${t}] ${msg}</div>`;
-  box.scrollTop = box.scrollHeight;
+function fmtTime(s){if(!s||!isFinite(s))return'??:??';return Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0')}
+function fmtSize(b){if(b<1024)return b+' B';if(b<1048576)return(b/1024).toFixed(1)+' KB';return(b/1048576).toFixed(1)+' MB'}
+
+function showError(msg){
+  const t=document.getElementById('errorToast');
+  t.textContent=msg;t.style.display='block';
+  setTimeout(()=>t.style.display='none',6000);
 }
 
-// === INDEXEDDB LIBRARY ===
-class AudioLibrary {
-  constructor() {
-    this.db = null;
-    this.DB_NAME = 'MusicVideoDB';
-    this.STORE = 'tracks';
-    this.selectedId = null;
-  }
-
-  async init() {
-    return new Promise((resolve, reject) => {
-      const req = indexedDB.open(this.DB_NAME, 1);
-      req.onupgradeneeded = (e) => {
-        const db = e.target.result;
-        if (!db.objectStoreNames.contains(this.STORE)) {
-          db.createObjectStore(this.STORE, { keyPath: 'id', autoIncrement: true });
-        }
-      };
-      req.onsuccess = (e) => { this.db = e.target.result; resolve(); };
-      req.onerror = (e) => reject(e.target.error);
-    });
-  }
-
-  async add(file) {
-    let duration = 0;
-    try { duration = await this.getDuration(file); } catch(e) {}
-    
-    return new Promise((resolve, reject) => {
-      const tx = this.db.transaction(this.STORE, 'readwrite');
-      const store = tx.objectStore(this.STORE);
-      const record = {
-        name: file.name,
-        file: file,
-        size: file.size,
-        type: file.type || 'audio/mpeg',
-        duration: duration,
-        lyrics: '',
-        dateAdded: Date.now()
-      };
-      const req = store.add(record);
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
-  }
-
-  getDuration(file) {
-    return new Promise((resolve) => {
-      const url = URL.createObjectURL(file);
-      const audio = new Audio();
-      audio.preload = 'metadata';
-      let done = false;
-      const finish = (v) => { if (done) return; done = true; clearTimeout(t); URL.revokeObjectURL(url); resolve(v); };
-      const t = setTimeout(() => finish(0), 6000);
-      audio.onloadedmetadata = () => finish(audio.duration || 0);
-      audio.onerror = () => finish(0);
-      audio.src = url;
-    });
-  }
-
-  async getAll() {
-    return new Promise((resolve, reject) => {
-      const tx = this.db.transaction(this.STORE, 'readonly');
-      const req = tx.objectStore(this.STORE).getAll();
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
-  }
-
-  async get(id) {
-    return new Promise((resolve, reject) => {
-      const tx = this.db.transaction(this.STORE, 'readonly');
-      const req = tx.objectStore(this.STORE).get(id);
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
-  }
-
-  async updateLyrics(id, lyrics) {
-    return new Promise((resolve, reject) => {
-      const tx = this.db.transaction(this.STORE, 'readwrite');
-      const store = tx.objectStore(this.STORE);
-      const req = store.get(id);
-      req.onsuccess = () => {
-        const data = req.result;
-        if (data) { data.lyrics = lyrics; store.put(data); }
-        resolve();
-      };
-      req.onerror = () => reject(req.error);
-    });
-  }
-
-  async remove(id) {
-    return new Promise((resolve, reject) => {
-      const tx = this.db.transaction(this.STORE, 'readwrite');
-      const req = tx.objectStore(this.STORE).delete(id);
-      req.onsuccess = () => resolve();
-      req.onerror = () => reject(req.error);
-    });
-  }
+function showLoading(msg){
+  document.getElementById('loadingText').textContent=msg||'Caricamento...';
+  document.getElementById('loadingOverlay').classList.add('active');
+}
+function hideLoading(){
+  document.getElementById('loadingOverlay').classList.remove('active');
 }
 
-// === GLOBALS ===
-const library = new AudioLibrary();
-let currentTrack = null;
+const uploadZone=document.getElementById('uploadZone');
+const audioUpload=document.getElementById('audioUpload');
+const trackList=document.getElementById('trackList');
+const lyricsInput=document.getElementById('lyrics');
+const styleHint=document.getElementById('styleHint');
+const generateBtn=document.getElementById('generateBtn');
+const selectedBadge=document.getElementById('selectedBadge');
+const autoSaveHint=document.getElementById('autoSaveHint');
+const progressEl=document.getElementById('progress');
+const progressBar=document.getElementById('progressBar');
+const statusEl=document.getElementById('status');
+const previewWrap=document.getElementById('previewWrap');
+const preview=document.getElementById('preview');
+const downloadBtn=document.getElementById('downloadBtn');
 
-const uploadZone = document.getElementById('uploadZone');
-const audioUpload = document.getElementById('audioUpload');
-const trackList = document.getElementById('trackList');
-const lyricsInput = document.getElementById('lyrics');
-const styleHint = document.getElementById('styleHint');
-const generateBtn = document.getElementById('generateBtn');
-const selectedBadge = document.getElementById('selectedBadge');
-const autoSaveHint = document.getElementById('autoSaveHint');
-const progress = document.getElementById('progress');
-const progressBar = document.getElementById('progressBar');
-const statusEl = document.getElementById('status');
-const previewWrap = document.getElementById('previewWrap');
-const preview = document.getElementById('preview');
-const downloadBtn = document.getElementById('downloadBtn');
+let selectedTrack=null;
+let audioCache={};
 
-// === FORMAT HELPERS ===
-function fmtTime(s) {
-  if (!s || s === Infinity) return '??:??';
-  const m = Math.floor(s / 60);
-  const sec = Math.floor(s % 60);
-  return `${m}:${sec.toString().padStart(2, '0')}`;
-}
+// === UPLOAD ===
+uploadZone.addEventListener('click',()=>audioUpload.click());
+uploadZone.addEventListener('dragover',e=>{e.preventDefault();uploadZone.classList.add('dragover')});
+uploadZone.addEventListener('dragleave',()=>uploadZone.classList.remove('dragover'));
+uploadZone.addEventListener('drop',e=>{e.preventDefault();uploadZone.classList.remove('dragover');handleFiles(e.dataTransfer.files)});
+audioUpload.addEventListener('change',e=>{handleFiles(e.target.files);audioUpload.value=''});
 
-function fmtSize(b) {
-  if (b < 1024) return b + ' B';
-  if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
-  return (b / 1048576).toFixed(1) + ' MB';
-}
-
-// === RENDER LIBRARY ===
-async function renderLibrary() {
-  const tracks = await library.getAll();
-  
-  if (tracks.length === 0) {
-    trackList.innerHTML = '<div class="empty-library">Nessuna traccia. Carica un file audio sopra.</div>';
-    return;
-  }
-
-  trackList.innerHTML = tracks.map(t => `
-    <div class="track-item ${library.selectedId === t.id ? 'selected' : ''}" data-id="${t.id}">
-      <div class="track-info">
-        <div class="track-name">${t.name}</div>
-        <div class="track-meta">${fmtTime(t.duration)} · ${fmtSize(t.size)}${t.lyrics ? ' · ✎ testo' : ''}</div>
-      </div>
-      <div class="track-actions">
-        <audio controls preload="metadata" src="${URL.createObjectURL(t.file)}"></audio>
-        <button class="sec" onclick="selectTrack(${t.id})">Usa</button>
-        <button class="del" onclick="deleteTrack(${t.id})">✕</button>
-      </div>
-    </div>
-  `).join('');
-}
-
-// === SELECT TRACK ===
-async function selectTrack(id) {
-  library.selectedId = id;
-  const track = await library.get(id);
-  currentTrack = track;
-  
-  lyricsInput.value = track.lyrics || '';
-  generateBtn.disabled = false;
-  selectedBadge.style.display = 'inline';
-  autoSaveHint.textContent = '';
-  
-  await renderLibrary();
-  log('Traccia selezionata: ' + track.name);
-}
-
-// === DELETE TRACK ===
-async function deleteTrack(id) {
-  if (!confirm('Eliminare questa traccia?')) return;
-  await library.remove(id);
-  if (library.selectedId === id) {
-    library.selectedId = null;
-    currentTrack = null;
-    lyricsInput.value = '';
-    generateBtn.disabled = true;
-    selectedBadge.style.display = 'none';
-  }
-  await renderLibrary();
-  log('Traccia eliminata');
-}
-
-// === AUTO-SAVE LYRICS ===
-let saveTimeout = null;
-lyricsInput.addEventListener('input', () => {
-  if (!library.selectedId) return;
-  autoSaveHint.textContent = 'salvataggio...';
-  clearTimeout(saveTimeout);
-  saveTimeout = setTimeout(async () => {
-    await library.updateLyrics(library.selectedId, lyricsInput.value);
-    autoSaveHint.textContent = '✓ salvato con la traccia';
-    setTimeout(() => { autoSaveHint.textContent = ''; }, 2000);
-  }, 500);
-});
-
-// === UPLOAD HANDLERS ===
-uploadZone.addEventListener('click', () => audioUpload.click());
-
-uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('dragover'); });
-uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
-uploadZone.addEventListener('drop', async (e) => {
-  e.preventDefault();
-  uploadZone.classList.remove('dragover');
-  await handleFiles(e.dataTransfer.files);
-});
-
-audioUpload.addEventListener('change', async (e) => {
-  await handleFiles(e.target.files);
-  audioUpload.value = '';
-});
-
-async function handleFiles(files) {
-  for (const file of files) {
-    log(`Caricamento: ${file.name} (${fmtSize(file.size)})`);
-    try {
-      const id = await library.add(file);
-      log(`Salvato ID: ${id}`);
-    } catch (err) {
-      log('ERRORE: ' + err.message);
-      alert('Errore con "' + file.name + '": ' + err.message);
+async function handleFiles(files){
+  for(const file of files){
+    try{
+      showLoading('Caricamento '+file.name+'...');
+      await uploadTrack(file);
+      hideLoading();
+    }catch(err){
+      hideLoading();
+      showError('Errore "'+file.name+'": '+err.message);
     }
   }
   await renderLibrary();
 }
 
-// === MOOD COLORS ===
-const MOOD_COLORS = {
-  'melancolico': ['#1a1a3e', '#2d1b69', '#0f0c29'],
-  'triste': ['#0c0c1d', '#1a1a2e', '#16213e'],
-  'allegro': ['#ff6b6b', '#feca57', '#ff9ff3'],
-  'energico': ['#f72585', '#7209b7', '#3a0ca3'],
-  'romantico': ['#e91e63', '#9c27b0', '#f48fb1'],
-  'rabbioso': ['#d32f2f', '#b71c1c', '#4a0000'],
-  'calmo': ['#006064', '#00838f', '#4dd0e1'],
-  'epico': ['#ff6f00', '#e65100', '#bf360c'],
-  'misterioso': ['#1a237e', '#311b92', '#0d0d2b'],
-  'nostalgico': ['#4e342e', '#3e2723', '#8d6e63'],
-  'default': ['#0f0c29', '#302b63', '#24243e']
-};
+async function uploadTrack(file){
+  const duration=await getDuration(file);
 
-function getMoodColors(mood) {
-  const m = (mood || '').toLowerCase();
-  for (const [key, colors] of Object.entries(MOOD_COLORS)) {
-    if (m.includes(key)) return colors;
+  const urlRes=await fetch('/api/upload-url',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({filename:file.name})
+  });
+  if(!urlRes.ok){
+    const err=await urlRes.json().catch(()=>({}));
+    throw new Error(err.error||'Errore upload URL');
   }
-  return MOOD_COLORS.default;
+  const{storagePath,signedUrl}=await urlRes.json();
+
+  const uploadRes=await fetch(signedUrl,{
+    method:'PUT',
+    headers:{'Content-Type':file.type||'audio/mpeg','x-upsert':'true'},
+    body:file
+  });
+  if(!uploadRes.ok&&uploadRes.status!==200) throw new Error('Upload storage fallito (status '+uploadRes.status+')');
+
+  const trackRes=await fetch('/api/tracks',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({name:file.name,size:file.size,type:file.type||'audio/mpeg',duration,storage_path:storagePath})
+  });
+  if(!trackRes.ok){
+    const err=await trackRes.json().catch(()=>({}));
+    throw new Error(err.error||'Salvataggio metadati fallito');
+  }
 }
 
-// === PARSE LYRICS TO SCENES ===
-function parseScenes(lyrics, duration) {
-  const blocks = lyrics.split(/\n\s*\n/).filter(b => b.trim());
-  if (blocks.length === 0) return [{ text: lyrics, mood: 'default', start: 0, end: duration || 60 }];
-  
-  const sceneDuration = (duration || 60) / blocks.length;
-  const moods = ['melancolico', 'allegro', 'energico', 'romantico', 'calmo', 'epico', 'misterioso', 'nostalgico'];
-  
-  return blocks.map((text, i) => ({
-    text: text.trim(),
-    mood: moods[i % moods.length],
-    start: i * sceneDuration,
-    end: (i + 1) * sceneDuration
-  }));
-}
-
-// === GENERATE IMAGE PROMPT ===
-function generatePrompt(sceneText, style) {
-  const stylePart = style ? `, ${style} style` : ', cinematic style';
-  const clean = sceneText.replace(/\[.*?\]/g, '').substring(0, 200);
-  return encodeURIComponent(`music video still${stylePart}, moody atmosphere, dramatic lighting, ${clean}`);
-}
-
-// === LOAD IMAGE ===
-function loadImage(prompt) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    const seed = Math.floor(Math.random() * 999999);
-    img.src = `https://image.pollinations.ai/prompt/${prompt}?width=1280&height=720&seed=${seed}&nologo=true`;
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error('Image load failed'));
-    setTimeout(() => reject(new Error('Timeout')), 30000);
+function getDuration(file){
+  return new Promise(resolve=>{
+    const url=URL.createObjectURL(file);
+    const a=new Audio();a.preload='metadata';
+    let done=false;
+    const finish=v=>{if(done)return;done=true;clearTimeout(t);URL.revokeObjectURL(url);resolve(v)};
+    const t=setTimeout(()=>finish(0),6000);
+    a.onloadedmetadata=()=>finish(a.duration||0);
+    a.onerror=()=>finish(0);
+    a.src=url;
   });
 }
 
-// === AUDIO ANALYSIS ===
-class AudioAnalyzer {
-  constructor(audioElement) {
-    this.audio = audioElement;
-    this.ctx = null;
-    this.analyser = null;
-    this.data = null;
-    this.bass = 0;
-    this.mid = 0;
-    this.high = 0;
-    this.energy = 0;
-    this.prevEnergy = 0;
-    this.beat = false;
-  }
+// === RENDER LIBRARY ===
+async function renderLibrary(){
+  try{
+    const res=await fetch('/api/tracks');
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    const tracks=await res.json();
 
-  init() {
-    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const source = this.ctx.createMediaElementSource(this.audio);
-    this.analyser = this.ctx.createAnalyser();
-    this.analyser.fftSize = 256;
-    source.connect(this.analyser);
-    this.analyser.connect(this.ctx.destination);
-    this.data = new Uint8Array(this.analyser.frequencyBinCount);
-  }
+    if(!tracks.length){
+      trackList.innerHTML='<div class="empty-library">Nessuna traccia. Carica un file audio sopra.</div>';
+      return;
+    }
 
-  update() {
-    if (!this.analyser) return;
+    trackList.innerHTML=tracks.map(t=>`
+      <div class="track-item ${selectedTrack&&selectedTrack.id===t.id?'selected':''}">
+        <div class="track-info">
+          <div class="track-name">${t.name}</div>
+          <div class="track-meta">${fmtTime(t.duration)} · ${fmtSize(t.size)}${t.lyrics?' · testo':''}</div>
+        </div>
+        <div class="track-actions">
+          <audio controls preload="metadata" data-tid="${t.id}"></audio>
+          <button class="sec" data-action="select" data-id="${t.id}">Usa</button>
+          <button class="del" data-action="delete" data-id="${t.id}">&#10005;</button>
+        </div>
+      </div>
+    `).join('');
+
+    trackList.querySelectorAll('audio[data-tid]').forEach(async el=>{
+      try{
+        const url=await getAudioUrl(el.dataset.tid);
+        el.src=url;
+      }catch(e){}
+    });
+
+    trackList.querySelectorAll('[data-action="select"]').forEach(btn=>{
+      btn.addEventListener('click',()=>selectTrack(btn.dataset.id));
+    });
+    trackList.querySelectorAll('[data-action="delete"]').forEach(btn=>{
+      btn.addEventListener('click',()=>deleteTrack(btn.dataset.id));
+    });
+
+  }catch(e){
+    trackList.innerHTML='<div class="empty-library" style="color:#f66">Errore: '+e.message+'</div>';
+  }
+}
+
+async function getAudioUrl(id){
+  if(audioCache[id])return audioCache[id];
+  const res=await fetch('/api/track?id='+encodeURIComponent(id));
+  if(!res.ok)throw new Error('URL non disponibile');
+  const data=await res.json();
+  audioCache[id]=data.url;
+  return data.url;
+}
+
+async function selectTrack(id){
+  try{
+    const res=await fetch('/api/tracks');
+    const tracks=await res.json();
+    selectedTrack=tracks.find(t=>t.id===id);
+    if(!selectedTrack)return;
+    lyricsInput.value=selectedTrack.lyrics||'';
+    generateBtn.disabled=false;
+    selectedBadge.style.display='inline';
+    autoSaveHint.textContent='';
+    await renderLibrary();
+  }catch(e){
+    showError('Errore selezione: '+e.message);
+  }
+}
+
+async function deleteTrack(id){
+  if(!confirm('Eliminare questa traccia?'))return;
+  try{
+    await fetch('/api/track?id='+encodeURIComponent(id),{method:'DELETE'});
+    delete audioCache[id];
+    if(selectedTrack&&selectedTrack.id===id){
+      selectedTrack=null;lyricsInput.value='';generateBtn.disabled=true;
+      selectedBadge.style.display='none';
+    }
+    await renderLibrary();
+  }catch(e){
+    showError('Errore eliminazione: '+e.message);
+  }
+}
+
+// === AUTO-SAVE LYRICS ===
+let saveTimeout=null;
+lyricsInput.addEventListener('input',()=>{
+  if(!selectedTrack)return;
+  autoSaveHint.textContent='salvataggio...';
+  clearTimeout(saveTimeout);
+  saveTimeout=setTimeout(async()=>{
+    try{
+      await fetch('/api/track?id='+encodeURIComponent(selectedTrack.id),{
+        method:'PUT',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({lyrics:lyricsInput.value})
+      });
+      selectedTrack.lyrics=lyricsInput.value;
+      autoSaveHint.textContent='salvato';
+      setTimeout(()=>autoSaveHint.textContent='',2000);
+    }catch(e){
+      autoSaveHint.textContent='errore salvataggio';
+    }
+  },600);
+});
+
+// === MOOD COLORS ===
+const MOOD_COLORS={
+  melancolico:['#1a1a3e','#2d1b69','#0f0c29'],triste:['#0c0c1d','#1a1a2e','#16213e'],
+  allegro:['#ff6b6b','#feca57','#ff9ff3'],energico:['#f72585','#7209b7','#3a0ca3'],
+  romantico:['#e91e63','#9c27b0','#f48fb1'],rabbioso:['#d32f2f','#b71c1c','#4a0000'],
+  calmo:['#006064','#00838f','#4dd0e1'],epico:['#ff6f00','#e65100','#bf360c'],
+  misterioso:['#1a237e','#311b92','#0d0d2b'],nostalgico:['#4e342e','#3e2723','#8d6e63'],
+  default:['#0f0c29','#302b63','#24243e']
+};
+function getMoodColors(mood){
+  const m=(mood||'').toLowerCase();
+  for(const[k,v]of Object.entries(MOOD_COLORS))if(m.includes(k))return v;
+  return MOOD_COLORS.default;
+}
+
+function parseScenes(lyrics,duration){
+  const blocks=lyrics.split(/\n\s*\n/).filter(b=>b.trim());
+  if(!blocks.length)return[{text:lyrics,mood:'default',start:0,end:duration||60}];
+  const sd=(duration||60)/blocks.length;
+  const moods=['melancolico','allegro','energico','romantico','calmo','epico','misterioso','nostalgico'];
+  return blocks.map((text,i)=>({text:text.trim(),mood:moods[i%moods.length],start:i*sd,end:(i+1)*sd}));
+}
+
+function genPrompt(sceneText,style){
+  const s=style?`, ${style} style`:', cinematic style';
+  const clean=sceneText.replace(/\[.*?\]/g,'').substring(0,200);
+  return encodeURIComponent('music video still'+s+', moody atmosphere, dramatic lighting, '+clean);
+}
+
+function loadImage(prompt){
+  return new Promise((resolve,reject)=>{
+    const img=new Image();img.crossOrigin='anonymous';
+    img.src='https://image.pollinations.ai/prompt/'+prompt+'?width=1280&height=720&seed='+Math.floor(Math.random()*999999)+'&nologo=true';
+    img.onload=()=>resolve(img);
+    img.onerror=()=>reject(new Error('fail'));
+    setTimeout(()=>reject(new Error('timeout')),30000);
+  });
+}
+
+// === AUDIO ANALYZER ===
+class AudioAnalyzer{
+  constructor(audio){
+    this.audio=audio;this.ctx=null;this.analyser=null;this.data=null;
+    this.bass=0;this.mid=0;this.high=0;this.energy=0;this.prevEnergy=0;this.beat=false;
+  }
+  init(){
+    this.ctx=new(window.AudioContext||window.webkitAudioContext)();
+    const src=this.ctx.createMediaElementSource(this.audio);
+    this.analyser=this.ctx.createAnalyser();this.analyser.fftSize=256;
+    src.connect(this.analyser);this.analyser.connect(this.ctx.destination);
+    this.data=new Uint8Array(this.analyser.frequencyBinCount);
+  }
+  update(){
+    if(!this.analyser)return;
     this.analyser.getByteFrequencyData(this.data);
-    
-    const len = this.data.length;
-    let bassSum = 0, midSum = 0, highSum = 0;
-    const bassEnd = Math.floor(len * 0.15);
-    const midEnd = Math.floor(len * 0.5);
-    
-    for (let i = 0; i < bassEnd; i++) bassSum += this.data[i];
-    for (let i = bassEnd; i < midEnd; i++) midSum += this.data[i];
-    for (let i = midEnd; i < len; i++) highSum += this.data[i];
-    
-    this.prevEnergy = this.energy;
-    this.bass = bassSum / (bassEnd * 255);
-    this.mid = midSum / ((midEnd - bassEnd) * 255);
-    this.high = highSum / ((len - midEnd) * 255);
-    this.energy = (this.bass + this.mid + this.high) / 3;
-    
-    const threshold = 0.15;
-    this.beat = this.energy - this.prevEnergy > threshold && this.energy > 0.3;
+    const len=this.data.length;let bs=0,ms=0,hs=0;
+    const be=Math.floor(len*.15),me=Math.floor(len*.5);
+    for(let i=0;i<be;i++)bs+=this.data[i];
+    for(let i=be;i<me;i++)ms+=this.data[i];
+    for(let i=me;i<len;i++)hs+=this.data[i];
+    this.prevEnergy=this.energy;
+    this.bass=bs/(be*255);this.mid=ms/((me-be)*255);this.high=hs/((len-me)*255);
+    this.energy=(this.bass+this.mid+this.high)/3;
+    this.beat=this.energy-this.prevEnergy>0.15&&this.energy>0.3;
   }
 }
 
 // === PARTICLES ===
-class Particle {
-  constructor(w, h) {
-    this.reset(w, h);
+class Particle{
+  constructor(w,h){this.reset(w,h)}
+  reset(w,h){
+    this.x=Math.random()*w;this.y=Math.random()*h;
+    this.vx=(Math.random()-.5)*2;this.vy=(Math.random()-.5)*2;
+    this.size=Math.random()*3+1;this.alpha=Math.random()*.5+.2;
+    this.life=Math.random()*100+50;this.maxLife=this.life;
   }
-  reset(w, h) {
-    this.x = Math.random() * w;
-    this.y = Math.random() * h;
-    this.vx = (Math.random() - 0.5) * 2;
-    this.vy = (Math.random() - 0.5) * 2;
-    this.size = Math.random() * 3 + 1;
-    this.alpha = Math.random() * 0.5 + 0.2;
-    this.life = Math.random() * 100 + 50;
-    this.maxLife = this.life;
+  update(w,h,e){
+    this.x+=this.vx*(1+e*3);this.y+=this.vy*(1+e*3);this.life--;
+    if(this.life<=0||this.x<0||this.x>w||this.y<0||this.y>h)this.reset(w,h);
   }
-  update(w, h, energy) {
-    this.x += this.vx * (1 + energy * 3);
-    this.y += this.vy * (1 + energy * 3);
-    this.life--;
-    if (this.life <= 0 || this.x < 0 || this.x > w || this.y < 0 || this.y > h) {
-      this.reset(w, h);
-    }
-  }
-  draw(ctx, color) {
-    const a = this.alpha * (this.life / this.maxLife);
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-    ctx.fillStyle = color.replace('1)', `${a})`);
-    ctx.fill();
+  draw(ctx){
+    const a=this.alpha*(this.life/this.maxLife);
+    ctx.beginPath();ctx.arc(this.x,this.y,this.size,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,255,255,'+a+')';ctx.fill();
   }
 }
 
-// === MAIN GENERATE ===
-async function generate() {
-  if (!currentTrack) return alert('Seleziona una traccia!');
-  
-  const lyrics = lyricsInput.value.trim();
-  if (!lyrics) return alert('Inserisci il testo!');
-  
-  const style = styleHint.value.trim();
-  const audioFile = currentTrack.file;
-  
-  generateBtn.disabled = true;
-  progress.style.display = 'block';
-  progressBar.style.width = '0%';
-  statusEl.textContent = 'Caricamento audio...';
-  log('Inizio generazione');
-  
-  // Create audio element
-  const audio = new Audio();
-  audio.crossOrigin = 'anonymous';
-  const audioUrl = URL.createObjectURL(audioFile);
-  audio.src = audioUrl;
-  
-  await new Promise((resolve, reject) => {
-    audio.onloadedmetadata = resolve;
-    audio.onerror = reject;
-  });
-  
-  const duration = audio.duration;
-  log('Durata audio: ' + fmtTime(duration));
-  
-  // Parse scenes
-  statusEl.textContent = 'Analisi testo...';
-  const scenes = parseScenes(lyrics, duration);
-  log('Scene trovate: ' + scenes.length);
-  
-  // Generate images
-  const images = [];
-  for (let i = 0; i < scenes.length; i++) {
-    statusEl.textContent = `Generazione immagine ${i + 1}/${scenes.length}...`;
-    progressBar.style.width = `${((i + 1) / scenes.length) * 50}%`;
-    log(`Immagine ${i + 1}: ${scenes[i].mood}`);
-    
-    try {
-      const prompt = generatePrompt(scenes[i].text, style);
-      const img = await loadImage(prompt);
-      images.push(img);
-      log(`Immagine ${i + 1} OK`);
-    } catch (e) {
-      log(`Immagine ${i + 1} fallita: ${e.message}`);
-      images.push(null);
-    }
+// === GENERATE VIDEO ===
+async function generate(){
+  if(!selectedTrack)return showError('Seleziona una traccia');
+  const lyrics=lyricsInput.value.trim();
+  if(!lyrics)return showError('Inserisci il testo della canzone');
+  const style=styleHint.value.trim();
+
+  generateBtn.disabled=true;
+  progressEl.style.display='block';
+  progressBar.style.width='0%';
+  statusEl.textContent='Caricamento audio...';
+  previewWrap.style.display='none';
+
+  let audioUrl;
+  try{
+    audioUrl=await getAudioUrl(selectedTrack.id);
+  }catch(e){
+    showError('Errore caricamento audio: '+e.message);
+    generateBtn.disabled=false;progressEl.style.display='none';return;
   }
-  
-  statusEl.textContent = 'Preparazione canvas...';
-  progressBar.style.width = '55%';
-  
-  // Setup canvas
-  const W = 1280, H = 720;
-  const canvas = document.createElement('canvas');
-  canvas.width = W;
-  canvas.height = H;
-  const ctx = canvas.getContext('2d');
-  
-  // Setup audio analyzer
-  const analyzer = new AudioAnalyzer(audio);
-  analyzer.init();
-  
-  // Setup particles
-  const particles = [];
-  for (let i = 0; i < 60; i++) particles.push(new Particle(W, H));
-  
-  // Animation state
-  let startTime = null;
-  let currentScene = 0;
-  let kenBurnsX = 0, kenBurnsY = 0;
-  let flashAlpha = 0;
-  
-  // Setup recording
-  const stream = canvas.captureStream(30);
-  
-  // Add audio to stream
-  const audioCtx = analyzer.ctx;
-  const dest = audioCtx.createMediaStreamDestination();
-  const sourceNode = audioCtx.createMediaElementSource(audio);
-  sourceNode.connect(dest);
-  sourceNode.connect(audioCtx.destination);
-  
-  const audioTrack = dest.stream.getAudioTracks()[0];
-  if (audioTrack) stream.addTrack(audioTrack);
-  
-  const recorder = new MediaRecorder(stream, { 
-    mimeType: 'video/webm;codecs=vp9,opus',
-    videoBitsPerSecond: 4000000 
-  });
-  const chunks = [];
-  recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
-  
-  const recordingDone = new Promise((resolve) => {
-    recorder.onstop = () => {
-      const blob = new Blob(chunks, { type: 'video/webm' });
-      resolve(blob);
-    };
-  });
-  
-  // Render loop
-  function render(timestamp) {
-    if (!startTime) startTime = timestamp;
-    const elapsed = (timestamp - startTime) / 1000;
-    
-    // Update audio analysis
-    analyzer.update();
-    
-    // Find current scene
-    for (let i = scenes.length - 1; i >= 0; i--) {
-      if (elapsed >= scenes[i].start) {
-        currentScene = i;
-        break;
-      }
-    }
-    
-    const scene = scenes[currentScene];
-    const colors = getMoodColors(scene.mood);
-    const img = images[currentScene];
-    
-    // Ken Burns effect
-    kenBurnsX += 0.0003 * (1 + analyzer.energy * 2);
-    kenBurnsY += 0.0002 * (1 + analyzer.energy);
-    
-    // Beat flash
-    if (analyzer.beat) flashAlpha = 0.4;
-    flashAlpha *= 0.92;
-    
-    // Clear
-    ctx.fillStyle = colors[0];
-    ctx.fillRect(0, 0, W, H);
-    
-    // Draw image with Ken Burns
-    if (img) {
-      ctx.save();
-      const scale = 1.15 + Math.sin(kenBurnsX) * 0.05 + analyzer.bass * 0.05;
-      const ox = Math.sin(kenBurnsY) * 30;
-      const oy = Math.cos(kenBurnsX * 0.7) * 20;
-      ctx.translate(W / 2 + ox, H / 2 + oy);
-      ctx.scale(scale, scale);
-      ctx.translate(-W / 2, -H / 2);
-      ctx.drawImage(img, 0, 0, W, H);
-      ctx.restore();
-    }
-    
-    // Gradient overlay
-    const grad = ctx.createLinearGradient(0, 0, 0, H);
-    grad.addColorStop(0, 'rgba(0,0,0,0.3)');
-    grad.addColorStop(1, 'rgba(0,0,0,0.6)');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
-    
-    // Particles
-    particles.forEach(p => {
-      p.update(W, H, analyzer.energy);
-      p.draw(ctx, 'rgba(255,255,255,1)');
+
+  const audio=new Audio();
+  audio.crossOrigin='anonymous';
+  audio.src=audioUrl;
+
+  try{
+    await new Promise((resolve,reject)=>{
+      audio.onloadedmetadata=resolve;
+      audio.onerror=()=>reject(new Error('Audio non caricabile'));
     });
-    
-    // Beat flash
-    if (flashAlpha > 0.01) {
-      ctx.fillStyle = `rgba(255,255,255,${flashAlpha})`;
-      ctx.fillRect(0, 0, W, H);
+  }catch(e){
+    showError('Non riesco a caricare l\'audio. Potrebbe essere un problema CORS.');
+    generateBtn.disabled=false;progressEl.style.display='none';return;
+  }
+
+  const duration=audio.duration;
+  statusEl.textContent='Analisi testo...';
+  const scenes=parseScenes(lyrics,duration);
+
+  const images=[];
+  for(let i=0;i<scenes.length;i++){
+    statusEl.textContent='Generazione immagine '+(i+1)+'/'+scenes.length+'...';
+    progressBar.style.width=((i+1)/scenes.length*50)+'%';
+    try{images.push(await loadImage(genPrompt(scenes[i].text,style)))}
+    catch(e){images.push(null)}
+  }
+
+  statusEl.textContent='Preparazione canvas...';
+  progressBar.style.width='55%';
+
+  const W=1280,H=720;
+  const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;
+  const ctx=canvas.getContext('2d');
+
+  let analyzer;
+  try{analyzer=new AudioAnalyzer(audio);analyzer.init()}
+  catch(e){showError('Errore inizializzazione audio: '+e.message);generateBtn.disabled=false;progressEl.style.display='none';return}
+
+  const particles=[];for(let i=0;i<60;i++)particles.push(new Particle(W,H));
+
+  let startTime=null,currentScene=0,kbx=0,kby=0,flashA=0;
+
+  const canvasStream=canvas.captureStream(30);
+  const audioDest=analyzer.ctx.createMediaStreamDestination();
+  const srcNode=analyzer.ctx.createMediaElementSource(audio);
+  srcNode.connect(audioDest);srcNode.connect(analyzer.ctx.destination);
+  const aTrack=audioDest.stream.getAudioTracks()[0];
+  if(aTrack)canvasStream.addTrack(aTrack);
+
+  let mimeType='video/webm;codecs=vp9,opus';
+  if(!MediaRecorder.isTypeSupported(mimeType)){
+    mimeType='video/webm;codecs=vp8,opus';
+    if(!MediaRecorder.isTypeSupported(mimeType))mimeType='video/webm';
+  }
+
+  const recorder=new MediaRecorder(canvasStream,{mimeType:mimeType,videoBitsPerSecond:4000000});
+  const chunks=[];
+  recorder.ondataavailable=e=>{if(e.data.size>0)chunks.push(e.data)};
+  const done=new Promise(resolve=>{recorder.onstop=()=>resolve(new Blob(chunks,{type:'video/webm'}))});
+
+  function render(ts){
+    if(!startTime)startTime=ts;
+    const elapsed=(ts-startTime)/1000;
+    analyzer.update();
+
+    for(let i=scenes.length-1;i>=0;i--){if(elapsed>=scenes[i].start){currentScene=i;break}}
+    const scene=scenes[currentScene];
+    const colors=getMoodColors(scene.mood);
+    const img=images[currentScene];
+
+    kbx+=.0003*(1+analyzer.energy*2);kby+=.0002*(1+analyzer.energy);
+    if(analyzer.beat)flashA=.4;flashA*=.92;
+
+    ctx.fillStyle=colors[0];ctx.fillRect(0,0,W,H);
+
+    if(img){
+      ctx.save();
+      const s=1.15+Math.sin(kbx)*.05+analyzer.bass*.05;
+      ctx.translate(W/2+Math.sin(kby)*30,H/2+Math.cos(kbx*.7)*20);
+      ctx.scale(s,s);ctx.translate(-W/2,-H/2);
+      ctx.drawImage(img,0,0,W,H);ctx.restore();
     }
-    
-    // Audio visualizer bars at bottom
-    if (analyzer.data) {
-      const barCount = 64;
-      const barWidth = W / barCount;
-      for (let i = 0; i < barCount; i++) {
-        const val = (analyzer.data[i] || 0) / 255;
-        const barH = val * 80;
-        const hue = (i / barCount) * 60 + 300;
-        ctx.fillStyle = `hsla(${hue}, 80%, 60%, ${0.4 + val * 0.4})`;
-        ctx.fillRect(i * barWidth, H - barH, barWidth - 1, barH);
+
+    const grad=ctx.createLinearGradient(0,0,0,H);
+    grad.addColorStop(0,'rgba(0,0,0,0.3)');grad.addColorStop(1,'rgba(0,0,0,0.6)');
+    ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);
+
+    particles.forEach(p=>{p.update(W,H,analyzer.energy);p.draw(ctx)});
+
+    if(flashA>.01){ctx.fillStyle='rgba(255,255,255,'+flashA+')';ctx.fillRect(0,0,W,H)}
+
+    if(analyzer.data){
+      const bc=64,bw=W/bc;
+      for(let i=0;i<bc;i++){
+        const v=(analyzer.data[i]||0)/255;
+        ctx.fillStyle='hsla('+(i/bc*60+300)+',80%,60%,'+(0.4+v*0.4)+')';
+        ctx.fillRect(i*bw,H-v*80,bw-1,v*80);
       }
     }
-    
-    // Subtitle
-    const lines = scene.text.split('\n').filter(l => l.trim());
-    if (lines.length > 0) {
-      const sceneProgress = (elapsed - scene.start) / (scene.end - scene.start);
-      const lineIdx = Math.min(Math.floor(sceneProgress * lines.length), lines.length - 1);
-      const line = lines[lineIdx];
-      
-      ctx.font = 'bold 36px -apple-system, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      
-      // Shadow
-      ctx.fillStyle = 'rgba(0,0,0,0.8)';
-      ctx.fillText(line, W / 2 + 2, H - 120 + 2);
-      
-      // Text
-      ctx.fillStyle = '#ffffff';
-      ctx.fillText(line, W / 2, H - 120);
+
+    const lines=scene.text.split('\n').filter(l=>l.trim());
+    if(lines.length){
+      const sp=Math.min((elapsed-scene.start)/(scene.end-scene.start),1);
+      const li=Math.min(Math.floor(sp*lines.length),lines.length-1);
+      ctx.font='bold 36px -apple-system,sans-serif';
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillStyle='rgba(0,0,0,0.8)';ctx.fillText(lines[li],W/2+2,H-120+2);
+      ctx.fillStyle='#ffffff';ctx.fillText(lines[li],W/2,H-120);
     }
-    
-    // Progress
-    const progress = elapsed / duration;
-    progressBar.style.width = `${55 + progress * 45}%`;
-    statusEl.textContent = `Registrazione... ${fmtTime(elapsed)} / ${fmtTime(duration)}`;
-    
-    if (elapsed < duration) {
-      requestAnimationFrame(render);
-    } else {
-      recorder.stop();
-      audio.pause();
-      log('Registrazione completata');
-    }
+
+    progressBar.style.width=(55+(elapsed/duration)*45)+'%';
+    statusEl.textContent='Registrazione... '+fmtTime(elapsed)+' / '+fmtTime(duration);
+
+    if(elapsed<duration)requestAnimationFrame(render);
+    else{recorder.stop();audio.pause()}
   }
-  
-  // Start
-  statusEl.textContent = 'Registrazione in corso...';
+
+  statusEl.textContent='Registrazione in corso...';
   recorder.start(1000);
   audio.play();
   requestAnimationFrame(render);
-  
-  // Wait for recording
-  const blob = await recordingDone;
-  
-  // Show preview
-  const url = URL.createObjectURL(blob);
-  preview.src = url;
-  previewWrap.style.display = 'block';
-  downloadBtn.href = url;
-  downloadBtn.style.display = 'inline-block';
-  downloadBtn.download = `${currentTrack.name.replace(/\.[^.]+$/, '')}-video.webm`;
-  
-  progress.style.display = 'none';
-  statusEl.textContent = 'Video pronto!';
-  generateBtn.disabled = false;
-  
-  log('Fatto! Video generato.');
-  
-  // Cleanup
-  URL.revokeObjectURL(audioUrl);
+
+  const blob=await done;
+  const url=URL.createObjectURL(blob);
+  preview.src=url;
+  previewWrap.style.display='block';
+  downloadBtn.href=url;
+  downloadBtn.style.display='inline-block';
+  downloadBtn.download=selectedTrack.name.replace(/\.[^.]+$/,'')+'-video.webm';
+
+  progressEl.style.display='none';
+  statusEl.textContent='Video pronto!';
+  generateBtn.disabled=false;
 }
 
-generateBtn.addEventListener('click', generate);
+generateBtn.addEventListener('click',generate);
 
 // === INIT ===
-(async () => {
-  try {
-    log('Inizializzazione...');
-    await library.init();
-    log('DB pronto');
-    await renderLibrary();
-    log('Libreria caricata');
-  } catch (err) {
-    log('ERRORE INIT: ' + err.message);
-    trackList.innerHTML = '<div class="empty-library" style="color:#f66;">Errore: ' + err.message + '<br>Usa un server HTTP (non file://)</div>';
-  }
-})();
+renderLibrary();
 </script>
 </body>
 </html>
