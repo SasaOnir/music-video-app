@@ -56,24 +56,21 @@ video{width:100%;border-radius:8px;background:#000;pointer-events:none}
 .login-box{text-align:center;max-width:400px}
 .login-box h1{margin-bottom:12px}
 .login-box p{color:#888;margin-bottom:24px}
-.blocked-screen{display:none;position:fixed;inset:0;background:#000;z-index:99999;color:#f66;font-size:1.2rem;display:none;align-items:center;justify-content:center;text-align:center;padding:40px}
+.blocked-screen{position:fixed;inset:0;background:#000;z-index:99999;color:#f66;font-size:1.2rem;display:none;align-items:center;justify-content:center;text-align:center;padding:40px}
 .honeypot{position:absolute;left:-9999px;top:-9999px;opacity:0;height:0;width:0;overflow:hidden;tabindex:-1}
 </style>
 </head>
 <body>
 
-<!-- HONEYPOT: campo invisibile per bot -->
 <input type="text" name="website" class="honeypot" id="hpField" tabindex="-1" autocomplete="off">
 
-<!-- SCHERMATA BLOCCO -->
 <div class="blocked-screen" id="blockedScreen">
 <div>
 <h1 style="color:#f66;margin-bottom:16px">Accesso Negato</h1>
-<p>Attivita sospetta rilevata. Il tuo accesso e stato registrato.</p>
+<p>Attivita sospetta rilevata.</p>
 </div>
 </div>
 
-<!-- SCHERMATA LOGIN -->
 <div id="loginScreen">
 <div class="login-box">
 <h1>Music Video Generator</h1>
@@ -86,7 +83,6 @@ Accedi con Google
 </div>
 </div>
 
-<!-- APP PRINCIPALE (nascosta finché non si fa login) -->
 <div class="container" id="appMain" style="display:none">
 <h1>Music Video Generator</h1>
 <p class="subtitle">Gemini AI · Audio reattivo · Immagini intelligenti · Libreria cloud</p>
@@ -103,7 +99,7 @@ Accedi con Google
 
 <div class="panel">
 <h2>Genera Video <span id="selectedBadge" class="badge" style="display:none">Selezionata</span></h2>
-<span class="no-track-hint" id="noTrackHint">Prima carica un file audio sopra, poi clicca "Usa" sulla traccia per selezionarla.</span>
+<span class="no-track-hint" id="noTrackHint">Prima carica un file audio sopra, poi clicca "Usa" sulla traccia.</span>
 <label>Testo della canzone <span id="autoSaveHint" class="save-hint"></span></label>
 <textarea id="lyrics" class="text-input" placeholder="Incolla qui il testo della canzone..."></textarea>
 <label>Stile visivo (opzionale)</label>
@@ -129,121 +125,82 @@ Accedi con Google
 <div class="success-toast" id="successToast"></div>
 
 <script>
-// === KEYS DIVISE PER NON ESSERE RILEVATE ===
-const SU1='https://jescfkahkgcyuhffyycw.supabase.co';
-const SK1='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Implc2Nma2Foa2djeXVoZmZ5eWN3Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4Mzk4ODU5NywiZXhwIjoyMDk5NTY0NTk3fQ.';
-const SK2='2Qr5bu9w0mjaVik-FV4tLKF3bkAHuJTCmO5KaM6PWt4';
-const GK1='AQ.Ab8RN6LzgprZZyHMzUv95Zi5d';
-const GK2='pC08mQLywzzuzye-dAbV0iSnw';
+var SU1='https://jescfkahkgcyuhffyycw.supabase.co';
+var SK1='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Implc2Nma2Foa2djeXVoZmZ5eWN3Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4Mzk4ODU5NywiZXhwIjoyMDk5NTY0NTk3fQ.';
+var SK2='2Qr5bu9w0mjaVik-FV4tLKF3bkAHuJTCmO5KaM6PWt4';
+var GK1='AQ.Ab8RN6LzgprZZyHMzUv95Zi5d';
+var GK2='pC08mQLywzzuzye-dAbV0iSnw';
 
-const SUPABASE_URL=SU1;
-const SUPABASE_KEY=SK1+SK2;
-const GEMINI_KEY=GK1+GK2;
+var SUPABASE_URL=SU1;
+var SUPABASE_KEY=SK1+SK2;
+var GEMINI_KEY=GK1+GK2;
+var GEMINI_MODEL='gemini-1.5-flash';
+var GEMINI_IMG_MODEL='gemini-2.0-flash-preview-image-generation';
 
-const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+var sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
-// === FINGERPRINTING ===
 function getFingerprint(){
-  const c=document.createElement('canvas');const ctx=c.getContext('2d');
-  ctx.textBaseline='top';ctx.font='14px Arial';ctx.fillText('fp_test',2,2);
-  const canvasData=c.toDataURL();
-  const parts=[
-    navigator.language||'',
-    screen.width+'x'+screen.height,
-    screen.colorDepth,
-    new Date().getTimezoneOffset(),
-    navigator.hardwareConcurrency||'',
-    navigator.platform||'',
-    canvasData.slice(-50)
-  ];
-  let hash=0;const str=parts.join('|');
-  for(let i=0;i<str.length;i++){const c=str.charCodeAt(i);hash=((hash<<5)-hash)+c;hash|=0}
+  var c=document.createElement('canvas');
+  var ctx=c.getContext('2d');
+  ctx.textBaseline='top';
+  ctx.font='14px Arial';
+  ctx.fillText('fp_test',2,2);
+  var cd=c.toDataURL();
+  var parts=[navigator.language||'',screen.width+'x'+screen.height,screen.colorDepth,new Date().getTimezoneOffset(),navigator.hardwareConcurrency||'',navigator.platform||'',cd.slice(-50)];
+  var hash=0;
+  var str=parts.join('|');
+  for(var i=0;i<str.length;i++){var cc=str.charCodeAt(i);hash=((hash<<5)-hash)+cc;hash|=0}
   return 'FP_'+Math.abs(hash).toString(36);
 }
 
-const FP=getFingerprint();
-let currentUser=null;
-let isBlocked=false;
-let actionCount=0;
-const MAX_ACTIONS_PER_MIN=60;
-let actionTimestamps=[];
+var FP=getFingerprint();
+var currentUser=null;
+var isBlocked=false;
+var actionTimestamps=[];
+var MAX_ACTIONS=60;
 
-// === SECURITY LOGGING ===
 async function secLog(eventType,details){
-  try{
-    await sb.from('security_logs').insert({event_type:eventType,details:details||{},fingerprint:FP});
-  }catch(e){}
+  try{await sb.from('security_logs').insert({event_type:eventType,details:details||{},fingerprint:FP})}catch(e){}
 }
 
-// === RATE LIMITING ===
 function checkRateLimit(){
-  const now=Date.now();
-  actionTimestamps=actionTimestamps.filter(t=>now-t<60000);
-  if(actionTimestamps.length>MAX_ACTIONS_PER_MIN){
-    secLog('RATE_LIMIT',{count:actionTimestamps.length});
-    blockUser();
-    return false;
-  }
+  var now=Date.now();
+  actionTimestamps=actionTimestamps.filter(function(t){return now-t<60000});
+  if(actionTimestamps.length>MAX_ACTIONS){secLog('RATE_LIMIT',{count:actionTimestamps.length});blockUser();return false}
   actionTimestamps.push(now);
   return true;
 }
 
-// === BLOCCO UTENTE ===
 function blockUser(){
   if(isBlocked)return;
   isBlocked=true;
-  secLog('BLOCKED',{reason:'suspicious_activity',fp:FP});
+  secLog('BLOCKED',{fp:FP});
   document.getElementById('appMain').style.display='none';
   document.getElementById('loginScreen').style.display='none';
-  const bs=document.getElementById('blockedScreen');
-  bs.style.display='flex';
+  document.getElementById('blockedScreen').style.display='flex';
 }
 
-// === HONEYPOT: se il campo invisibile viene compilato, è un bot ===
-const hpField=document.getElementById('hpField');
-let hpCheckInterval=setInterval(()=>{
-  if(hpField.value!==''){
-    clearInterval(hpCheckInterval);
-    secLog('HONEYPOT_TRIGGERED',{value:hpField.value});
-    blockUser();
-  }
-},2000);
+var hpField=document.getElementById('hpField');
+setInterval(function(){if(hpField.value!==''){secLog('HONEYPOT',{value:hpField.value});blockUser()}},2000);
 
-// === ANTI-COPY / ANTI-DEVTOOLS ===
-document.addEventListener('contextmenu',e=>{e.preventDefault();secLog('RIGHT_CLICK',{x:e.clientX,y:e.clientY})});
-document.addEventListener('selectstart',e=>{if(!e.target.closest('.text-input,.debug-panel')){e.preventDefault()}});
-document.addEventListener('dragstart',e=>{e.preventDefault();secLog('DRAG_ATTEMPT')});
-document.addEventListener('copy',e=>{e.preventDefault();secLog('COPY_ATTEMPT')});
-document.addEventListener('cut',e=>{e.preventDefault();secLog('CUT_ATTEMPT')});
-
-document.addEventListener('keydown',e=>{
-  if(e.key==='F12'||(e.ctrlKey&&e.shiftKey&&(e.key==='I'||e.key==='J'||e.key==='C'))||(e.ctrlKey&&e.key==='u')||(e.ctrlKey&&e.key==='U')||(e.metaKey&&e.key==='u')){
-    e.preventDefault();
-    secLog('DEVTOOLS_KEY',{key:e.key,ctrl:e.ctrlKey,shift:e.shiftKey});
-  }
+document.addEventListener('contextmenu',function(e){e.preventDefault();secLog('RIGHT_CLICK')});
+document.addEventListener('selectstart',function(e){if(!e.target.closest('.text-input,.debug-panel'))e.preventDefault()});
+document.addEventListener('dragstart',function(e){e.preventDefault()});
+document.addEventListener('copy',function(e){e.preventDefault();secLog('COPY')});
+document.addEventListener('cut',function(e){e.preventDefault();secLog('CUT')});
+document.addEventListener('keydown',function(e){
+  if(e.key==='F12'||(e.ctrlKey&&e.shiftKey&&(e.key==='I'||e.key==='J'||e.key==='C'))||(e.ctrlKey&&e.key==='u')||(e.metaKey&&e.key==='u')){e.preventDefault();secLog('DEVTOOLS_KEY')}
 });
 
-// Rileva devtools con dimensione finestra
-let devtoolsCheck=setInterval(()=>{
-  const w=window.outerWidth-window.innerWidth>160;
-  const h=window.outerHeight-window.innerHeight>160;
-  if(w||h){
-    secLog('DEVTOOLS_DETECTED',{widthDiff:window.outerWidth-window.innerWidth,heightDiff:window.outerHeight-window.innerHeight});
-  }
-},3000);
+secLog('PAGE_LOAD',{ua:navigator.userAgent.substring(0,200),fp:FP});
 
-// Log tentativi di login falliti e fingerprint iniziale
-secLog('PAGE_LOAD',{url:window.location.href,userAgent:navigator.userAgent.substring(0,200),fp:FP});
-
-// === LOGIN CON GOOGLE ===
 document.getElementById('googleLogin').addEventListener('click',async function(){
   if(!checkRateLimit())return;
   this.disabled=true;
   this.textContent='Accesso in corso...';
-  
   try{
-    const{data,error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.origin+'/?auth=callback'}});
-    if(error)throw error;
+    var result=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.origin+'/?auth=callback'}});
+    if(result.error)throw result.error;
   }catch(e){
     document.getElementById('loginError').textContent='Errore: '+e.message;
     document.getElementById('loginError').style.display='block';
@@ -253,183 +210,246 @@ document.getElementById('googleLogin').addEventListener('click',async function()
   }
 });
 
-// === CHECK AUTH STATE & CALLBACK ===
 async function handleAuth(){
-  const hash=new URLSearchParams(window.location.hash.substring(1));
-  const search=new URLSearchParams(window.location.search);
-  
-  // Dopo redirect OAuth
+  var search=new URLSearchParams(window.location.search);
+  var hash=new URLSearchParams(window.location.hash.substring(1));
   if(search.get('auth')==='callback'||hash.get('access_token')){
     try{
-      const{data:{session},error}=await sb.auth.getSession();
-      if(error)throw error;
-      if(session){
-        await verifyAdmin(session.user.email);
-        return;
-      }
-    }catch(e){
-      secLog('OAUTH_CALLBACK_ERROR',{msg:e.message});
-      window.location.href=window.location.origin;
-      return;
-    }
+      var result=await sb.auth.getSession();
+      if(result.data.session){await verifyAdmin(result.data.session.user.email);return}
+    }catch(e){secLog('OAUTH_ERROR',{msg:e.message});window.location.href=window.location.origin;return}
   }
-  
-  // Controlla sessione esistente
-  const{data:{session}}=await sb.auth.getSession();
-  if(session&&session.user){
-    await verifyAdmin(session.user.email);
-  }
+  var result=await sb.auth.getSession();
+  if(result.data.session&&result.data.session.user){await verifyAdmin(result.data.session.user.email)}
 }
 
 async function verifyAdmin(email){
   if(email!=='sasacaruso84@gmail.com'){
-    secLog('UNAUTHORIZED_LOGIN',{email:email});
+    secLog('UNAUTHORIZED',{email:email});
     await sb.auth.signOut();
-    document.getElementById('loginError').textContent='Non sei autorizzato. Solo l\'admin puo accedere.';
+    document.getElementById('loginError').textContent='Non autorizzato.';
     document.getElementById('loginError').style.display='block';
     return;
   }
-  
   currentUser=email;
-  secLog('LOGIN_SUCCESS',{email:email});
-  
-  // Pulisci URL
-  if(window.location.search.includes('auth=callback')){
-    window.history.replaceState({},'',window.location.origin);
-  }
-  
-  // Mostra app
+  secLog('LOGIN_OK',{email:email});
+  if(window.location.search.includes('auth=callback')){window.history.replaceState({},'',window.location.origin)}
   document.getElementById('loginScreen').style.display='none';
   document.getElementById('appMain').style.display='block';
-  clearInterval(devtoolsCheck);
   log('Benvenuto, '+email);
   renderLibrary();
 }
 
 handleAuth();
 
-// === DEBUG LOG ===
-function log(msg){console.log('[MV]',msg);const el=document.getElementById('debugLog');el.style.display='block';el.innerHTML+='<div>['+new Date().toLocaleTimeString()+'] '+msg+'</div>';el.scrollTop=el.scrollHeight}
+function log(msg){
+  console.log('[MV]',msg);
+  var el=document.getElementById('debugLog');
+  el.style.display='block';
+  el.innerHTML+='<div>['+new Date().toLocaleTimeString()+'] '+msg+'</div>';
+  el.scrollTop=el.scrollHeight;
+}
+
 function fmtTime(s){if(!s||!isFinite(s))return'??:??';return Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0')}
 function fmtSize(b){if(b<1024)return b+' B';if(b<1048576)return(b/1024).toFixed(1)+' KB';return(b/1048576).toFixed(1)+' MB'}
-function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+function sleep(ms){return new Promise(function(r){setTimeout(r,ms)})}
 
-let errorTimer=null;
-function showError(msg){const t=document.getElementById('errorToast');t.textContent=msg;t.style.display='block';clearTimeout(errorTimer);errorTimer=setTimeout(()=>t.style.display='none',8000);log('ERRORE: '+msg)}
-let successTimer=null;
-function showSuccess(msg){const t=document.getElementById('successToast');t.textContent=msg;t.style.display='block';clearTimeout(successTimer);successTimer=setTimeout(()=>t.style.display='none',4000);log('OK: '+msg)}
+var errorTimer=null;
+function showError(msg){var t=document.getElementById('errorToast');t.textContent=msg;t.style.display='block';clearTimeout(errorTimer);errorTimer=setTimeout(function(){t.style.display='none'},8000);log('ERRORE: '+msg)}
+var successTimer=null;
+function showSuccess(msg){var t=document.getElementById('successToast');t.textContent=msg;t.style.display='block';clearTimeout(successTimer);successTimer=setTimeout(function(){t.style.display='none'},4000);log('OK: '+msg)}
 
-const uploadZone=document.getElementById('uploadZone');
-const audioUpload=document.getElementById('audioUpload');
-const trackList=document.getElementById('trackList');
-const lyricsInput=document.getElementById('lyrics');
-const styleHint=document.getElementById('styleHint');
-const generateBtn=document.getElementById('generateBtn');
-const selectedBadge=document.getElementById('selectedBadge');
-const autoSaveHint=document.getElementById('autoSaveHint');
-const noTrackHint=document.getElementById('noTrackHint');
-const progressEl=document.getElementById('progress');
-const progressBar=document.getElementById('progressBar');
-const statusEl=document.getElementById('status');
-const previewWrap=document.getElementById('previewWrap');
-const preview=document.getElementById('preview');
-const downloadBtn=document.getElementById('downloadBtn');
+var uploadZone=document.getElementById('uploadZone');
+var audioUpload=document.getElementById('audioUpload');
+var trackList=document.getElementById('trackList');
+var lyricsInput=document.getElementById('lyrics');
+var styleHint=document.getElementById('styleHint');
+var generateBtn=document.getElementById('generateBtn');
+var selectedBadge=document.getElementById('selectedBadge');
+var autoSaveHint=document.getElementById('autoSaveHint');
+var noTrackHint=document.getElementById('noTrackHint');
+var progressEl=document.getElementById('progress');
+var progressBar=document.getElementById('progressBar');
+var statusEl=document.getElementById('status');
+var previewWrap=document.getElementById('previewWrap');
+var preview=document.getElementById('preview');
+var downloadBtn=document.getElementById('downloadBtn');
 
-let selectedTrack=null;
-let audioCache={};
+var selectedTrack=null;
+var audioCache={};
 
-// === UPLOAD ===
-uploadZone.addEventListener('click',()=>audioUpload.click());
-uploadZone.addEventListener('dragover',e=>{e.preventDefault();uploadZone.classList.add('dragover')});
-uploadZone.addEventListener('dragleave',()=>uploadZone.classList.remove('dragover'));
-uploadZone.addEventListener('drop',e=>{e.preventDefault();uploadZone.classList.remove('dragover');handleFiles(e.dataTransfer.files)});
-audioUpload.addEventListener('change',e=>{handleFiles(e.target.files);audioUpload.value=''});
+uploadZone.addEventListener('click',function(){audioUpload.click()});
+uploadZone.addEventListener('dragover',function(e){e.preventDefault();uploadZone.classList.add('dragover')});
+uploadZone.addEventListener('dragleave',function(){uploadZone.classList.remove('dragover')});
+uploadZone.addEventListener('drop',function(e){e.preventDefault();uploadZone.classList.remove('dragover');handleFiles(e.dataTransfer.files)});
+audioUpload.addEventListener('change',function(e){handleFiles(e.target.files);audioUpload.value=''});
 
 async function handleFiles(files){
   if(!checkRateLimit())return;
-  for(const file of files){log('Upload: '+file.name);try{await uploadTrack(file);showSuccess(file.name+' caricato!')}catch(err){showError('"'+file.name+'": '+err.message)}}
+  for(var i=0;i<files.length;i++){
+    log('Upload: '+files[i].name);
+    try{await uploadTrack(files[i]);showSuccess(files[i].name+' caricato!')}
+    catch(err){showError('"'+files[i].name+'": '+err.message)}
+  }
   await renderLibrary();
 }
 
 async function uploadTrack(file){
-  const duration=await getDuration(file);
-  const ext=file.name.split('.').pop()||'mp3';
-  const path='uploads/'+Date.now()+'-'+Math.random().toString(36).slice(2)+'.'+ext;
-  const{error:ue}=await sb.storage.from('audio').upload(path,file,{upsert:true,contentType:file.type||'audio/mpeg'});
-  if(ue)throw new Error('Storage: '+ue.message);
-  const{error}=await sb.from('tracks').insert({name:file.name,size:file.size,type:file.type||'audio/mpeg',duration,storage_path:path}).select().single();
-  if(error)throw new Error('DB: '+error.message);
+  var duration=await getDuration(file);
+  var ext=file.name.split('.').pop()||'mp3';
+  var path='uploads/'+Date.now()+'-'+Math.random().toString(36).slice(2)+'.'+ext;
+  var result=await sb.storage.from('audio').upload(path,file,{upsert:true,contentType:file.type||'audio/mpeg'});
+  if(result.error)throw new Error('Storage: '+result.error.message);
+  var result2=await sb.from('tracks').insert({name:file.name,size:file.size,type:file.type||'audio/mpeg',duration:duration,storage_path:path}).select().single();
+  if(result2.error)throw new Error('DB: '+result2.error.message);
 }
 
-function getDuration(file){return new Promise(resolve=>{const url=URL.createObjectURL(file);const a=new Audio();a.preload='metadata';let done=false;const f=v=>{if(done)return;done=true;clearTimeout(t);URL.revokeObjectURL(url);resolve(v)};const t=setTimeout(()=>f(0),6000);a.onloadedmetadata=()=>f(a.duration||0);a.onerror=()=>f(0);a.src=url})}
+function getDuration(file){
+  return new Promise(function(resolve){
+    var url=URL.createObjectURL(file);
+    var a=new Audio();
+    a.preload='metadata';
+    var done=false;
+    var finish=function(v){if(done)return;done=true;clearTimeout(t);URL.revokeObjectURL(url);resolve(v)};
+    var t=setTimeout(function(){finish(0)},6000);
+    a.onloadedmetadata=function(){finish(a.duration||0)};
+    a.onerror=function(){finish(0)};
+    a.src=url;
+  });
+}
 
-// === LIBRERIA ===
 async function renderLibrary(){
   try{
-    const{data:tracks,error}=await sb.from('tracks').select('*');
-    if(error)throw new Error(error.message);
+    var result=await sb.from('tracks').select('*');
+    if(result.error)throw new Error(result.error.message);
+    var tracks=result.data;
     log('Trovate '+tracks.length+' tracce');
     if(!tracks.length){trackList.innerHTML='<div class="empty-library">Nessuna traccia. Carica un file audio sopra.</div>';return}
-    trackList.innerHTML=tracks.map(t=>{const sel=selectedTrack&&selectedTrack.id===t.id;return '<div class="track-item '+(sel?'selected':'')+'"><div class="track-info"><div class="track-name">'+t.name+'</div><div class="track-meta">'+fmtTime(t.duration)+' · '+fmtSize(t.size)+(t.lyrics?' · testo':'')+'</div></div><div class="track-actions"><audio controls preload="metadata" data-tid="'+t.id+'"></audio><button class="sec" data-action="select" data-id="'+t.id+'" style="'+(sel?'background:#f72585;color:#fff':'')+'">'+(sel?'Selezionata':'Usa')+'</button><button class="del" data-action="delete" data-id="'+t.id+'">&#10005;</button></div></div>'}).join('');
-    trackList.querySelectorAll('audio[data-tid]').forEach(async el=>{try{el.src=await getAudioUrl(el.dataset.tid)}catch(e){}});
-    trackList.querySelectorAll('[data-action="select"]').forEach(btn=>btn.addEventListener('click',function(){selectTrack(this.dataset.id)}));
-    trackList.querySelectorAll('[data-action="delete"]').forEach(btn=>btn.addEventListener('click',function(){deleteTrack(this.dataset.id)}));
+    var html='';
+    for(var i=0;i<tracks.length;i++){
+      var t=tracks[i];
+      var sel=selectedTrack&&selectedTrack.id===t.id;
+      html+='<div class="track-item '+(sel?'selected':'')+'">';
+      html+='<div class="track-info"><div class="track-name">'+t.name+'</div><div class="track-meta">'+fmtTime(t.duration)+' · '+fmtSize(t.size)+(t.lyrics?' · testo':'')+'</div></div>';
+      html+='<div class="track-actions"><audio controls preload="metadata" data-tid="'+t.id+'"></audio>';
+      html+='<button class="sec" data-action="select" data-id="'+t.id+'" style="'+(sel?'background:#f72585;color:#fff':'')+'">'+(sel?'Selezionata':'Usa')+'</button>';
+      html+='<button class="del" data-action="delete" data-id="'+t.id+'">&#10005;</button></div></div>';
+    }
+    trackList.innerHTML=html;
+
+    var audios=trackList.querySelectorAll('audio[data-tid]');
+    for(var j=0;j<audios.length;j++){
+      (function(el){
+        getAudioUrl(el.dataset.tid).then(function(url){el.src=url}).catch(function(){});
+      })(audios[j]);
+    }
+    var selBtns=trackList.querySelectorAll('[data-action="select"]');
+    for(var k=0;k<selBtns.length;k++){
+      (function(btn){btn.addEventListener('click',function(){selectTrack(btn.dataset.id)})})(selBtns[k]);
+    }
+    var delBtns=trackList.querySelectorAll('[data-action="delete"]');
+    for(var m=0;m<delBtns.length;m++){
+      (function(btn){btn.addEventListener('click',function(){deleteTrack(btn.dataset.id)})})(delBtns[m]);
+    }
   }catch(e){log('ERRORE: '+e.message);trackList.innerHTML='<div class="empty-library" style="color:#f66">Errore: '+e.message+'</div>'}
 }
 
 async function getAudioUrl(id){
   if(audioCache[id])return audioCache[id];
-  const track=selectedTrack&&selectedTrack.id===id?selectedTrack:(await sb.from('tracks').select('storage_path').eq('id',id).single()).data;
+  var track=selectedTrack&&selectedTrack.id===id?selectedTrack:(await sb.from('tracks').select('storage_path').eq('id',id).single()).data;
   if(!track)throw new Error('Non trovata');
-  const{data,error}=await sb.storage.from('audio').createSignedUrl(track.storage_path,7200);
-  if(error)throw new Error(error.message);
-  audioCache[id]=data.signedUrl;return data.signedUrl;
+  var result=await sb.storage.from('audio').createSignedUrl(track.storage_path,7200);
+  if(result.error)throw new Error(result.error.message);
+  audioCache[id]=result.data.signedUrl;
+  return result.data.signedUrl;
 }
 
 async function selectTrack(id){
-  try{const{data:track,error}=await sb.from('tracks').select('*').eq('id',id).single();if(error)throw error;selectedTrack=track;lyricsInput.value=track.lyrics||'';generateBtn.disabled=false;selectedBadge.style.display='inline';noTrackHint.classList.add('hidden');autoSaveHint.textContent='';await renderLibrary()}catch(e){showError('Errore: '+e.message)}
+  try{
+    var result=await sb.from('tracks').select('*').eq('id',id).single();
+    if(result.error)throw result.error;
+    selectedTrack=result.data;
+    lyricsInput.value=selectedTrack.lyrics||'';
+    generateBtn.disabled=false;
+    selectedBadge.style.display='inline';
+    noTrackHint.classList.add('hidden');
+    autoSaveHint.textContent='';
+    await renderLibrary();
+  }catch(e){showError('Errore: '+e.message)}
 }
 
 async function deleteTrack(id){
   if(!confirm('Eliminare?'))return;
-  try{const{data:track}=await sb.from('tracks').select('storage_path').eq('id',id).single();if(track)await sb.storage.from('audio').remove([track.storage_path]);await sb.from('tracks').delete().eq('id',id);delete audioCache[id];if(selectedTrack&&selectedTrack.id===id){selectedTrack=null;lyricsInput.value='';generateBtn.disabled=true;selectedBadge.style.display='none';noTrackHint.classList.remove('hidden')}showSuccess('Eliminata');await renderLibrary()}catch(e){showError(e.message)}
+  try{
+    var result=await sb.from('tracks').select('storage_path').eq('id',id).single();
+    if(result.data)await sb.storage.from('audio').remove([result.data.storage_path]);
+    await sb.from('tracks').delete().eq('id',id);
+    delete audioCache[id];
+    if(selectedTrack&&selectedTrack.id===id){selectedTrack=null;lyricsInput.value='';generateBtn.disabled=true;selectedBadge.style.display='none';noTrackHint.classList.remove('hidden')}
+    showSuccess('Eliminata');
+    await renderLibrary();
+  }catch(e){showError(e.message)}
 }
 
-let saveTimeout=null;
-lyricsInput.addEventListener('input',()=>{if(!selectedTrack)return;autoSaveHint.textContent='salvataggio...';clearTimeout(saveTimeout);saveTimeout=setTimeout(async()=>{try{const{error}=await sb.from('tracks').update({lyrics:lyricsInput.value}).eq('id',selectedTrack.id);if(error)throw error;selectedTrack.lyrics=lyricsInput.value;autoSaveHint.textContent='salvato';setTimeout(()=>autoSaveHint.textContent='',2000)}catch(e){autoSaveHint.textContent='errore'}},600)});
+var saveTimeout=null;
+lyricsInput.addEventListener('input',function(){
+  if(!selectedTrack)return;
+  autoSaveHint.textContent='salvataggio...';
+  clearTimeout(saveTimeout);
+  saveTimeout=setTimeout(async function(){
+    try{
+      var result=await sb.from('tracks').update({lyrics:lyricsInput.value}).eq('id',selectedTrack.id);
+      if(result.error)throw result.error;
+      selectedTrack.lyrics=lyricsInput.value;
+      autoSaveHint.textContent='salvato';
+      setTimeout(function(){autoSaveHint.textContent=''},2000);
+    }catch(e){autoSaveHint.textContent='errore'}
+  },600);
+});
 
-// === GEMINI: ANALISI TESTO ===
 async function analyzeWithGemini(lyrics,duration,style){
   log('Gemini: analisi testo...');
-  const sceneCount=Math.max(12,Math.min(25,Math.round(duration/15)));
-  const prompt='You are an expert music video director. Analyze these song lyrics deeply and create a detailed visual storyboard.\n\nSONG DURATION: '+Math.round(duration)+' seconds\nVISUAL STYLE: '+(style||'cinematic')+'\nNUMBER OF SCENES: '+sceneCount+'\n\nINSTRUCTIONS:\n- Understand the EMOTIONAL ARC of the song\n- Each scene must have a SPECIFIC visual that matches the lyrics meaning\n- Think about NARRATIVE CONTINUITY\n- Include CULTURAL CONTEXT if lyrics are in a specific language/dialect\n\nFor EACH scene provide:\n1. "text": the exact portion of lyrics this scene covers\n2. "prompt": a DETAILED visual prompt in English for AI image generation (40-60 words). Include: subject, setting, time of day, lighting, color palette, camera angle, mood, symbolic elements.\n3. "mood": one of: melancholic, energetic, romantic, dark, hopeful, aggressive, nostalgic, ethereal, intimate, epic\n4. "colors": array of 3 hex color codes for background gradient\n\nReturn ONLY a valid JSON array. No markdown, no explanation.\n\nLYRICS:\n'+lyrics;
+  var sceneCount=Math.max(12,Math.min(25,Math.round(duration/15)));
+  var prompt='You are an expert music video director. Analyze these song lyrics deeply and create a detailed visual storyboard.\n\nSONG DURATION: '+Math.round(duration)+' seconds\nVISUAL STYLE: '+(style||'cinematic')+'\nNUMBER OF SCENES: '+sceneCount+'\n\nINSTRUCTIONS:\n- Understand the EMOTIONAL ARC of the song\n- Each scene must have a SPECIFIC visual that matches the lyrics meaning\n- Think about NARRATIVE CONTINUITY\n- Include CULTURAL CONTEXT if lyrics are in a specific language/dialect\n\nFor EACH scene provide:\n1. "text": the exact portion of lyrics this scene covers\n2. "prompt": a DETAILED visual prompt in English for AI image generation (40-60 words). Include: subject, setting, time of day, lighting, color palette, camera angle, mood, symbolic elements.\n3. "mood": one of: melancholic, energetic, romantic, dark, hopeful, aggressive, nostalgic, ethereal, intimate, epic\n4. "colors": array of 3 hex color codes for background gradient\n\nReturn ONLY a valid JSON array. No markdown, no explanation.\n\nLYRICS:\n'+lyrics;
 
-  const modelUrl='https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key='+GEMINI_KEY;
-  const res=await fetch(modelUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.85}})});
-  if(!res.ok){const err=await res.json().catch(()=>{});throw new Error('Gemini: '+(err.error?.message||res.status))}
-  const data=await res.json();
-  let text=data.candidates[0].content.parts[0].text;
+  var modelUrl='https://generativelanguage.googleapis.com/v1beta/models/'+GEMINI_MODEL+':generateContent?key='+GEMINI_KEY;
+  var res=await fetch(modelUrl,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.85}})
+  });
+  if(!res.ok){
+    var errData=await res.json().catch(function(){return{}});
+    throw new Error('Gemini: '+(errData.error&&errData.error.message?errData.error.message:res.status));
+  }
+  var data=await res.json();
+  var text=data.candidates[0].content.parts[0].text;
   text=text.replace(/```json\s*/g,'').replace(/```\s*/g,'').trim();
-  const match=text.match(/\[[\s\S]*\]/);
+  var match=text.match(/\[[\s\S]*\]/);
   if(!match)throw new Error('Gemini: JSON non valido');
-  const scenes=JSON.parse(match[0]);
+  var scenes=JSON.parse(match[0]);
   log('Gemini: '+scenes.length+' scene');
-  const sceneDur=duration/scenes.length;
-  return scenes.map((s,i)=>({text:s.text,prompt:s.prompt,mood:s.mood||'melancholic',colors:s.colors||['#0f0c29','#302b63','#24243e'],start:i*sceneDur,end:(i+1)*sceneDur}));
+  var sceneDur=duration/scenes.length;
+  return scenes.map(function(s,i){return{text:s.text,prompt:s.prompt,mood:s.mood||'melancolico',colors:s.colors||['#0f0c29','#302b63','#24243e'],start:i*sceneDur,end:(i+1)*sceneDur}});
 }
 
-// === GEMINI: GENERAZIONE IMMAGINI ===
 async function generateImageGemini(prompt){
   try{
-    const res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key='+GEMINI_KEY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:'Generate a cinematic still image for a music video: '+prompt}]}],generationConfig:{responseModalities:['IMAGE','TEXT']}})});
+    var modelUrl='https://generativelanguage.googleapis.com/v1beta/models/'+GEMINI_IMG_MODEL+':generateContent?key='+GEMINI_KEY;
+    var res=await fetch(modelUrl,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{text:'Generate a cinematic still image for a music video: '+prompt}]}],generationConfig:{responseModalities:['IMAGE','TEXT']}})
+    });
     if(!res.ok)return null;
-    const data=await res.json();
-    const parts=data.candidates?.[0]?.content?.parts||[];
-    for(const part of parts){
-      if(part.inlineData&&part.inlineData.data){
-        const img=new Image();img.crossOrigin='anonymous';
-        img.src='data:'+part.inlineData.mimeType+';base64,'+part.inlineData.data;
-        await new Promise((r,j)=>{img.onload=r;img.onerror=j;setTimeout(()=>j(new Error('timeout')),30000)});
+    var data=await res.json();
+    var parts=data.candidates&&data.candidates[0]&&data.candidates[0].content?data.candidates[0].content.parts:[];
+    for(var i=0;i<parts.length;i++){
+      if(parts[i].inlineData&&parts[i].inlineData.data){
+        var img=new Image();
+        img.crossOrigin='anonymous';
+        img.src='data:'+parts[i].inlineData.mimeType+';base64,'+parts[i].inlineData.data;
+        await new Promise(function(r,j){img.onload=r;img.onerror=j;setTimeout(function(){j(new Error('timeout'))},30000)});
         return img;
       }
     }
@@ -437,137 +457,221 @@ async function generateImageGemini(prompt){
   return null;
 }
 
-// === POLLINATIONS: FALLBACK ===
 function loadImagePollinations(prompt){
-  const clean=prompt.replace(/'/g,'').replace(/\n/g,' ').substring(0,300);
-  return new Promise((r,j)=>{const i=new Image();i.crossOrigin='anonymous';i.src='https://image.pollinations.ai/prompt/'+encodeURIComponent(clean)+'?width=1280&height=720&seed='+Math.floor(Math.random()*999999)+'&nologo=true';i.onload=()=>r(i);i.onerror=()=>j(new Error('fail'));setTimeout(()=>j(new Error('timeout')),45000)})
+  var clean=prompt.replace(/'/g,'').replace(/\n/g,' ').substring(0,300);
+  return new Promise(function(r,j){
+    var img=new Image();
+    img.crossOrigin='anonymous';
+    img.src='https://image.pollinations.ai/prompt/'+encodeURIComponent(clean)+'?width=1280&height=720&seed='+Math.floor(Math.random()*999999)+'&nologo=true';
+    img.onload=function(){r(img)};
+    img.onerror=function(){j(new Error('fail'))};
+    setTimeout(function(){j(new Error('timeout'))},45000);
+  });
 }
 
-async function loadImageWithRetry(prompt,retries=2){
-  for(let i=0;i<=retries;i++){
-    try{if(i>0){log('Retry '+i+'/'+retries);await sleep(5000)}return await loadImagePollinations(prompt)}
-    catch(e){if(i===retries)return null;await sleep(5000)}
+async function loadImageWithRetry(prompt,retries){
+  retries=retries||2;
+  for(var i=0;i<=retries;i++){
+    try{
+      if(i>0){log('Retry '+i+'/'+retries);await sleep(5000)}
+      return await loadImagePollinations(prompt);
+    }catch(e){if(i===retries)return null;await sleep(5000)}
   }
   return null;
 }
 
-// === GENERA IMMAGINE ===
 async function generateSceneImage(prompt,idx,total){
-  try{log('Img '+(idx+1)+'/'+total+': Gemini...');const img=await generateImageGemini(prompt);if(img){log('Img '+(idx+1)+': Gemini OK');return img}log('Img '+(idx+1)+': Gemini no image, fallback')}
-  catch(e){log('Img '+(idx+1)+': Gemini fail, fallback')}
-  const img=await loadImageWithRetry(prompt);
+  try{
+    log('Img '+(idx+1)+'/'+total+': Gemini...');
+    var img=await generateImageGemini(prompt);
+    if(img){log('Img '+(idx+1)+': Gemini OK');return img}
+    log('Img '+(idx+1)+': Gemini no img, fallback');
+  }catch(e){log('Img '+(idx+1)+': Gemini fail, fallback')}
+  var img=await loadImageWithRetry(prompt);
   if(img)log('Img '+(idx+1)+': Pollinations OK');
   else log('Img '+(idx+1)+': fallita');
   return img;
 }
 
-// === GENERA TUTTE LE IMMAGINI ===
 async function generateAllImages(scenes){
-  const images=new Array(scenes.length).fill(null);
-  for(let i=0;i<scenes.length;i+=2){
-    const batch=[];
-    for(let j=i;j<Math.min(i+2,scenes.length);j++)batch.push({idx:j,prompt:scenes[j].prompt});
+  var images=new Array(scenes.length).fill(null);
+  for(var i=0;i<scenes.length;i+=2){
+    var batch=[];
+    for(var j=i;j<Math.min(i+2,scenes.length);j++){batch.push({idx:j,prompt:scenes[j].prompt})}
     statusEl.textContent='Immagini '+(i+1)+'-'+Math.min(i+2,scenes.length)+'/'+scenes.length+'...';
     progressBar.style.width=(10+((i+2)/scenes.length)*45)+'%';
-    const results=await Promise.all(batch.map(b=>generateSceneImage(b.prompt,b.idx,scenes.length)));
-    results.forEach((img,idx)=>{images[i+idx]=img});
+    var results=await Promise.all(batch.map(function(b){return generateSceneImage(b.prompt,b.idx,scenes.length)}));
+    for(var k=0;k<results.length;k++){images[i+k]=results[k]}
     if(i+2<scenes.length)await sleep(2000);
   }
-  const ok=images.filter(i=>i).length;
+  var ok=images.filter(function(i){return i}).length;
   log('Immagini: '+ok+'/'+scenes.length);
   return images;
 }
 
 function getMoodColors(colors){return colors&&colors.length===3?colors:['#0f0c29','#302b63','#24243e']}
 
-// === AUDIO ANALYZER ===
-class AudioAnalyzer{
-  constructor(a){this.audio=a;this.ctx=null;this.analyser=null;this.data=null;this.sourceNode=null;this.bass=0;this.mid=0;this.high=0;this.energy=0;this.prevEnergy=0;this.beat=false}
-  init(){this.ctx=new(window.AudioContext||window.webkitAudioContext)();this.sourceNode=this.ctx.createMediaElementSource(this.audio);this.analyser=this.ctx.createAnalyser();this.analyser.fftSize=256;this.sourceNode.connect(this.analyser);this.analyser.connect(this.ctx.destination);this.data=new Uint8Array(this.analyser.frequencyBinCount)}
-  update(){if(!this.analyser)return;this.analyser.getByteFrequencyData(this.data);const l=this.data.length;let b=0,m=0,h=0;const be=Math.floor(l*.15),me=Math.floor(l*.5);for(let i=0;i<be;i++)b+=this.data[i];for(let i=be;i<me;i++)m+=this.data[i];for(let i=me;i<l;i++)h+=this.data[i];this.prevEnergy=this.energy;this.bass=b/(be*255);this.mid=m/((me-be)*255);this.high=h/((l-me)*255);this.energy=(this.bass+this.mid+this.high)/3;this.beat=this.energy-this.prevEnergy>0.15&&this.energy>0.3}
+function AudioAnalyzer(audio){
+  this.audio=audio;
+  this.ctx=null;
+  this.analyser=null;
+  this.data=null;
+  this.sourceNode=null;
+  this.bass=0;this.mid=0;this.high=0;this.energy=0;this.prevEnergy=0;this.beat=false;
 }
+AudioAnalyzer.prototype.init=function(){
+  this.ctx=new(window.AudioContext||window.webkitAudioContext)();
+  this.sourceNode=this.ctx.createMediaElementSource(this.audio);
+  this.analyser=this.ctx.createAnalyser();
+  this.analyser.fftSize=256;
+  this.sourceNode.connect(this.analyser);
+  this.analyser.connect(this.ctx.destination);
+  this.data=new Uint8Array(this.analyser.frequencyBinCount);
+};
+AudioAnalyzer.prototype.update=function(){
+  if(!this.analyser)return;
+  this.analyser.getByteFrequencyData(this.data);
+  var l=this.data.length;var b=0,m=0,h=0;
+  var be=Math.floor(l*0.15);var me=Math.floor(l*0.5);
+  for(var i=0;i<be;i++)b+=this.data[i];
+  for(var i=be;i<me;i++)m+=this.data[i];
+  for(var i=me;i<l;i++)h+=this.data[i];
+  this.prevEnergy=this.energy;
+  this.bass=b/(be*255);this.mid=m/((me-be)*255);this.high=h/((l-me)*255);
+  this.energy=(this.bass+this.mid+this.high)/3;
+  this.beat=this.energy-this.prevEnergy>0.15&&this.energy>0.3;
+};
 
-// === PARTICLES ===
-class Particle{constructor(w,h){this.reset(w,h)}reset(w,h){this.x=Math.random()*w;this.y=Math.random()*h;this.vx=(Math.random()-.5)*2;this.vy=(Math.random()-.5)*2;this.size=Math.random()*3+1;this.alpha=Math.random()*.5+.2;this.life=Math.random()*100+50;this.maxLife=this.life}update(w,h,e){this.x+=this.vx*(1+e*3);this.y+=this.vy*(1+e*3);this.life--;if(this.life<=0||this.x<0||this.x>w||this.y<0||this.y>h)this.reset(w,h)}draw(ctx){const a=this.alpha*(this.life/this.maxLife);ctx.beginPath();ctx.arc(this.x,this.y,this.size,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,'+a+')';ctx.fill()}}
+function Particle(w,h){this.reset(w,h)}
+Particle.prototype.reset=function(w,h){
+  this.x=Math.random()*w;this.y=Math.random()*h;
+  this.vx=(Math.random()-0.5)*2;this.vy=(Math.random()-0.5)*2;
+  this.size=Math.random()*3+1;this.alpha=Math.random()*0.5+0.2;
+  this.life=Math.random()*100+50;this.maxLife=this.life;
+};
+Particle.prototype.update=function(w,h,e){
+  this.x+=this.vx*(1+e*3);this.y+=this.vy*(1+e*3);this.life--;
+  if(this.life<=0||this.x<0||this.x>w||this.y<0||this.y>h)this.reset(w,h);
+};
+Particle.prototype.draw=function(ctx){
+  var a=this.alpha*(this.life/this.maxLife);
+  ctx.beginPath();ctx.arc(this.x,this.y,this.size,0,Math.PI*2);
+  ctx.fillStyle='rgba(255,255,255,'+a+')';ctx.fill();
+};
 
-// === GENERATE VIDEO ===
 async function generate(){
   if(!selectedTrack)return showError('Seleziona una traccia');
-  const lyrics=lyricsInput.value.trim();
+  var lyrics=lyricsInput.value.trim();
   if(!lyrics)return showError('Inserisci il testo');
-  const style=styleHint.value.trim();
+  var style=styleHint.value.trim();
+
   generateBtn.disabled=true;progressEl.style.display='block';progressBar.style.width='0%';
   statusEl.textContent='Caricamento audio...';previewWrap.style.display='none';
   log('=== GENERAZIONE VIDEO ===');
 
-  let audioUrl;
-  try{audioUrl=await getAudioUrl(selectedTrack.id);log('Audio URL OK')}catch(e){showError('Audio: '+e.message);generateBtn.disabled=false;progressEl.style.display='none';return}
+  var audioUrl;
+  try{audioUrl=await getAudioUrl(selectedTrack.id);log('Audio URL OK')}
+  catch(e){showError('Audio: '+e.message);generateBtn.disabled=false;progressEl.style.display='none';return}
 
-  const audio=new Audio();audio.crossOrigin='anonymous';audio.src=audioUrl;
-  try{await new Promise((r,j)=>{audio.onloadedmetadata=r;audio.onerror=()=>j(new Error('Audio non caricabile'))})}catch(e){showError(e.message);generateBtn.disabled=false;progressEl.style.display='none';return}
+  var audio=new Audio();audio.crossOrigin='anonymous';audio.src=audioUrl;
+  try{await new Promise(function(r,j){audio.onloadedmetadata=r;audio.onerror=function(){j(new Error('Audio non caricabile'))}})}
+  catch(e){showError(e.message);generateBtn.disabled=false;progressEl.style.display='none';return}
 
-  const duration=audio.duration;log('Durata: '+fmtTime(duration));
+  var duration=audio.duration;log('Durata: '+fmtTime(duration));
 
-  statusEl.textContent='Analisi testo con Gemini AI...';progressBar.style.width='5%';
-  let scenes;
+  statusEl.textContent='Analisi testo con Gemini...';progressBar.style.width='5%';
+  var scenes;
   try{scenes=await analyzeWithGemini(lyrics,duration,style)}
-  catch(e){log('Gemini analisi: '+e.message);showError('Gemini: '+e.message);generateBtn.disabled=false;progressEl.style.display='none';return}
+  catch(e){log('Gemini: '+e.message);showError('Gemini: '+e.message);generateBtn.disabled=false;progressEl.style.display='none';return}
 
   statusEl.textContent='Generazione immagini...';progressBar.style.width='10%';
-  const images=await generateAllImages(scenes);
+  var images=await generateAllImages(scenes);
 
   statusEl.textContent='Preparazione...';progressBar.style.width='60%';
-  const W=1280,H=720;const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;const ctx=canvas.getContext('2d');
+  var W=1280,H=720;
+  var canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;
+  var ctx=canvas.getContext('2d');
 
-  let analyzer;
-  try{analyzer=new AudioAnalyzer(audio);analyzer.init();log('Audio analyzer OK')}catch(e){showError('Audio: '+e.message);generateBtn.disabled=false;progressEl.style.display='none';return}
+  var analyzer;
+  try{analyzer=new AudioAnalyzer(audio);analyzer.init();log('Audio analyzer OK')}
+  catch(e){showError('Audio: '+e.message);generateBtn.disabled=false;progressEl.style.display='none';return}
 
-  const particles=[];for(let i=0;i<60;i++)particles.push(new Particle(W,H));
-  let startTime=null,curScene=0,kbx=0,kby=0,flashA=0;
+  var particles=[];for(var i=0;i<60;i++)particles.push(new Particle(W,H));
+  var startTime=null,curScene=0,kbx=0,kby=0,flashA=0;
 
-  const canvasStream=canvas.captureStream(30);
-  const audioDest=analyzer.ctx.createMediaStreamDestination();
+  var canvasStream=canvas.captureStream(30);
+  var audioDest=analyzer.ctx.createMediaStreamDestination();
   analyzer.sourceNode.connect(audioDest);
-  const aTrack=audioDest.stream.getAudioTracks()[0];
+  var aTrack=audioDest.stream.getAudioTracks()[0];
   if(aTrack)canvasStream.addTrack(aTrack);
 
-  let mimeType='video/webm;codecs=vp9,opus';
+  var mimeType='video/webm;codecs=vp9,opus';
   if(!MediaRecorder.isTypeSupported(mimeType))mimeType='video/webm;codecs=vp8,opus';
   if(!MediaRecorder.isTypeSupported(mimeType))mimeType='video/webm';
 
-  const recorder=new MediaRecorder(canvasStream,{mimeType:mimeType,videoBitsPerSecond:4000000});
-  const chunks=[];recorder.ondataavailable=e=>{if(e.data.size>0)chunks.push(e.data)};
-  const done=new Promise(r=>{recorder.onstop=()=>r(new Blob(chunks,{type:'video/webm'}))});
+  var recorder=new MediaRecorder(canvasStream,{mimeType:mimeType,videoBitsPerSecond:4000000});
+  var chunks=[];
+  recorder.ondataavailable=function(e){if(e.data.size>0)chunks.push(e.data)};
+  var done=new Promise(function(r){recorder.onstop=function(){r(new Blob(chunks,{type:'video/webm'}))}});
 
   function render(ts){
-    if(!startTime)startTime=ts;const elapsed=(ts-startTime)/1000;analyzer.update();
-    for(let i=scenes.length-1;i>=0;i--){if(elapsed>=scenes[i].start){curScene=i;break}}
-    const scene=scenes[curScene];const colors=getMoodColors(scene.colors);const img=images[curScene];
-    kbx+=.0003*(1+analyzer.energy*2);kby+=.0002*(1+analyzer.energy);
-    if(analyzer.beat)flashA=.4;flashA*=.92;
+    if(!startTime)startTime=ts;
+    var elapsed=(ts-startTime)/1000;
+    analyzer.update();
+    for(var i=scenes.length-1;i>=0;i--){if(elapsed>=scenes[i].start){curScene=i;break}}
+    var scene=scenes[curScene];
+    var colors=getMoodColors(scene.colors);
+    var img=images[curScene];
+    kbx+=0.0003*(1+analyzer.energy*2);kby+=0.0002*(1+analyzer.energy);
+    if(analyzer.beat)flashA=0.4;flashA*=0.92;
     ctx.fillStyle=colors[0];ctx.fillRect(0,0,W,H);
-    if(img){ctx.save();const s=1.15+Math.sin(kbx)*.05+analyzer.bass*.05;ctx.translate(W/2+Math.sin(kby)*30,H/2+Math.cos(kbx*.7)*20);ctx.scale(s,s);ctx.translate(-W/2,-H/2);ctx.drawImage(img,0,0,W,H);ctx.restore()}
-    const grad=ctx.createLinearGradient(0,0,0,H);grad.addColorStop(0,'rgba(0,0,0,0.3)');grad.addColorStop(1,'rgba(0,0,0,0.6)');ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);
-    particles.forEach(p=>{p.update(W,H,analyzer.energy);p.draw(ctx)});
-    if(flashA>.01){ctx.fillStyle='rgba(255,255,255,'+flashA+')';ctx.fillRect(0,0,W,H)}
-    if(analyzer.data){const bc=64,bw=W/bc;for(let i=0;i<bc;i++){const v=(analyzer.data[i]||0)/255;ctx.fillStyle='hsla('+(i/bc*60+300)+',80%,60%,'+(0.4+v*0.4)+')';ctx.fillRect(i*bw,H-v*80,bw-1,v*80)}}
-    const lines=scene.text.split('\n').filter(l=>l.trim());
-    if(lines.length){const sp=Math.min((elapsed-scene.start)/(scene.end-scene.start),1);const li=Math.min(Math.floor(sp*lines.length),lines.length-1);ctx.font='bold 36px -apple-system,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='rgba(0,0,0,0.8)';ctx.fillText(lines[li],W/2+2,H-120+2);ctx.fillStyle='#ffffff';ctx.fillText(lines[li],W/2,H-120)}
-    progressBar.style.width=(60+(elapsed/duration)*40)+'%';statusEl.textContent='Registrazione... '+fmtTime(elapsed)+' / '+fmtTime(duration);
-    if(elapsed<duration)requestAnimationFrame(render);else{recorder.stop();audio.pause();log('Registrazione finita')}
+    if(img){
+      ctx.save();
+      var s=1.15+Math.sin(kbx)*0.05+analyzer.bass*0.05;
+      ctx.translate(W/2+Math.sin(kby)*30,H/2+Math.cos(kbx*0.7)*20);
+      ctx.scale(s,s);ctx.translate(-W/2,-H/2);
+      ctx.drawImage(img,0,0,W,H);ctx.restore();
+    }
+    var grad=ctx.createLinearGradient(0,0,0,H);
+    grad.addColorStop(0,'rgba(0,0,0,0.3)');grad.addColorStop(1,'rgba(0,0,0,0.6)');
+    ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);
+    for(var p=0;p<particles.length;p++){particles[p].update(W,H,analyzer.energy);particles[p].draw(ctx)}
+    if(flashA>0.01){ctx.fillStyle='rgba(255,255,255,'+flashA+')';ctx.fillRect(0,0,W,H)}
+    if(analyzer.data){
+      var bc=64,bw=W/bc;
+      for(var i=0;i<bc;i++){
+        var v=(analyzer.data[i]||0)/255;
+        ctx.fillStyle='hsla('+(i/bc*60+300)+',80%,60%,'+(0.4+v*0.4)+')';
+        ctx.fillRect(i*bw,H-v*80,bw-1,v*80);
+      }
+    }
+    var lines=scene.text.split('\n').filter(function(l){return l.trim()});
+    if(lines.length){
+      var sp=Math.min((elapsed-scene.start)/(scene.end-scene.start),1);
+      var li=Math.min(Math.floor(sp*lines.length),lines.length-1);
+      ctx.font='bold 36px -apple-system,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillStyle='rgba(0,0,0,0.8)';ctx.fillText(lines[li],W/2+2,H-120+2);
+      ctx.fillStyle='#ffffff';ctx.fillText(lines[li],W/2,H-120);
+    }
+    progressBar.style.width=(60+(elapsed/duration)*40)+'%';
+    statusEl.textContent='Registrazione... '+fmtTime(elapsed)+' / '+fmtTime(duration);
+    if(elapsed<duration)requestAnimationFrame(render);
+    else{recorder.stop();audio.pause();log('Registrazione finita')}
   }
 
   statusEl.textContent='Registrazione in corso...';recorder.start(1000);audio.play();requestAnimationFrame(render);
-  const blob=await done;const url=URL.createObjectURL(blob);
-  preview.src=url;previewWrap.style.display='block';downloadBtn.href=url;downloadBtn.style.display='inline-block';
+  var blob=await done;
+  var url=URL.createObjectURL(blob);
+  preview.src=url;previewWrap.style.display='block';
+  downloadBtn.href=url;downloadBtn.style.display='inline-block';
   downloadBtn.download=selectedTrack.name.replace(/\.[^.]+$/,'')+'-video.webm';
-  progressEl.style.display='none';statusEl.textContent='Video pronto!';generateBtn.disabled=false;
+  progressEl.style.display='none';statusEl.textContent='Video pronto!';
+  generateBtn.disabled=false;
   log('Video: '+fmtSize(blob.size));
 }
 
 generateBtn.addEventListener('click',generate);
-
-log('App avviata (Gemini + Security v4)');
+log('App avviata (Gemini 1.5 + Security v5)');
 </script>
 </body>
 </html>
