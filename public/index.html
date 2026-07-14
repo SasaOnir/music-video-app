@@ -58,7 +58,7 @@ video{width:100%;border-radius:8px;background:#000}
 <body>
 <div class="container">
 <h1>Music Video Generator</h1>
-<p class="subtitle">Gratis · Audio reattivo · Immagini AI · Libreria cloud</p>
+<p class="subtitle">Gemini AI · Audio reattivo · Immagini intelligenti · Libreria cloud</p>
 
 <div class="panel">
 <h2>Libreria Audio</h2>
@@ -88,7 +88,7 @@ video{width:100%;border-radius:8px;background:#000}
 <a id="downloadBtn" class="button sec" style="display:none;margin-top:12px;text-decoration:none" download="music-video.webm">Scarica Video</a>
 </div>
 
-<div class="panel" id="debugPanelWrap" style="cursor:pointer" onclick="document.getElementById('debugLog').style.display=document.getElementById('debugLog').style.display==='none'?'block':'none'">
+<div class="panel" style="cursor:pointer" onclick="document.getElementById('debugLog').style.display=document.getElementById('debugLog').style.display==='none'?'block':'none'">
 <h2 style="color:#666">Debug Log (clicca per aprire)</h2>
 <div class="debug-panel" id="debugLog"></div>
 </div>
@@ -106,12 +106,14 @@ video{width:100%;border-radius:8px;background:#000}
 <script>
 const SUPABASE_URL='https://jescfkahkgcyuhffyycw.supabase.co';
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Implc2Nma2Foa2djeXVoZmZ5eWN3Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4Mzk4ODU5NywiZXhwIjoyMDk5NTY0NTk3fQ.2Qr5bu9w0mjaVik-FV4tLKF3bkAHuJTCmO5KaM6PWt4';
+const GEMINI_KEY='AQ.Ab8RN6LsIDhoDUtjB5iaGaNiJfl4ba_NA_HyVQQb6PBd2xiuaQ';
 const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
 function log(msg){console.log('[MV]',msg);const el=document.getElementById('debugLog');el.style.display='block';el.innerHTML+='<div>['+new Date().toLocaleTimeString()+'] '+msg+'</div>';el.scrollTop=el.scrollHeight}
 function fmtTime(s){if(!s||!isFinite(s))return'??:??';return Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0')}
 function fmtSize(b){if(b<1024)return b+' B';if(b<1048576)return(b/1024).toFixed(1)+' KB';return(b/1048576).toFixed(1)+' MB'}
 function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+
 let errorTimer=null;
 function showError(msg){const t=document.getElementById('errorToast');t.textContent=msg;t.style.display='block';clearTimeout(errorTimer);errorTimer=setTimeout(()=>t.style.display='none',8000);log('ERRORE: '+msg)}
 let successTimer=null;
@@ -138,6 +140,7 @@ const downloadBtn=document.getElementById('downloadBtn');
 let selectedTrack=null;
 let audioCache={};
 
+// === UPLOAD ===
 uploadZone.addEventListener('click',()=>audioUpload.click());
 uploadZone.addEventListener('dragover',e=>{e.preventDefault();uploadZone.classList.add('dragover')});
 uploadZone.addEventListener('dragleave',()=>uploadZone.classList.remove('dragover'));
@@ -146,41 +149,34 @@ audioUpload.addEventListener('change',e=>{handleFiles(e.target.files);audioUploa
 
 async function handleFiles(files){
   for(const file of files){
-    log('Upload: '+file.name+' ('+fmtSize(file.size)+')');
-    try{showLoading('Caricamento '+file.name+'...');await uploadTrack(file);hideLoading();showSuccess(file.name+' caricato!')}
-    catch(err){hideLoading();showError('"'+file.name+'": '+err.message)}
-  }
-  await renderLibrary();
+    log('Upload: '+file.name);try{showLoading('Caricamento '+file.name+'...');await uploadTrack(file);hideLoading();showSuccess(file.name+' caricato!')}catch(err){hideLoading();showError('"'+file.name+'": '+err.message)}
+  }await renderLibrary();
 }
 
 async function uploadTrack(file){
   const duration=await getDuration(file);
-  log('Durata: '+fmtTime(duration));
   const ext=file.name.split('.').pop()||'mp3';
-  const uniqueName='uploads/'+Date.now()+'-'+Math.random().toString(36).slice(2)+'.'+ext;
-  log('Upload storage: '+uniqueName);
-  const{error:uploadErr}=await sb.storage.from('audio').upload(uniqueName,file,{upsert:true,contentType:file.type||'audio/mpeg'});
-  if(uploadErr)throw new Error('Storage: '+uploadErr.message);
-  log('Storage OK');
-  const{error}=await sb.from('tracks').insert({name:file.name,size:file.size,type:file.type||'audio/mpeg',duration,storage_path:uniqueName}).select().single();
+  const path='uploads/'+Date.now()+'-'+Math.random().toString(36).slice(2)+'.'+ext;
+  const{error:ue}=await sb.storage.from('audio').upload(path,file,{upsert:true,contentType:file.type||'audio/mpeg'});
+  if(ue)throw new Error('Storage: '+ue.message);
+  const{error}=await sb.from('tracks').insert({name:file.name,size:file.size,type:file.type||'audio/mpeg',duration,storage_path:path}).select().single();
   if(error)throw new Error('DB: '+error.message);
-  log('DB OK');
 }
 
-function getDuration(file){return new Promise(resolve=>{const url=URL.createObjectURL(file);const a=new Audio();a.preload='metadata';let done=false;const finish=v=>{if(done)return;done=true;clearTimeout(t);URL.revokeObjectURL(url);resolve(v)};const t=setTimeout(()=>finish(0),6000);a.onloadedmetadata=()=>finish(a.duration||0);a.onerror=()=>finish(0);a.src=url})}
+function getDuration(file){return new Promise(resolve=>{const url=URL.createObjectURL(file);const a=new Audio();a.preload='metadata';let done=false;const f=v=>{if(done)return;done=true;clearTimeout(t);URL.revokeObjectURL(url);resolve(v)};const t=setTimeout(()=>f(0),6000);a.onloadedmetadata=()=>f(a.duration||0);a.onerror=()=>f(0);a.src=url})}
 
+// === LIBRERIA ===
 async function renderLibrary(){
-  log('Caricamento libreria...');
   try{
     const{data:tracks,error}=await sb.from('tracks').select('*');
     if(error)throw new Error(error.message);
     log('Trovate '+tracks.length+' tracce');
     if(!tracks.length){trackList.innerHTML='<div class="empty-library">Nessuna traccia. Carica un file audio sopra.</div>';return}
-    trackList.innerHTML=tracks.map(t=>{const sel=selectedTrack&&selectedTrack.id===t.id;return '<div class="track-item '+(sel?'selected':'')+'"><div class="track-info"><div class="track-name">'+t.name+'</div><div class="track-meta">'+fmtTime(t.duration)+' · '+fmtSize(t.size)+(t.lyrics?' · testo salvato':'')+'</div></div><div class="track-actions"><audio controls preload="metadata" data-tid="'+t.id+'"></audio><button class="sec" data-action="select" data-id="'+t.id+'" style="'+(sel?'background:#f72585;color:#fff':'')+'">'+(sel?'Selezionata':'Usa')+'</button><button class="del" data-action="delete" data-id="'+t.id+'">&#10005;</button></div></div>'}).join('');
+    trackList.innerHTML=tracks.map(t=>{const sel=selectedTrack&&selectedTrack.id===t.id;return '<div class="track-item '+(sel?'selected':'')+'"><div class="track-info"><div class="track-name">'+t.name+'</div><div class="track-meta">'+fmtTime(t.duration)+' · '+fmtSize(t.size)+(t.lyrics?' · testo':'')+'</div></div><div class="track-actions"><audio controls preload="metadata" data-tid="'+t.id+'"></audio><button class="sec" data-action="select" data-id="'+t.id+'" style="'+(sel?'background:#f72585;color:#fff':'')+'">'+(sel?'Selezionata':'Usa')+'</button><button class="del" data-action="delete" data-id="'+t.id+'">&#10005;</button></div></div>'}).join('');
     trackList.querySelectorAll('audio[data-tid]').forEach(async el=>{try{el.src=await getAudioUrl(el.dataset.tid)}catch(e){}});
     trackList.querySelectorAll('[data-action="select"]').forEach(btn=>btn.addEventListener('click',function(){selectTrack(this.dataset.id)}));
     trackList.querySelectorAll('[data-action="delete"]').forEach(btn=>btn.addEventListener('click',function(){deleteTrack(this.dataset.id)}));
-  }catch(e){log('ERRORE libreria: '+e.message);trackList.innerHTML='<div class="empty-library" style="color:#f66">Errore: '+e.message+'</div>'}
+  }catch(e){log('ERRORE: '+e.message);trackList.innerHTML='<div class="empty-library" style="color:#f66">Errore: '+e.message+'</div>'}
 }
 
 async function getAudioUrl(id){
@@ -193,80 +189,183 @@ async function getAudioUrl(id){
 }
 
 async function selectTrack(id){
-  log('Select: '+id);
-  try{
-    const{data:track,error}=await sb.from('tracks').select('*').eq('id',id).single();
-    if(error)throw new Error(error.message);
-    selectedTrack=track;log('Selezionata: '+track.name);
-    lyricsInput.value=track.lyrics||'';
-    generateBtn.disabled=false;selectedBadge.style.display='inline';noTrackHint.classList.add('hidden');autoSaveHint.textContent='';
-    await renderLibrary();
-  }catch(e){showError('Errore selezione: '+e.message)}
+  try{const{data:track,error}=await sb.from('tracks').select('*').eq('id',id).single();if(error)throw error;selectedTrack=track;lyricsInput.value=track.lyrics||'';generateBtn.disabled=false;selectedBadge.style.display='inline';noTrackHint.classList.add('hidden');autoSaveHint.textContent='';await renderLibrary()}catch(e){showError('Errore: '+e.message)}
 }
 
 async function deleteTrack(id){
   if(!confirm('Eliminare?'))return;
-  try{
-    const{data:track}=await sb.from('tracks').select('storage_path').eq('id',id).single();
-    if(track)await sb.storage.from('audio').remove([track.storage_path]);
-    await sb.from('tracks').delete().eq('id',id);
-    delete audioCache[id];
-    if(selectedTrack&&selectedTrack.id===id){selectedTrack=null;lyricsInput.value='';generateBtn.disabled=true;selectedBadge.style.display='none';noTrackHint.classList.remove('hidden')}
-    showSuccess('Eliminata');await renderLibrary();
-  }catch(e){showError('Errore: '+e.message)}
+  try{const{data:track}=await sb.from('tracks').select('storage_path').eq('id',id).single();if(track)await sb.storage.from('audio').remove([track.storage_path]);await sb.from('tracks').delete().eq('id',id);delete audioCache[id];if(selectedTrack&&selectedTrack.id===id){selectedTrack=null;lyricsInput.value='';generateBtn.disabled=true;selectedBadge.style.display='none';noTrackHint.classList.remove('hidden')}showSuccess('Eliminata');await renderLibrary()}catch(e){showError(e.message)}
 }
 
 let saveTimeout=null;
-lyricsInput.addEventListener('input',()=>{
-  if(!selectedTrack)return;autoSaveHint.textContent='salvataggio...';clearTimeout(saveTimeout);
-  saveTimeout=setTimeout(async()=>{
-    try{const{error}=await sb.from('tracks').update({lyrics:lyricsInput.value}).eq('id',selectedTrack.id);if(error)throw error;selectedTrack.lyrics=lyricsInput.value;autoSaveHint.textContent='salvato';setTimeout(()=>autoSaveHint.textContent='',2000)}
-    catch(e){autoSaveHint.textContent='errore';log('Salvataggio testo: '+e.message)}
-  },600);
-});
+lyricsInput.addEventListener('input',()=>{if(!selectedTrack)return;autoSaveHint.textContent='salvataggio...';clearTimeout(saveTimeout);saveTimeout=setTimeout(async()=>{try{const{error}=await sb.from('tracks').update({lyrics:lyricsInput.value}).eq('id',selectedTrack.id);if(error)throw error;selectedTrack.lyrics=lyricsInput.value;autoSaveHint.textContent='salvato';setTimeout(()=>autoSaveHint.textContent='',2000)}catch(e){autoSaveHint.textContent='errore'}},600)});
 
-const MOOD={melancolico:['#1a1a3e','#2d1b69','#0f0c29'],triste:['#0c0c1d','#1a1a2e','#16213e'],allegro:['#ff6b6b','#feca57','#ff9ff3'],energico:['#f72585','#7209b7','#3a0ca3'],romantico:['#e91e63','#9c27b0','#f48fb1'],rabbioso:['#d32f2f','#b71c1c','#4a0000'],calmo:['#006064','#00838f','#4dd0e1'],epico:['#ff6f00','#e65100','#bf360c'],misterioso:['#1a237e','#311b92','#0d0d2b'],nostalgico:['#4e342e','#3e2723','#8d6e63'],default:['#0f0c29','#302b63','#24243e']};
-function getMoodColors(m){const l=(m||'').toLowerCase();for(const[k,v]of Object.entries(MOOD))if(l.includes(k))return v;return MOOD.default}
-function parseScenes(lyrics,dur){const b=lyrics.split(/\n\s*\n/).filter(x=>x.trim());if(!b.length)return[{text:lyrics,mood:'default',start:0,end:dur||60}];const s=(dur||60)/b.length;const m=['melancolico','allegro','energico','romantico','calmo','epico','misterioso','nostalgico'];return b.map((t,i)=>({text:t.trim(),mood:m[i%m.length],start:i*s,end:(i+1)*s}))}
-function genPrompt(t,style){const s=style?', '+style+' style':', cinematic style';const clean=t.replace(/\[.*?\]/g,'').replace(/\n/g,' ').replace(/'/g,'').substring(0,150);return encodeURIComponent('music video still'+s+', moody atmosphere, dramatic lighting, '+clean)}
+// === GEMINI: ANALISI TESTO ===
+async function analyzeWithGemini(lyrics, duration, style){
+  log('Gemini: analisi testo...');
+  const sceneCount=Math.max(12,Math.min(25,Math.round(duration/15)));
+  
+  const prompt=`You are an expert music video director. Analyze these song lyrics deeply and create a detailed visual storyboard.
 
-function loadImage(p){return new Promise((r,j)=>{const i=new Image();i.crossOrigin='anonymous';i.src='https://image.pollinations.ai/prompt/'+p+'?width=1280&height=720&seed='+Math.floor(Math.random()*999999)+'&nologo=true';i.onload=()=>r(i);i.onerror=()=>j(new Error('fail'));setTimeout(()=>j(new Error('timeout')),45000)})}
+SONG DURATION: ${Math.round(duration)} seconds
+VISUAL STYLE: ${style||'cinematic'}
+NUMBER OF SCENES: ${sceneCount} (each scene ~10-20 seconds)
 
-async function loadImageWithRetry(prompt,retries=3){
-  for(let i=0;i<=retries;i++){
-    try{
-      if(i>0){log('Retry '+(i)+'/'+retries+' tra 6s...');await sleep(6000)}
-      return await loadImage(prompt);
-    }catch(e){
-      if(i===retries)return null;
-      log('Fallita, attesa 6s prima di retry...');
-      await sleep(6000);
+INSTRUCTIONS:
+- Understand the EMOTIONAL ARC of the song: where does it start, build, peak, resolve?
+- Each scene must have a SPECIFIC visual that matches the lyrics' meaning, not just random imagery
+- Think about NARRATIVE CONTINUITY: scenes should flow visually
+- Consider the GENRE/MOOD: if it's rap, urban imagery; if romantic, intimate settings; if melancholic, empty spaces at golden hour
+- Include CULTURAL CONTEXT if the lyrics are in a specific language/dialect (Neapolitan, Sicilian, etc.)
+
+For EACH scene provide:
+1. "text": the exact portion of lyrics this scene covers
+2. "prompt": a DETAILED visual prompt in English for AI image generation. Include: specific subject/person, setting/location, time of day, lighting type and direction, color palette, camera angle (low/high/wide/close-up), mood, any symbolic elements. Be VERY specific, 40-60 words.
+3. "mood": one of: melancholic, energetic, romantic, dark, hopeful, aggressive, nostalgic, ethereal, intimate, epic
+4. "colors": array of 3 hex color codes for background gradient
+
+Return ONLY a valid JSON array. No markdown, no explanation, no code blocks.
+Example of one scene:
+{"text":"lyrics here","prompt":"A solitary figure standing on a rainy Neapolitan rooftop at dusk, warm orange streetlights reflecting on wet concrete, low angle shot looking up, moody fog in background, cinematic color grading with teal and orange, sense of longing and isolation","mood":"melancholic","colors":["#0a1628","#1a3a5c","#2d1b0e"]}
+
+LYRICS:
+ ${lyrics}`;
+
+  const res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+GEMINI_KEY,{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.85}})
+  });
+  
+  if(!res.ok){const err=await res.json().catch(()=>{});throw new Error('Gemini analisi: '+(err.error?.message||res.status))}
+  
+  const data=await res.json();
+  let text=data.candidates[0].content.parts[0].text;
+  
+  // Pulisci markdown code blocks se presenti
+  text=text.replace(/```json\s*/g,'').replace(/```\s*/g,'').trim();
+  
+  // Trova il JSON array
+  const match=text.match(/\[[\s\S]*\]/);
+  if(!match)throw new Error('Gemini non ha restituito JSON valido');
+  
+  const scenes=JSON.parse(match[0]);
+  log('Gemini: '+scenes.length+' scene analizzate');
+  
+  // Calcola timing
+  const sceneDur=duration/scenes.length;
+  return scenes.map((s,i)=>({
+    text:s.text,
+    prompt:s.prompt,
+    mood:s.mood||'melancholic',
+    colors:s.colors||['#0f0c29','#302b63','#24243e'],
+    start:i*sceneDur,
+    end:(i+1)*sceneDur
+  }));
+}
+
+// === GEMINI: GENERAZIONE IMMAGINI ===
+async function generateImageGemini(prompt){
+  const res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key='+GEMINI_KEY,{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      contents:[{parts:[{text:'Generate a cinematic still image for a music video: '+prompt}]}],
+      generationConfig:{responseModalities:['IMAGE','TEXT']}
+    })
+  });
+  
+  if(!res.ok)return null;
+  
+  const data=await res.json();
+  const parts=data.candidates?.[0]?.content?.parts||[];
+  
+  for(const part of parts){
+    if(part.inlineData&&part.inlineData.data){
+      const img=new Image();
+      img.crossOrigin='anonymous';
+      img.src='data:'+part.inlineData.mimeType+';base64,'+part.inlineData.data;
+      await new Promise((r,j)=>{img.onload=r;img.onerror=j;setTimeout(()=>j(new Error('timeout')),30000)});
+      return img;
     }
   }
   return null;
 }
 
-class AudioAnalyzer{
-  constructor(a){this.audio=a;this.ctx=null;this.analyser=null;this.data=null;this.sourceNode=null;this.bass=0;this.mid=0;this.high=0;this.energy=0;this.prevEnergy=0;this.beat=false}
-  init(){
-    this.ctx=new(window.AudioContext||window.webkitAudioContext)();
-    this.sourceNode=this.ctx.createMediaElementSource(this.audio);
-    this.analyser=this.ctx.createAnalyser();this.analyser.fftSize=256;
-    this.sourceNode.connect(this.analyser);
-    this.analyser.connect(this.ctx.destination);
-    this.data=new Uint8Array(this.analyser.frequencyBinCount);
-  }
-  update(){
-    if(!this.analyser)return;this.analyser.getByteFrequencyData(this.data);
-    const l=this.data.length;let b=0,m=0,h=0;const be=Math.floor(l*.15),me=Math.floor(l*.5);
-    for(let i=0;i<be;i++)b+=this.data[i];for(let i=be;i<me;i++)m+=this.data[i];for(let i=me;i<l;i++)h+=this.data[i];
-    this.prevEnergy=this.energy;this.bass=b/(be*255);this.mid=m/((me-be)*255);this.high=h/((l-me)*255);
-    this.energy=(this.bass+this.mid+this.high)/3;this.beat=this.energy-this.prevEnergy>0.15&&this.energy>0.3;
-  }
+// === POLLINATIONS: FALLBACK ===
+function loadImagePollinations(prompt){
+  const clean=prompt.replace(/'/g,'').replace(/\n/g,' ').substring(0,300);
+  return new Promise((r,j)=>{const i=new Image();i.crossOrigin='anonymous';i.src='https://image.pollinations.ai/prompt/'+encodeURIComponent(clean)+'?width=1280&height=720&seed='+Math.floor(Math.random()*999999)+'&nologo=true';i.onload=()=>r(i);i.onerror=()=>j(new Error('fail'));setTimeout(()=>j(new Error('timeout')),45000)})
 }
 
+async function loadImageWithRetry(prompt,retries=2){
+  for(let i=0;i<=retries;i++){
+    try{
+      if(i>0){log('Retry '+i+'/'+retries+' tra 5s...');await sleep(5000)}
+      return await loadImagePollinations(prompt);
+    }catch(e){if(i===retries)return null;await sleep(5000)}
+  }
+  return null;
+}
+
+// === GENERA IMMAGINE (Gemini prima, Pollinations fallback) ===
+async function generateSceneImage(prompt,idx,total){
+  // Prima prova Gemini
+  try{
+    log('Img '+(idx+1)+'/''+total+': tentativo Gemini...');
+    const img=await generateImageGemini(prompt);
+    if(img){log('Img '+(idx+1)+': Gemini OK');return img}
+    log('Img '+(idx+1)+': Gemini non ha restituito immagine, provo Pollinations');
+  }catch(e){
+    log('Img '+(idx+1)+': Gemini fallita ('+e.message+'), provo Pollinations');
+  }
+  // Fallback Pollinations
+  const img=await loadImageWithRetry(prompt);
+  if(img)log('Img '+(idx+1)+': Pollinations OK');
+  else log('Img '+(idx+1)+': fallita');
+  return img;
+}
+
+// === GENERA TUTTE LE IMMAGINI (2 alla volta) ===
+async function generateAllImages(scenes){
+  const images=new Array(scenes.length).fill(null);
+  const batchSize=2;
+  
+  for(let i=0;i<scenes.length;i+=batchSize){
+    const batch=[];
+    for(let j=i;j<Math.min(i+batchSize,scenes.length);j++){
+      batch.push({idx:j,prompt:scenes[j].prompt});
+    }
+    
+    statusEl.textContent='Immagini '+(i+1)+'-'+Math.min(i+batchSize,scenes.length)+'/'+scenes.length+'...';
+    progressBar.style.width=(10+((i+batchSize)/scenes.length)*45)+'%';
+    
+    const results=await Promise.all(batch.map(b=>generateSceneImage(b.prompt,b.idx,scenes.length)));
+    results.forEach((img,idx)=>{images[i+idx]=img});
+    
+    // Pausa tra i batch per non saturare
+    if(i+batchSize<scenes.length){
+      await sleep(2000);
+    }
+  }
+  
+  const ok=images.filter(i=>i).length;
+  log('Immagini generate: '+ok+'/'+scenes.length);
+  return images;
+}
+
+// === MOOD COLORS (fallback) ===
+function getMoodColors(colors){return colors&&colors.length===3?colors:['#0f0c29','#302b63','#24243e']}
+
+// === AUDIO ANALYZER ===
+class AudioAnalyzer{
+  constructor(a){this.audio=a;this.ctx=null;this.analyser=null;this.data=null;this.sourceNode=null;this.bass=0;this.mid=0;this.high=0;this.energy=0;this.prevEnergy=0;this.beat=false}
+  init(){this.ctx=new(window.AudioContext||window.webkitAudioContext)();this.sourceNode=this.ctx.createMediaElementSource(this.audio);this.analyser=this.ctx.createAnalyser();this.analyser.fftSize=256;this.sourceNode.connect(this.analyser);this.analyser.connect(this.ctx.destination);this.data=new Uint8Array(this.analyser.frequencyBinCount)}
+  update(){if(!this.analyser)return;this.analyser.getByteFrequencyData(this.data);const l=this.data.length;let b=0,m=0,h=0;const be=Math.floor(l*.15),me=Math.floor(l*.5);for(let i=0;i<be;i++)b+=this.data[i];for(let i=be;i<me;i++)m+=this.data[i];for(let i=me;i<l;i++)h+=this.data[i];this.prevEnergy=this.energy;this.bass=b/(be*255);this.mid=m/((me-be)*255);this.high=h/((l-me)*255);this.energy=(this.bass+this.mid+this.high)/3;this.beat=this.energy-this.prevEnergy>0.15&&this.energy>0.3}
+}
+
+// === PARTICLES ===
 class Particle{constructor(w,h){this.reset(w,h)}reset(w,h){this.x=Math.random()*w;this.y=Math.random()*h;this.vx=(Math.random()-.5)*2;this.vy=(Math.random()-.5)*2;this.size=Math.random()*3+1;this.alpha=Math.random()*.5+.2;this.life=Math.random()*100+50;this.maxLife=this.life}update(w,h,e){this.x+=this.vx*(1+e*3);this.y+=this.vy*(1+e*3);this.life--;if(this.life<=0||this.x<0||this.x>w||this.y<0||this.y>h)this.reset(w,h)}draw(ctx){const a=this.alpha*(this.life/this.maxLife);ctx.beginPath();ctx.arc(this.x,this.y,this.size,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,'+a+')';ctx.fill()}}
 
+// === GENERATE VIDEO ===
 async function generate(){
   if(!selectedTrack)return showError('Seleziona una traccia');
   const lyrics=lyricsInput.value.trim();
@@ -275,36 +374,38 @@ async function generate(){
 
   generateBtn.disabled=true;progressEl.style.display='block';progressBar.style.width='0%';
   statusEl.textContent='Caricamento audio...';previewWrap.style.display='none';
-  log('Generazione video: '+selectedTrack.name);
+  log('=== GENERAZIONE VIDEO ===');
+  log('Traccia: '+selectedTrack.name);
 
   let audioUrl;
-  try{audioUrl=await getAudioUrl(selectedTrack.id);log('Audio URL OK')}
-  catch(e){showError('Audio: '+e.message);generateBtn.disabled=false;progressEl.style.display='none';return}
+  try{audioUrl=await getAudioUrl(selectedTrack.id);log('Audio URL OK')}catch(e){showError('Audio: '+e.message);generateBtn.disabled=false;progressEl.style.display='none';return}
 
   const audio=new Audio();audio.crossOrigin='anonymous';audio.src=audioUrl;
-  try{await new Promise((r,j)=>{audio.onloadedmetadata=r;audio.onerror=()=>j(new Error('Audio non caricabile'))})}
-  catch(e){showError(e.message);generateBtn.disabled=false;progressEl.style.display='none';return}
+  try{await new Promise((r,j)=>{audio.onloadedmetadata=r;audio.onerror=()=>j(new Error('Audio non caricabile'))})}catch(e){showError(e.message);generateBtn.disabled=false;progressEl.style.display='none';return}
 
-  const duration=audio.duration;log('Durata: '+fmtTime(duration));
-  statusEl.textContent='Analisi testo...';
-  const scenes=parseScenes(lyrics,duration);log('Scene: '+scenes.length);
+  const duration=audio.duration;
+  log('Durata: '+fmtTime(duration));
 
-  const images=[];
-  for(let i=0;i<scenes.length;i++){
-    statusEl.textContent='Immagine '+(i+1)+'/'+scenes.length+'... (con pausa anti-limit)';
-    progressBar.style.width=((i+1)/scenes.length*50)+'%';
-    const img=await loadImageWithRetry(genPrompt(scenes[i].text,style));
-    if(img){images.push(img);log('Img '+(i+1)+' OK')}
-    else{images.push(null);log('Img '+(i+1)+' fallita dopo retry')}
-    if(i<scenes.length-1){log('Pausa 4s...');await sleep(4000)}
+  // FASE 1: Analisi con Gemini
+  statusEl.textContent='Analisi testo con Gemini AI...';progressBar.style.width='5%';
+  let scenes;
+  try{scenes=await analyzeWithGemini(lyrics,duration,style)}
+  catch(e){
+    log('Gemini analisi fallita: '+e.message);
+    showError('Analisi Gemini fallita: '+e.message);
+    generateBtn.disabled=false;progressEl.style.display='none';return;
   }
 
-  statusEl.textContent='Preparazione...';progressBar.style.width='55%';
+  // FASE 2: Generazione immagini
+  statusEl.textContent='Generazione immagini...';progressBar.style.width='10%';
+  const images=await generateAllImages(scenes);
+
+  // FASE 3: Render video
+  statusEl.textContent='Preparazione canvas...';progressBar.style.width='60%';
   const W=1280,H=720;const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;const ctx=canvas.getContext('2d');
 
   let analyzer;
-  try{analyzer=new AudioAnalyzer(audio);analyzer.init();log('Audio analyzer pronto')}
-  catch(e){showError('Audio: '+e.message);generateBtn.disabled=false;progressEl.style.display='none';return}
+  try{analyzer=new AudioAnalyzer(audio);analyzer.init();log('Audio analyzer pronto')}catch(e){showError('Audio: '+e.message);generateBtn.disabled=false;progressEl.style.display='none';return}
 
   const particles=[];for(let i=0;i<60;i++)particles.push(new Particle(W,H));
   let startTime=null,curScene=0,kbx=0,kby=0,flashA=0;
@@ -312,14 +413,12 @@ async function generate(){
   const canvasStream=canvas.captureStream(30);
   const audioDest=analyzer.ctx.createMediaStreamDestination();
   analyzer.sourceNode.connect(audioDest);
-
-  const aTrack=audioDest.stream.getAudioTracks()[0];
+  const aTrack=audioDest.stream.getAudioTracks()[0);
   if(aTrack)canvasStream.addTrack(aTrack);
 
   let mimeType='video/webm;codecs=vp9,opus';
   if(!MediaRecorder.isTypeSupported(mimeType))mimeType='video/webm;codecs=vp8,opus';
   if(!MediaRecorder.isTypeSupported(mimeType))mimeType='video/webm';
-  log('Codec: '+mimeType);
 
   const recorder=new MediaRecorder(canvasStream,{mimeType:mimeType,videoBitsPerSecond:4000000});
   const chunks=[];recorder.ondataavailable=e=>{if(e.data.size>0)chunks.push(e.data)};
@@ -328,7 +427,7 @@ async function generate(){
   function render(ts){
     if(!startTime)startTime=ts;const elapsed=(ts-startTime)/1000;analyzer.update();
     for(let i=scenes.length-1;i>=0;i--){if(elapsed>=scenes[i].start){curScene=i;break}}
-    const scene=scenes[curScene];const colors=getMoodColors(scene.mood);const img=images[curScene];
+    const scene=scenes[curScene];const colors=getMoodColors(scene.colors);const img=images[curScene];
     kbx+=.0003*(1+analyzer.energy*2);kby+=.0002*(1+analyzer.energy);
     if(analyzer.beat)flashA=.4;flashA*=.92;
     ctx.fillStyle=colors[0];ctx.fillRect(0,0,W,H);
@@ -339,7 +438,7 @@ async function generate(){
     if(analyzer.data){const bc=64,bw=W/bc;for(let i=0;i<bc;i++){const v=(analyzer.data[i]||0)/255;ctx.fillStyle='hsla('+(i/bc*60+300)+',80%,60%,'+(0.4+v*0.4)+')';ctx.fillRect(i*bw,H-v*80,bw-1,v*80)}}
     const lines=scene.text.split('\n').filter(l=>l.trim());
     if(lines.length){const sp=Math.min((elapsed-scene.start)/(scene.end-scene.start),1);const li=Math.min(Math.floor(sp*lines.length),lines.length-1);ctx.font='bold 36px -apple-system,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='rgba(0,0,0,0.8)';ctx.fillText(lines[li],W/2+2,H-120+2);ctx.fillStyle='#ffffff';ctx.fillText(lines[li],W/2,H-120)}
-    progressBar.style.width=(55+(elapsed/duration)*45)+'%';statusEl.textContent='Registrazione... '+fmtTime(elapsed)+' / '+fmtTime(duration);
+    progressBar.style.width=(60+(elapsed/duration)*40)+'%';statusEl.textContent='Registrazione... '+fmtTime(elapsed)+' / '+fmtTime(duration);
     if(elapsed<duration)requestAnimationFrame(render);else{recorder.stop();audio.pause();log('Registrazione finita')}
   }
 
@@ -353,7 +452,7 @@ async function generate(){
 
 generateBtn.addEventListener('click',generate);
 
-log('App avviata (client-direct v2)');
+log('App avviata (Gemini AI v3)');
 renderLibrary();
 </script>
 </body>
