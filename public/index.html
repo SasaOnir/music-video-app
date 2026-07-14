@@ -205,7 +205,7 @@ function getDuration(file){
 async function renderLibrary(){
   log('Caricamento libreria...');
   try{
-    const{data:tracks,error}=await sb.from('tracks').select('*').order('created_at',{ascending:false});
+    const{data:tracks,error}=await sb.from('tracks').select('*');
     if(error)throw new Error(error.message);
     log('Trovate '+tracks.length+' tracce');
 
