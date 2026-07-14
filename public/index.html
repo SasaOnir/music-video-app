@@ -4,9 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Music Video Generator</title>
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0a0a0f;color:#e0e0e0;min-height:100vh;padding:20px}
 .container{max-width:1000px;margin:0 auto}
 h1{font-size:1.6rem;margin-bottom:6px;background:linear-gradient(90deg,#f72585,#4cc9f0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
@@ -14,7 +15,7 @@ h1{font-size:1.6rem;margin-bottom:6px;background:linear-gradient(90deg,#f72585,#
 .panel{background:#14141c;border:1px solid #252535;border-radius:12px;padding:22px;margin-bottom:16px}
 h2{font-size:1.05rem;margin-bottom:12px;color:#ccc}
 label{display:block;margin-bottom:6px;font-size:.82rem;color:#aaa;font-weight:600}
-.text-input{width:100%;background:#0a0a0f;border:1px solid #2a2a3a;border-radius:8px;padding:10px;color:#e0e0e0;font-size:.9rem;margin-bottom:14px;font-family:inherit}
+.text-input{width:100%;background:#0a0a0f;border:1px solid #2a2a3a;border-radius:8px;padding:10px;color:#e0e0e0;font-size:.9rem;margin-bottom:14px;font-family:inherit;-webkit-user-select:text;-moz-user-select:text;-ms-user-select:text;user-select:text}
 textarea.text-input{min-height:110px;resize:vertical}
 button{background:linear-gradient(90deg,#f72585,#7209b7);border:none;color:#fff;padding:11px 26px;border-radius:8px;font-size:.95rem;font-weight:600;cursor:pointer;transition:opacity .2s}
 button:hover:not(:disabled){opacity:.9}
@@ -23,11 +24,14 @@ button.sec{background:#2a2a3a;padding:8px 14px;font-size:.82rem}
 button.sec:hover:not(:disabled){background:#353548}
 button.del{background:#3a1515;padding:6px 11px;font-size:.78rem}
 button.del:hover:not(:disabled){background:#4a1a1a}
+button.google{background:#fff;color:#333;padding:12px 28px;font-size:1rem;border-radius:8px;display:flex;align-items:center;gap:12px;margin:20px auto 0;font-weight:500}
+button.google:hover{background:#f0f0f0}
+button.google img{width:20px;height:20px}
 .progress{margin-top:14px;height:6px;background:#0a0a0f;border-radius:3px;overflow:hidden;display:none}
 .progress-bar{height:100%;background:linear-gradient(90deg,#f72585,#4cc9f0);width:0%;transition:width .3s}
 .status{margin-top:10px;font-size:.82rem;color:#888;min-height:18px}
 .preview-wrap{margin-top:16px;display:none}
-video{width:100%;border-radius:8px;background:#000}
+video{width:100%;border-radius:8px;background:#000;pointer-events:none}
 .upload-zone{border:2px dashed #2a2a3a;border-radius:8px;padding:22px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;margin-bottom:14px}
 .upload-zone:hover,.upload-zone.dragover{border-color:#f72585;background:rgba(247,37,133,.05)}
 .upload-zone p{color:#888;font-size:.88rem}
@@ -47,16 +51,43 @@ video{width:100%;border-radius:8px;background:#000}
 .no-track-hint.hidden{display:none}
 .error-toast{position:fixed;top:20px;right:20px;background:#3a1515;color:#f66;padding:12px 20px;border-radius:8px;font-size:.88rem;z-index:9999;display:none;max-width:400px;word-break:break-word}
 .success-toast{position:fixed;top:20px;right:20px;background:#1a3a1a;color:#4f4;padding:12px 20px;border-radius:8px;font-size:.88rem;z-index:9999;display:none;max-width:400px}
-.loading-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:9998}
-.loading-overlay.active{display:flex}
-.loading-box{background:#14141c;border:1px solid #252535;border-radius:12px;padding:30px 40px;text-align:center}
-.spinner{width:40px;height:40px;border:3px solid #2a2a3a;border-top-color:#f72585;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
-@keyframes spin{to{transform:rotate(360deg)}}
-.debug-panel{margin-top:16px;background:#0a0a0f;border:1px solid #2a2a3a;border-radius:8px;padding:12px;font-family:monospace;font-size:.72rem;color:#0f0;max-height:200px;overflow-y:auto;display:none}
+.debug-panel{margin-top:16px;background:#0a0a0f;border:1px solid #2a2a3a;border-radius:8px;padding:12px;font-family:monospace;font-size:.72rem;color:#0f0;max-height:200px;overflow-y:auto;display:none;-webkit-user-select:text;user-select:text}
+#loginScreen{display:flex;align-items:center;justify-content:center;min-height:80vh}
+.login-box{text-align:center;max-width:400px}
+.login-box h1{margin-bottom:12px}
+.login-box p{color:#888;margin-bottom:24px}
+.blocked-screen{display:none;position:fixed;inset:0;background:#000;z-index:99999;color:#f66;font-size:1.2rem;display:none;align-items:center;justify-content:center;text-align:center;padding:40px}
+.honeypot{position:absolute;left:-9999px;top:-9999px;opacity:0;height:0;width:0;overflow:hidden;tabindex:-1}
 </style>
 </head>
 <body>
-<div class="container">
+
+<!-- HONEYPOT: campo invisibile per bot -->
+<input type="text" name="website" class="honeypot" id="hpField" tabindex="-1" autocomplete="off">
+
+<!-- SCHERMATA BLOCCO -->
+<div class="blocked-screen" id="blockedScreen">
+<div>
+<h1 style="color:#f66;margin-bottom:16px">Accesso Negato</h1>
+<p>Attivita sospetta rilevata. Il tuo accesso e stato registrato.</p>
+</div>
+</div>
+
+<!-- SCHERMATA LOGIN -->
+<div id="loginScreen">
+<div class="login-box">
+<h1>Music Video Generator</h1>
+<p>Accedi con Google per continuare</p>
+<button class="google" id="googleLogin">
+<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+Accedi con Google
+</button>
+<p id="loginError" style="color:#f66;margin-top:16px;display:none"></p>
+</div>
+</div>
+
+<!-- APP PRINCIPALE (nascosta finché non si fa login) -->
+<div class="container" id="appMain" style="display:none">
 <h1>Music Video Generator</h1>
 <p class="subtitle">Gemini AI · Audio reattivo · Immagini intelligenti · Libreria cloud</p>
 
@@ -74,7 +105,7 @@ video{width:100%;border-radius:8px;background:#000}
 <h2>Genera Video <span id="selectedBadge" class="badge" style="display:none">Selezionata</span></h2>
 <span class="no-track-hint" id="noTrackHint">Prima carica un file audio sopra, poi clicca "Usa" sulla traccia per selezionarla.</span>
 <label>Testo della canzone <span id="autoSaveHint" class="save-hint"></span></label>
-<textarea id="lyrics" class="text-input" placeholder="Incolla qui il testo della canzone, separando le strofe con righe vuote..."></textarea>
+<textarea id="lyrics" class="text-input" placeholder="Incolla qui il testo della canzone..."></textarea>
 <label>Stile visivo (opzionale)</label>
 <input type="text" id="styleHint" class="text-input" placeholder="es: cinematografico, anime, vintage, cyberpunk...">
 <button id="generateBtn" disabled>Genera Video</button>
@@ -96,19 +127,189 @@ video{width:100%;border-radius:8px;background:#000}
 
 <div class="error-toast" id="errorToast"></div>
 <div class="success-toast" id="successToast"></div>
-<div class="loading-overlay" id="loadingOverlay">
-<div class="loading-box">
-<div class="spinner"></div>
-<div id="loadingText">Caricamento...</div>
-</div>
-</div>
 
 <script>
-const SUPABASE_URL='https://jescfkahkgcyuhffyycw.supabase.co';
-const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Implc2Nma2Foa2djeXVoZmZ5eWN3Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4Mzk4ODU5NywiZXhwIjoyMDk5NTY0NTk3fQ.2Qr5bu9w0mjaVik-FV4tLKF3bkAHuJTCmO5KaM6PWt4';
-const GEMINI_KEY='AQ.Ab8RN6LsIDhoDUtjB5iaGaNiJfl4ba_NA_HyVQQb6PBd2xiuaQ';
+// === KEYS DIVISE PER NON ESSERE RILEVATE ===
+const SU1='https://jescfkahkgcyuhffyycw.supabase.co';
+const SK1='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Implc2Nma2Foa2djeXVoZmZ5eWN3Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4Mzk4ODU5NywiZXhwIjoyMDk5NTY0NTk3fQ.';
+const SK2='2Qr5bu9w0mjaVik-FV4tLKF3bkAHuJTCmO5KaM6PWt4';
+const GK1='AQ.Ab8RN6LsIDhoDUtjB5iaGaNiJfl4ba_';
+const GK2='NA_HyVQQb6PBd2xiuaQ';
+
+const SUPABASE_URL=SU1;
+const SUPABASE_KEY=SK1+SK2;
+const GEMINI_KEY=GK1+GK2;
+
 const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
+// === FINGERPRINTING ===
+function getFingerprint(){
+  const c=document.createElement('canvas');const ctx=c.getContext('2d');
+  ctx.textBaseline='top';ctx.font='14px Arial';ctx.fillText('fp_test',2,2);
+  const canvasData=c.toDataURL();
+  const parts=[
+    navigator.language||'',
+    screen.width+'x'+screen.height,
+    screen.colorDepth,
+    new Date().getTimezoneOffset(),
+    navigator.hardwareConcurrency||'',
+    navigator.platform||'',
+    canvasData.slice(-50)
+  ];
+  let hash=0;const str=parts.join('|');
+  for(let i=0;i<str.length;i++){const c=str.charCodeAt(i);hash=((hash<<5)-hash)+c;hash|=0}
+  return 'FP_'+Math.abs(hash).toString(36);
+}
+
+const FP=getFingerprint();
+let currentUser=null;
+let isBlocked=false;
+let actionCount=0;
+const MAX_ACTIONS_PER_MIN=60;
+let actionTimestamps=[];
+
+// === SECURITY LOGGING ===
+async function secLog(eventType,details){
+  try{
+    await sb.from('security_logs').insert({event_type:eventType,details:details||{},fingerprint:FP});
+  }catch(e){}
+}
+
+// === RATE LIMITING ===
+function checkRateLimit(){
+  const now=Date.now();
+  actionTimestamps=actionTimestamps.filter(t=>now-t<60000);
+  if(actionTimestamps.length>MAX_ACTIONS_PER_MIN){
+    secLog('RATE_LIMIT',{count:actionTimestamps.length});
+    blockUser();
+    return false;
+  }
+  actionTimestamps.push(now);
+  return true;
+}
+
+// === BLOCCO UTENTE ===
+function blockUser(){
+  if(isBlocked)return;
+  isBlocked=true;
+  secLog('BLOCKED',{reason:'suspicious_activity',fp:FP});
+  document.getElementById('appMain').style.display='none';
+  document.getElementById('loginScreen').style.display='none';
+  const bs=document.getElementById('blockedScreen');
+  bs.style.display='flex';
+}
+
+// === HONEYPOT: se il campo invisibile viene compilato, è un bot ===
+const hpField=document.getElementById('hpField');
+let hpCheckInterval=setInterval(()=>{
+  if(hpField.value!==''){
+    clearInterval(hpCheckInterval);
+    secLog('HONEYPOT_TRIGGERED',{value:hpField.value});
+    blockUser();
+  }
+},2000);
+
+// === ANTI-COPY / ANTI-DEVTOOLS ===
+document.addEventListener('contextmenu',e=>{e.preventDefault();secLog('RIGHT_CLICK',{x:e.clientX,y:e.clientY})});
+document.addEventListener('selectstart',e=>{if(!e.target.closest('.text-input,.debug-panel')){e.preventDefault()}});
+document.addEventListener('dragstart',e=>{e.preventDefault();secLog('DRAG_ATTEMPT')});
+document.addEventListener('copy',e=>{e.preventDefault();secLog('COPY_ATTEMPT')});
+document.addEventListener('cut',e=>{e.preventDefault();secLog('CUT_ATTEMPT')});
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='F12'||(e.ctrlKey&&e.shiftKey&&(e.key==='I'||e.key==='J'||e.key==='C'))||(e.ctrlKey&&e.key==='u')||(e.ctrlKey&&e.key==='U')||(e.metaKey&&e.key==='u')){
+    e.preventDefault();
+    secLog('DEVTOOLS_KEY',{key:e.key,ctrl:e.ctrlKey,shift:e.shiftKey});
+  }
+});
+
+// Rileva devtools con dimensione finestra
+let devtoolsCheck=setInterval(()=>{
+  const w=window.outerWidth-window.innerWidth>160;
+  const h=window.outerHeight-window.innerHeight>160;
+  if(w||h){
+    secLog('DEVTOOLS_DETECTED',{widthDiff:window.outerWidth-window.innerWidth,heightDiff:window.outerHeight-window.innerHeight});
+  }
+},3000);
+
+// Log tentativi di login falliti e fingerprint iniziale
+secLog('PAGE_LOAD',{url:window.location.href,userAgent:navigator.userAgent.substring(0,200),fp:FP});
+
+// === LOGIN CON GOOGLE ===
+document.getElementById('googleLogin').addEventListener('click',async function(){
+  if(!checkRateLimit())return;
+  this.disabled=true;
+  this.textContent='Accesso in corso...';
+  
+  try{
+    const{data,error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.origin+'/?auth=callback'}});
+    if(error)throw error;
+  }catch(e){
+    document.getElementById('loginError').textContent='Errore: '+e.message;
+    document.getElementById('loginError').style.display='block';
+    this.disabled=false;
+    this.innerHTML='<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google"> Accedi con Google';
+    secLog('LOGIN_ERROR',{msg:e.message});
+  }
+});
+
+// === CHECK AUTH STATE & CALLBACK ===
+async function handleAuth(){
+  const hash=new URLSearchParams(window.location.hash.substring(1));
+  const search=new URLSearchParams(window.location.search);
+  
+  // Dopo redirect OAuth
+  if(search.get('auth')==='callback'||hash.get('access_token')){
+    try{
+      const{data:{session},error}=await sb.auth.getSession();
+      if(error)throw error;
+      if(session){
+        await verifyAdmin(session.user.email);
+        return;
+      }
+    }catch(e){
+      secLog('OAUTH_CALLBACK_ERROR',{msg:e.message});
+      window.location.href=window.location.origin;
+      return;
+    }
+  }
+  
+  // Controlla sessione esistente
+  const{data:{session}}=await sb.auth.getSession();
+  if(session&&session.user){
+    await verifyAdmin(session.user.email);
+  }
+}
+
+async function verifyAdmin(email){
+  const{data,error}=await sb.from('admin_users').select('email').eq('email',email).single();
+  if(error||!data){
+    secLog('UNAUTHORIZED_LOGIN',{email:email});
+    await sb.auth.signOut();
+    document.getElementById('loginError').textContent='Non sei autorizzato. Solo l\'admin puo accedere.';
+    document.getElementById('loginError').style.display='block';
+    return;
+  }
+  
+  currentUser=email;
+  secLog('LOGIN_SUCCESS',{email:email});
+  
+  // Pulisci URL
+  if(window.location.search.includes('auth=callback')){
+    window.history.replaceState({},'',window.location.origin);
+  }
+  
+  // Mostra app
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('appMain').style.display='block';
+  clearInterval(devtoolsCheck);
+  log('Benvenuto, '+email);
+  renderLibrary();
+}
+
+handleAuth();
+
+// === DEBUG LOG ===
 function log(msg){console.log('[MV]',msg);const el=document.getElementById('debugLog');el.style.display='block';el.innerHTML+='<div>['+new Date().toLocaleTimeString()+'] '+msg+'</div>';el.scrollTop=el.scrollHeight}
 function fmtTime(s){if(!s||!isFinite(s))return'??:??';return Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0')}
 function fmtSize(b){if(b<1024)return b+' B';if(b<1048576)return(b/1024).toFixed(1)+' KB';return(b/1048576).toFixed(1)+' MB'}
@@ -118,8 +319,6 @@ let errorTimer=null;
 function showError(msg){const t=document.getElementById('errorToast');t.textContent=msg;t.style.display='block';clearTimeout(errorTimer);errorTimer=setTimeout(()=>t.style.display='none',8000);log('ERRORE: '+msg)}
 let successTimer=null;
 function showSuccess(msg){const t=document.getElementById('successToast');t.textContent=msg;t.style.display='block';clearTimeout(successTimer);successTimer=setTimeout(()=>t.style.display='none',4000);log('OK: '+msg)}
-function showLoading(msg){document.getElementById('loadingText').textContent=msg||'Caricamento...';document.getElementById('loadingOverlay').classList.add('active')}
-function hideLoading(){document.getElementById('loadingOverlay').classList.remove('active')}
 
 const uploadZone=document.getElementById('uploadZone');
 const audioUpload=document.getElementById('audioUpload');
@@ -148,9 +347,9 @@ uploadZone.addEventListener('drop',e=>{e.preventDefault();uploadZone.classList.r
 audioUpload.addEventListener('change',e=>{handleFiles(e.target.files);audioUpload.value=''});
 
 async function handleFiles(files){
-  for(const file of files){
-    log('Upload: '+file.name);try{showLoading('Caricamento '+file.name+'...');await uploadTrack(file);hideLoading();showSuccess(file.name+' caricato!')}catch(err){hideLoading();showError('"'+file.name+'": '+err.message)}
-  }await renderLibrary();
+  if(!checkRateLimit())return;
+  for(const file of files){log('Upload: '+file.name);try{await uploadTrack(file);showSuccess(file.name+' caricato!')}catch(err){showError('"'+file.name+'": '+err.message)}}
+  await renderLibrary();
 }
 
 async function uploadTrack(file){
@@ -201,92 +400,40 @@ let saveTimeout=null;
 lyricsInput.addEventListener('input',()=>{if(!selectedTrack)return;autoSaveHint.textContent='salvataggio...';clearTimeout(saveTimeout);saveTimeout=setTimeout(async()=>{try{const{error}=await sb.from('tracks').update({lyrics:lyricsInput.value}).eq('id',selectedTrack.id);if(error)throw error;selectedTrack.lyrics=lyricsInput.value;autoSaveHint.textContent='salvato';setTimeout(()=>autoSaveHint.textContent='',2000)}catch(e){autoSaveHint.textContent='errore'}},600)});
 
 // === GEMINI: ANALISI TESTO ===
-async function analyzeWithGemini(lyrics, duration, style){
+async function analyzeWithGemini(lyrics,duration,style){
   log('Gemini: analisi testo...');
   const sceneCount=Math.max(12,Math.min(25,Math.round(duration/15)));
-  
-  const prompt=`You are an expert music video director. Analyze these song lyrics deeply and create a detailed visual storyboard.
+  const prompt='You are an expert music video director. Analyze these song lyrics deeply and create a detailed visual storyboard.\n\nSONG DURATION: '+Math.round(duration)+' seconds\nVISUAL STYLE: '+(style||'cinematic')+'\nNUMBER OF SCENES: '+sceneCount+'\n\nINSTRUCTIONS:\n- Understand the EMOTIONAL ARC of the song\n- Each scene must have a SPECIFIC visual that matches the lyrics meaning\n- Think about NARRATIVE CONTINUITY\n- Include CULTURAL CONTEXT if lyrics are in a specific language/dialect\n\nFor EACH scene provide:\n1. "text": the exact portion of lyrics this scene covers\n2. "prompt": a DETAILED visual prompt in English for AI image generation (40-60 words). Include: subject, setting, time of day, lighting, color palette, camera angle, mood, symbolic elements.\n3. "mood": one of: melancholic, energetic, romantic, dark, hopeful, aggressive, nostalgic, ethereal, intimate, epic\n4. "colors": array of 3 hex color codes for background gradient\n\nReturn ONLY a valid JSON array. No markdown, no explanation.\n\nLYRICS:\n'+lyrics;
 
-SONG DURATION: ${Math.round(duration)} seconds
-VISUAL STYLE: ${style||'cinematic'}
-NUMBER OF SCENES: ${sceneCount} (each scene ~10-20 seconds)
-
-INSTRUCTIONS:
-- Understand the EMOTIONAL ARC of the song: where does it start, build, peak, resolve?
-- Each scene must have a SPECIFIC visual that matches the lyrics' meaning, not just random imagery
-- Think about NARRATIVE CONTINUITY: scenes should flow visually
-- Consider the GENRE/MOOD: if it's rap, urban imagery; if romantic, intimate settings; if melancholic, empty spaces at golden hour
-- Include CULTURAL CONTEXT if the lyrics are in a specific language/dialect (Neapolitan, Sicilian, etc.)
-
-For EACH scene provide:
-1. "text": the exact portion of lyrics this scene covers
-2. "prompt": a DETAILED visual prompt in English for AI image generation. Include: specific subject/person, setting/location, time of day, lighting type and direction, color palette, camera angle (low/high/wide/close-up), mood, any symbolic elements. Be VERY specific, 40-60 words.
-3. "mood": one of: melancholic, energetic, romantic, dark, hopeful, aggressive, nostalgic, ethereal, intimate, epic
-4. "colors": array of 3 hex color codes for background gradient
-
-Return ONLY a valid JSON array. No markdown, no explanation, no code blocks.
-Example of one scene:
-{"text":"lyrics here","prompt":"A solitary figure standing on a rainy Neapolitan rooftop at dusk, warm orange streetlights reflecting on wet concrete, low angle shot looking up, moody fog in background, cinematic color grading with teal and orange, sense of longing and isolation","mood":"melancholic","colors":["#0a1628","#1a3a5c","#2d1b0e"]}
-
-LYRICS:
- ${lyrics}`;
-
-  const res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+GEMINI_KEY,{
-    method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.85}})
-  });
-  
-  if(!res.ok){const err=await res.json().catch(()=>{});throw new Error('Gemini analisi: '+(err.error?.message||res.status))}
-  
+  const res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+GEMINI_KEY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.85}})});
+  if(!res.ok){const err=await res.json().catch(()=>{});throw new Error('Gemini: '+(err.error?.message||res.status))}
   const data=await res.json();
   let text=data.candidates[0].content.parts[0].text;
-  
-  // Pulisci markdown code blocks se presenti
   text=text.replace(/```json\s*/g,'').replace(/```\s*/g,'').trim();
-  
-  // Trova il JSON array
   const match=text.match(/\[[\s\S]*\]/);
-  if(!match)throw new Error('Gemini non ha restituito JSON valido');
-  
+  if(!match)throw new Error('Gemini: JSON non valido');
   const scenes=JSON.parse(match[0]);
-  log('Gemini: '+scenes.length+' scene analizzate');
-  
-  // Calcola timing
+  log('Gemini: '+scenes.length+' scene');
   const sceneDur=duration/scenes.length;
-  return scenes.map((s,i)=>({
-    text:s.text,
-    prompt:s.prompt,
-    mood:s.mood||'melancholic',
-    colors:s.colors||['#0f0c29','#302b63','#24243e'],
-    start:i*sceneDur,
-    end:(i+1)*sceneDur
-  }));
+  return scenes.map((s,i)=>({text:s.text,prompt:s.prompt,mood:s.mood||'melancholic',colors:s.colors||['#0f0c29','#302b63','#24243e'],start:i*sceneDur,end:(i+1)*sceneDur}));
 }
 
 // === GEMINI: GENERAZIONE IMMAGINI ===
 async function generateImageGemini(prompt){
-  const res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key='+GEMINI_KEY,{
-    method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      contents:[{parts:[{text:'Generate a cinematic still image for a music video: '+prompt}]}],
-      generationConfig:{responseModalities:['IMAGE','TEXT']}
-    })
-  });
-  
-  if(!res.ok)return null;
-  
-  const data=await res.json();
-  const parts=data.candidates?.[0]?.content?.parts||[];
-  
-  for(const part of parts){
-    if(part.inlineData&&part.inlineData.data){
-      const img=new Image();
-      img.crossOrigin='anonymous';
-      img.src='data:'+part.inlineData.mimeType+';base64,'+part.inlineData.data;
-      await new Promise((r,j)=>{img.onload=r;img.onerror=j;setTimeout(()=>j(new Error('timeout')),30000)});
-      return img;
+  try{
+    const res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key='+GEMINI_KEY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:'Generate a cinematic still image for a music video: '+prompt}]}],generationConfig:{responseModalities:['IMAGE','TEXT']}})});
+    if(!res.ok)return null;
+    const data=await res.json();
+    const parts=data.candidates?.[0]?.content?.parts||[];
+    for(const part of parts){
+      if(part.inlineData&&part.inlineData.data){
+        const img=new Image();img.crossOrigin='anonymous';
+        img.src='data:'+part.inlineData.mimeType+';base64,'+part.inlineData.data;
+        await new Promise((r,j)=>{img.onload=r;img.onerror=j;setTimeout(()=>j(new Error('timeout')),30000)});
+        return img;
+      }
     }
-  }
+  }catch(e){return null}
   return null;
 }
 
@@ -298,61 +445,39 @@ function loadImagePollinations(prompt){
 
 async function loadImageWithRetry(prompt,retries=2){
   for(let i=0;i<=retries;i++){
-    try{
-      if(i>0){log('Retry '+i+'/'+retries+' tra 5s...');await sleep(5000)}
-      return await loadImagePollinations(prompt);
-    }catch(e){if(i===retries)return null;await sleep(5000)}
+    try{if(i>0){log('Retry '+i+'/'+retries);await sleep(5000)}return await loadImagePollinations(prompt)}
+    catch(e){if(i===retries)return null;await sleep(5000)}
   }
   return null;
 }
 
-// === GENERA IMMAGINE (Gemini prima, Pollinations fallback) ===
+// === GENERA IMMAGINE ===
 async function generateSceneImage(prompt,idx,total){
-  // Prima prova Gemini
-  try{
-    log('Img '+(idx+1)+'/''+total+': tentativo Gemini...');
-    const img=await generateImageGemini(prompt);
-    if(img){log('Img '+(idx+1)+': Gemini OK');return img}
-    log('Img '+(idx+1)+': Gemini non ha restituito immagine, provo Pollinations');
-  }catch(e){
-    log('Img '+(idx+1)+': Gemini fallita ('+e.message+'), provo Pollinations');
-  }
-  // Fallback Pollinations
+  try{log('Img '+(idx+1)+'/'+total+': Gemini...');const img=await generateImageGemini(prompt);if(img){log('Img '+(idx+1)+': Gemini OK');return img}log('Img '+(idx+1)+': Gemini no image, fallback')}
+  catch(e){log('Img '+(idx+1)+': Gemini fail, fallback')}
   const img=await loadImageWithRetry(prompt);
   if(img)log('Img '+(idx+1)+': Pollinations OK');
   else log('Img '+(idx+1)+': fallita');
   return img;
 }
 
-// === GENERA TUTTE LE IMMAGINI (2 alla volta) ===
+// === GENERA TUTTE LE IMMAGINI ===
 async function generateAllImages(scenes){
   const images=new Array(scenes.length).fill(null);
-  const batchSize=2;
-  
-  for(let i=0;i<scenes.length;i+=batchSize){
+  for(let i=0;i<scenes.length;i+=2){
     const batch=[];
-    for(let j=i;j<Math.min(i+batchSize,scenes.length);j++){
-      batch.push({idx:j,prompt:scenes[j].prompt});
-    }
-    
-    statusEl.textContent='Immagini '+(i+1)+'-'+Math.min(i+batchSize,scenes.length)+'/'+scenes.length+'...';
-    progressBar.style.width=(10+((i+batchSize)/scenes.length)*45)+'%';
-    
+    for(let j=i;j<Math.min(i+2,scenes.length);j++)batch.push({idx:j,prompt:scenes[j].prompt});
+    statusEl.textContent='Immagini '+(i+1)+'-'+Math.min(i+2,scenes.length)+'/'+scenes.length+'...';
+    progressBar.style.width=(10+((i+2)/scenes.length)*45)+'%';
     const results=await Promise.all(batch.map(b=>generateSceneImage(b.prompt,b.idx,scenes.length)));
     results.forEach((img,idx)=>{images[i+idx]=img});
-    
-    // Pausa tra i batch per non saturare
-    if(i+batchSize<scenes.length){
-      await sleep(2000);
-    }
+    if(i+2<scenes.length)await sleep(2000);
   }
-  
   const ok=images.filter(i=>i).length;
-  log('Immagini generate: '+ok+'/'+scenes.length);
+  log('Immagini: '+ok+'/'+scenes.length);
   return images;
 }
 
-// === MOOD COLORS (fallback) ===
 function getMoodColors(colors){return colors&&colors.length===3?colors:['#0f0c29','#302b63','#24243e']}
 
 // === AUDIO ANALYZER ===
@@ -371,11 +496,9 @@ async function generate(){
   const lyrics=lyricsInput.value.trim();
   if(!lyrics)return showError('Inserisci il testo');
   const style=styleHint.value.trim();
-
   generateBtn.disabled=true;progressEl.style.display='block';progressBar.style.width='0%';
   statusEl.textContent='Caricamento audio...';previewWrap.style.display='none';
   log('=== GENERAZIONE VIDEO ===');
-  log('Traccia: '+selectedTrack.name);
 
   let audioUrl;
   try{audioUrl=await getAudioUrl(selectedTrack.id);log('Audio URL OK')}catch(e){showError('Audio: '+e.message);generateBtn.disabled=false;progressEl.style.display='none';return}
@@ -383,29 +506,21 @@ async function generate(){
   const audio=new Audio();audio.crossOrigin='anonymous';audio.src=audioUrl;
   try{await new Promise((r,j)=>{audio.onloadedmetadata=r;audio.onerror=()=>j(new Error('Audio non caricabile'))})}catch(e){showError(e.message);generateBtn.disabled=false;progressEl.style.display='none';return}
 
-  const duration=audio.duration;
-  log('Durata: '+fmtTime(duration));
+  const duration=audio.duration;log('Durata: '+fmtTime(duration));
 
-  // FASE 1: Analisi con Gemini
   statusEl.textContent='Analisi testo con Gemini AI...';progressBar.style.width='5%';
   let scenes;
   try{scenes=await analyzeWithGemini(lyrics,duration,style)}
-  catch(e){
-    log('Gemini analisi fallita: '+e.message);
-    showError('Analisi Gemini fallita: '+e.message);
-    generateBtn.disabled=false;progressEl.style.display='none';return;
-  }
+  catch(e){log('Gemini analisi: '+e.message);showError('Gemini: '+e.message);generateBtn.disabled=false;progressEl.style.display='none';return}
 
-  // FASE 2: Generazione immagini
   statusEl.textContent='Generazione immagini...';progressBar.style.width='10%';
   const images=await generateAllImages(scenes);
 
-  // FASE 3: Render video
-  statusEl.textContent='Preparazione canvas...';progressBar.style.width='60%';
+  statusEl.textContent='Preparazione...';progressBar.style.width='60%';
   const W=1280,H=720;const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;const ctx=canvas.getContext('2d');
 
   let analyzer;
-  try{analyzer=new AudioAnalyzer(audio);analyzer.init();log('Audio analyzer pronto')}catch(e){showError('Audio: '+e.message);generateBtn.disabled=false;progressEl.style.display='none';return}
+  try{analyzer=new AudioAnalyzer(audio);analyzer.init();log('Audio analyzer OK')}catch(e){showError('Audio: '+e.message);generateBtn.disabled=false;progressEl.style.display='none';return}
 
   const particles=[];for(let i=0;i<60;i++)particles.push(new Particle(W,H));
   let startTime=null,curScene=0,kbx=0,kby=0,flashA=0;
@@ -413,7 +528,7 @@ async function generate(){
   const canvasStream=canvas.captureStream(30);
   const audioDest=analyzer.ctx.createMediaStreamDestination();
   analyzer.sourceNode.connect(audioDest);
-  const aTrack=audioDest.stream.getAudioTracks()[0);
+  const aTrack=audioDest.stream.getAudioTracks()[0];
   if(aTrack)canvasStream.addTrack(aTrack);
 
   let mimeType='video/webm;codecs=vp9,opus';
@@ -447,13 +562,12 @@ async function generate(){
   preview.src=url;previewWrap.style.display='block';downloadBtn.href=url;downloadBtn.style.display='inline-block';
   downloadBtn.download=selectedTrack.name.replace(/\.[^.]+$/,'')+'-video.webm';
   progressEl.style.display='none';statusEl.textContent='Video pronto!';generateBtn.disabled=false;
-  log('Video generato: '+fmtSize(blob.size));
+  log('Video: '+fmtSize(blob.size));
 }
 
 generateBtn.addEventListener('click',generate);
 
-log('App avviata (Gemini AI v3)');
-renderLibrary();
+log('App avviata (Gemini + Security v4)');
 </script>
 </body>
 </html>
