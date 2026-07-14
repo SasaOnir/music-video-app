@@ -1,3 +1,5 @@
+<!DOCTYPE html><html><head><title>Test</title></head><body>
+<script>
 function detectMood(text) {
   var lower = text.toLowerCase();
   var scores = {};
@@ -16,3 +18,10 @@ function detectMood(text) {
   if (lower.match(/\.\.\./)) intensity = Math.max(0, intensity - 0.1);
   return { primaryMood: primaryMood, intensity: intensity };
 }
+
+var MOOD_WORDS = {test:'word'};
+
+document.getElementById('result').textContent = detectMood('test word');
+document.getElementById('result').textContent += ' - OK';
+</script>
+<body><div id="result"></div></body></html>
