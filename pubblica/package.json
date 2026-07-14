@@ -1,1 +1,7 @@
-
+{
+  "name": "music-video-app",
+  "private": true,
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0"
+  }
+}
