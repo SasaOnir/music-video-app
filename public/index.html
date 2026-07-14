@@ -104,38 +104,21 @@ video{width:100%;border-radius:8px;background:#000}
 </div>
 
 <script>
-// === SUPABASE DIRETTO DAL BROWSER ===
-const SUPABASE_URL = 'https://jescfkahkgcyuhffyycw.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Implc2Nma2Foa2djeXVoZmZ5eWN3Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4Mzk4ODU5NywiZXhwIjoyMDk5NTY0NTk3fQ.2Qr5bu9w0mjaVik-FV4tLKF3bkAHuJTCmO5KaM6PWt4';
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const SUPABASE_URL='https://jescfkahkgcyuhffyycw.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Implc2Nma2Foa2djeXVoZmZ5eWN3Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4Mzk4ODU5NywiZXhwIjoyMDk5NTY0NTk3fQ.2Qr5bu9w0mjaVik-FV4tLKF3bkAHuJTCmO5KaM6PWt4';
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
-// === DEBUG ===
-function log(msg){
-  console.log('[MV]',msg);
-  const el=document.getElementById('debugLog');
-  el.style.display='block';
-  el.innerHTML+='<div>['+new Date().toLocaleTimeString()+'] '+msg+'</div>';
-  el.scrollTop=el.scrollHeight;
-}
-
-// === UTILS ===
+function log(msg){console.log('[MV]',msg);const el=document.getElementById('debugLog');el.style.display='block';el.innerHTML+='<div>['+new Date().toLocaleTimeString()+'] '+msg+'</div>';el.scrollTop=el.scrollHeight}
 function fmtTime(s){if(!s||!isFinite(s))return'??:??';return Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0')}
 function fmtSize(b){if(b<1024)return b+' B';if(b<1048576)return(b/1024).toFixed(1)+' KB';return(b/1048576).toFixed(1)+' MB'}
-
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
 let errorTimer=null;
-function showError(msg){
-  const t=document.getElementById('errorToast');t.textContent=msg;t.style.display='block';
-  clearTimeout(errorTimer);errorTimer=setTimeout(()=>t.style.display='none',8000);log('ERRORE: '+msg);
-}
+function showError(msg){const t=document.getElementById('errorToast');t.textContent=msg;t.style.display='block';clearTimeout(errorTimer);errorTimer=setTimeout(()=>t.style.display='none',8000);log('ERRORE: '+msg)}
 let successTimer=null;
-function showSuccess(msg){
-  const t=document.getElementById('successToast');t.textContent=msg;t.style.display='block';
-  clearTimeout(successTimer);successTimer=setTimeout(()=>t.style.display='none',4000);log('OK: '+msg);
-}
+function showSuccess(msg){const t=document.getElementById('successToast');t.textContent=msg;t.style.display='block';clearTimeout(successTimer);successTimer=setTimeout(()=>t.style.display='none',4000);log('OK: '+msg)}
 function showLoading(msg){document.getElementById('loadingText').textContent=msg||'Caricamento...';document.getElementById('loadingOverlay').classList.add('active')}
 function hideLoading(){document.getElementById('loadingOverlay').classList.remove('active')}
 
-// === DOM ===
 const uploadZone=document.getElementById('uploadZone');
 const audioUpload=document.getElementById('audioUpload');
 const trackList=document.getElementById('trackList');
@@ -155,7 +138,6 @@ const downloadBtn=document.getElementById('downloadBtn');
 let selectedTrack=null;
 let audioCache={};
 
-// === UPLOAD ===
 uploadZone.addEventListener('click',()=>audioUpload.click());
 uploadZone.addEventListener('dragover',e=>{e.preventDefault();uploadZone.classList.add('dragover')});
 uploadZone.addEventListener('dragleave',()=>uploadZone.classList.remove('dragover'));
@@ -165,11 +147,8 @@ audioUpload.addEventListener('change',e=>{handleFiles(e.target.files);audioUploa
 async function handleFiles(files){
   for(const file of files){
     log('Upload: '+file.name+' ('+fmtSize(file.size)+')');
-    try{
-      showLoading('Caricamento '+file.name+'...');
-      await uploadTrack(file);
-      hideLoading();showSuccess(file.name+' caricato!');
-    }catch(err){hideLoading();showError('"'+file.name+'": '+err.message)}
+    try{showLoading('Caricamento '+file.name+'...');await uploadTrack(file);hideLoading();showSuccess(file.name+' caricato!')}
+    catch(err){hideLoading();showError('"'+file.name+'": '+err.message)}
   }
   await renderLibrary();
 }
@@ -177,61 +156,31 @@ async function handleFiles(files){
 async function uploadTrack(file){
   const duration=await getDuration(file);
   log('Durata: '+fmtTime(duration));
-
   const ext=file.name.split('.').pop()||'mp3';
   const uniqueName='uploads/'+Date.now()+'-'+Math.random().toString(36).slice(2)+'.'+ext;
-
-  log('Upload su storage: '+uniqueName);
-  const{data:uploadData,error:uploadErr}=await sb.storage.from('audio').upload(uniqueName,file,{upsert:true,contentType:file.type||'audio/mpeg'});
+  log('Upload storage: '+uniqueName);
+  const{error:uploadErr}=await sb.storage.from('audio').upload(uniqueName,file,{upsert:true,contentType:file.type||'audio/mpeg'});
   if(uploadErr)throw new Error('Storage: '+uploadErr.message);
   log('Storage OK');
-
-  const{data,error}=await sb.from('tracks').insert({name:file.name,size:file.size,type:file.type||'audio/mpeg',duration,storage_path:uniqueName}).select().single();
+  const{error}=await sb.from('tracks').insert({name:file.name,size:file.size,type:file.type||'audio/mpeg',duration,storage_path:uniqueName}).select().single();
   if(error)throw new Error('DB: '+error.message);
-  log('DB OK, id: '+data.id);
+  log('DB OK');
 }
 
-function getDuration(file){
-  return new Promise(resolve=>{
-    const url=URL.createObjectURL(file);const a=new Audio();a.preload='metadata';
-    let done=false;
-    const finish=v=>{if(done)return;done=true;clearTimeout(t);URL.revokeObjectURL(url);resolve(v)};
-    const t=setTimeout(()=>finish(0),6000);
-    a.onloadedmetadata=()=>finish(a.duration||0);a.onerror=()=>finish(0);a.src=url;
-  });
-}
+function getDuration(file){return new Promise(resolve=>{const url=URL.createObjectURL(file);const a=new Audio();a.preload='metadata';let done=false;const finish=v=>{if(done)return;done=true;clearTimeout(t);URL.revokeObjectURL(url);resolve(v)};const t=setTimeout(()=>finish(0),6000);a.onloadedmetadata=()=>finish(a.duration||0);a.onerror=()=>finish(0);a.src=url})}
 
-// === RENDER LIBRARY ===
 async function renderLibrary(){
   log('Caricamento libreria...');
   try{
     const{data:tracks,error}=await sb.from('tracks').select('*');
     if(error)throw new Error(error.message);
     log('Trovate '+tracks.length+' tracce');
-
     if(!tracks.length){trackList.innerHTML='<div class="empty-library">Nessuna traccia. Carica un file audio sopra.</div>';return}
-
-    trackList.innerHTML=tracks.map(t=>{
-      const sel=selectedTrack&&selectedTrack.id===t.id;
-      return '<div class="track-item '+(sel?'selected':'')+'">'+
-        '<div class="track-info"><div class="track-name">'+t.name+'</div>'+
-        '<div class="track-meta">'+fmtTime(t.duration)+' · '+fmtSize(t.size)+(t.lyrics?' · testo salvato':'')+'</div></div>'+
-        '<div class="track-actions">'+
-        '<audio controls preload="metadata" data-tid="'+t.id+'"></audio>'+
-        '<button class="sec" data-action="select" data-id="'+t.id+'" style="'+(sel?'background:#f72585;color:#fff':'')+'">'+(sel?'Selezionata':'Usa')+'</button>'+
-        '<button class="del" data-action="delete" data-id="'+t.id+'">&#10005;</button>'+
-        '</div></div>';
-    }).join('');
-
-    trackList.querySelectorAll('audio[data-tid]').forEach(async el=>{
-      try{el.src=await getAudioUrl(el.dataset.tid)}catch(e){}
-    });
+    trackList.innerHTML=tracks.map(t=>{const sel=selectedTrack&&selectedTrack.id===t.id;return '<div class="track-item '+(sel?'selected':'')+'"><div class="track-info"><div class="track-name">'+t.name+'</div><div class="track-meta">'+fmtTime(t.duration)+' · '+fmtSize(t.size)+(t.lyrics?' · testo salvato':'')+'</div></div><div class="track-actions"><audio controls preload="metadata" data-tid="'+t.id+'"></audio><button class="sec" data-action="select" data-id="'+t.id+'" style="'+(sel?'background:#f72585;color:#fff':'')+'">'+(sel?'Selezionata':'Usa')+'</button><button class="del" data-action="delete" data-id="'+t.id+'">&#10005;</button></div></div>'}).join('');
+    trackList.querySelectorAll('audio[data-tid]').forEach(async el=>{try{el.src=await getAudioUrl(el.dataset.tid)}catch(e){}});
     trackList.querySelectorAll('[data-action="select"]').forEach(btn=>btn.addEventListener('click',function(){selectTrack(this.dataset.id)}));
     trackList.querySelectorAll('[data-action="delete"]').forEach(btn=>btn.addEventListener('click',function(){deleteTrack(this.dataset.id)}));
-  }catch(e){
-    log('ERRORE libreria: '+e.message);
-    trackList.innerHTML='<div class="empty-library" style="color:#f66">Errore: '+e.message+'</div>';
-  }
+  }catch(e){log('ERRORE libreria: '+e.message);trackList.innerHTML='<div class="empty-library" style="color:#f66">Errore: '+e.message+'</div>'}
 }
 
 async function getAudioUrl(id){
@@ -248,13 +197,9 @@ async function selectTrack(id){
   try{
     const{data:track,error}=await sb.from('tracks').select('*').eq('id',id).single();
     if(error)throw new Error(error.message);
-    selectedTrack=track;
-    log('Selezionata: '+track.name);
+    selectedTrack=track;log('Selezionata: '+track.name);
     lyricsInput.value=track.lyrics||'';
-    generateBtn.disabled=false;
-    selectedBadge.style.display='inline';
-    noTrackHint.classList.add('hidden');
-    autoSaveHint.textContent='';
+    generateBtn.disabled=false;selectedBadge.style.display='inline';noTrackHint.classList.add('hidden');autoSaveHint.textContent='';
     await renderLibrary();
   }catch(e){showError('Errore selezione: '+e.message)}
 }
@@ -271,36 +216,57 @@ async function deleteTrack(id){
   }catch(e){showError('Errore: '+e.message)}
 }
 
-// === AUTO-SAVE LYRICS ===
 let saveTimeout=null;
 lyricsInput.addEventListener('input',()=>{
-  if(!selectedTrack)return;
-  autoSaveHint.textContent='salvataggio...';
-  clearTimeout(saveTimeout);
+  if(!selectedTrack)return;autoSaveHint.textContent='salvataggio...';clearTimeout(saveTimeout);
   saveTimeout=setTimeout(async()=>{
-    try{
-      const{error}=await sb.from('tracks').update({lyrics:lyricsInput.value}).eq('id',selectedTrack.id);
-      if(error)throw error;
-      selectedTrack.lyrics=lyricsInput.value;
-      autoSaveHint.textContent='salvato';setTimeout(()=>autoSaveHint.textContent='',2000);
-    }catch(e){autoSaveHint.textContent='errore';log('Salvataggio testo fallito: '+e.message)}
+    try{const{error}=await sb.from('tracks').update({lyrics:lyricsInput.value}).eq('id',selectedTrack.id);if(error)throw error;selectedTrack.lyrics=lyricsInput.value;autoSaveHint.textContent='salvato';setTimeout(()=>autoSaveHint.textContent='',2000)}
+    catch(e){autoSaveHint.textContent='errore';log('Salvataggio testo: '+e.message)}
   },600);
 });
 
-// === MOOD ===
 const MOOD={melancolico:['#1a1a3e','#2d1b69','#0f0c29'],triste:['#0c0c1d','#1a1a2e','#16213e'],allegro:['#ff6b6b','#feca57','#ff9ff3'],energico:['#f72585','#7209b7','#3a0ca3'],romantico:['#e91e63','#9c27b0','#f48fb1'],rabbioso:['#d32f2f','#b71c1c','#4a0000'],calmo:['#006064','#00838f','#4dd0e1'],epico:['#ff6f00','#e65100','#bf360c'],misterioso:['#1a237e','#311b92','#0d0d2b'],nostalgico:['#4e342e','#3e2723','#8d6e63'],default:['#0f0c29','#302b63','#24243e']};
 function getMoodColors(m){const l=(m||'').toLowerCase();for(const[k,v]of Object.entries(MOOD))if(l.includes(k))return v;return MOOD.default}
 function parseScenes(lyrics,dur){const b=lyrics.split(/\n\s*\n/).filter(x=>x.trim());if(!b.length)return[{text:lyrics,mood:'default',start:0,end:dur||60}];const s=(dur||60)/b.length;const m=['melancolico','allegro','energico','romantico','calmo','epico','misterioso','nostalgico'];return b.map((t,i)=>({text:t.trim(),mood:m[i%m.length],start:i*s,end:(i+1)*s}))}
-function genPrompt(t,style){const s=style?', '+style+' style':', cinematic style';return encodeURIComponent('music video still'+s+', moody atmosphere, dramatic lighting, '+t.replace(/\[.*?\]/g,'').substring(0,200))}
-function loadImage(p){return new Promise((r,j)=>{const i=new Image();i.crossOrigin='anonymous';i.src='https://image.pollinations.ai/prompt/'+p+'?width=1280&height=720&seed='+Math.floor(Math.random()*999999)+'&nologo=true';i.onload=()=>r(i);i.onerror=()=>j(new Error('fail'));setTimeout(()=>j(new Error('timeout')),30000)})}
+function genPrompt(t,style){const s=style?', '+style+' style':', cinematic style';const clean=t.replace(/\[.*?\]/g,'').replace(/\n/g,' ').replace(/'/g,'').substring(0,150);return encodeURIComponent('music video still'+s+', moody atmosphere, dramatic lighting, '+clean)}
 
-// === AUDIO ANALYZER ===
-class AudioAnalyzer{constructor(a){this.audio=a;this.ctx=null;this.analyser=null;this.data=null;this.bass=0;this.mid=0;this.high=0;this.energy=0;this.prevEnergy=0;this.beat=false}init(){this.ctx=new(window.AudioContext||window.webkitAudioContext)();const s=this.ctx.createMediaElementSource(this.audio);this.analyser=this.ctx.createAnalyser();this.analyser.fftSize=256;s.connect(this.analyser);this.analyser.connect(this.ctx.destination);this.data=new Uint8Array(this.analyser.frequencyBinCount)}update(){if(!this.analyser)return;this.analyser.getByteFrequencyData(this.data);const l=this.data.length;let b=0,m=0,h=0;const be=Math.floor(l*.15),me=Math.floor(l*.5);for(let i=0;i<be;i++)b+=this.data[i];for(let i=be;i<me;i++)m+=this.data[i];for(let i=me;i<l;i++)h+=this.data[i];this.prevEnergy=this.energy;this.bass=b/(be*255);this.mid=m/((me-be)*255);this.high=h/((l-me)*255);this.energy=(this.bass+this.mid+this.high)/3;this.beat=this.energy-this.prevEnergy>0.15&&this.energy>0.3}}
+function loadImage(p){return new Promise((r,j)=>{const i=new Image();i.crossOrigin='anonymous';i.src='https://image.pollinations.ai/prompt/'+p+'?width=1280&height=720&seed='+Math.floor(Math.random()*999999)+'&nologo=true';i.onload=()=>r(i);i.onerror=()=>j(new Error('fail'));setTimeout(()=>j(new Error('timeout')),45000)})}
 
-// === PARTICLES ===
+async function loadImageWithRetry(prompt,retries=3){
+  for(let i=0;i<=retries;i++){
+    try{
+      if(i>0){log('Retry '+(i)+'/'+retries+' tra 6s...');await sleep(6000)}
+      return await loadImage(prompt);
+    }catch(e){
+      if(i===retries)return null;
+      log('Fallita, attesa 6s prima di retry...');
+      await sleep(6000);
+    }
+  }
+  return null;
+}
+
+class AudioAnalyzer{
+  constructor(a){this.audio=a;this.ctx=null;this.analyser=null;this.data=null;this.sourceNode=null;this.bass=0;this.mid=0;this.high=0;this.energy=0;this.prevEnergy=0;this.beat=false}
+  init(){
+    this.ctx=new(window.AudioContext||window.webkitAudioContext)();
+    this.sourceNode=this.ctx.createMediaElementSource(this.audio);
+    this.analyser=this.ctx.createAnalyser();this.analyser.fftSize=256;
+    this.sourceNode.connect(this.analyser);
+    this.analyser.connect(this.ctx.destination);
+    this.data=new Uint8Array(this.analyser.frequencyBinCount);
+  }
+  update(){
+    if(!this.analyser)return;this.analyser.getByteFrequencyData(this.data);
+    const l=this.data.length;let b=0,m=0,h=0;const be=Math.floor(l*.15),me=Math.floor(l*.5);
+    for(let i=0;i<be;i++)b+=this.data[i];for(let i=be;i<me;i++)m+=this.data[i];for(let i=me;i<l;i++)h+=this.data[i];
+    this.prevEnergy=this.energy;this.bass=b/(be*255);this.mid=m/((me-be)*255);this.high=h/((l-me)*255);
+    this.energy=(this.bass+this.mid+this.high)/3;this.beat=this.energy-this.prevEnergy>0.15&&this.energy>0.3;
+  }
+}
+
 class Particle{constructor(w,h){this.reset(w,h)}reset(w,h){this.x=Math.random()*w;this.y=Math.random()*h;this.vx=(Math.random()-.5)*2;this.vy=(Math.random()-.5)*2;this.size=Math.random()*3+1;this.alpha=Math.random()*.5+.2;this.life=Math.random()*100+50;this.maxLife=this.life}update(w,h,e){this.x+=this.vx*(1+e*3);this.y+=this.vy*(1+e*3);this.life--;if(this.life<=0||this.x<0||this.x>w||this.y<0||this.y>h)this.reset(w,h)}draw(ctx){const a=this.alpha*(this.life/this.maxLife);ctx.beginPath();ctx.arc(this.x,this.y,this.size,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,'+a+')';ctx.fill()}}
 
-// === GENERATE ===
 async function generate(){
   if(!selectedTrack)return showError('Seleziona una traccia');
   const lyrics=lyricsInput.value.trim();
@@ -325,22 +291,28 @@ async function generate(){
 
   const images=[];
   for(let i=0;i<scenes.length;i++){
-    statusEl.textContent='Immagine '+(i+1)+'/'+scenes.length+'...';
+    statusEl.textContent='Immagine '+(i+1)+'/'+scenes.length+'... (con pausa anti-limit)';
     progressBar.style.width=((i+1)/scenes.length*50)+'%';
-    try{images.push(await loadImage(genPrompt(scenes[i].text,style)));log('Img '+(i+1)+' OK')}
-    catch(e){images.push(null);log('Img '+(i+1)+' fail')}
+    const img=await loadImageWithRetry(genPrompt(scenes[i].text,style));
+    if(img){images.push(img);log('Img '+(i+1)+' OK')}
+    else{images.push(null);log('Img '+(i+1)+' fallita dopo retry')}
+    if(i<scenes.length-1){log('Pausa 4s...');await sleep(4000)}
   }
 
   statusEl.textContent='Preparazione...';progressBar.style.width='55%';
   const W=1280,H=720;const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;const ctx=canvas.getContext('2d');
-  let analyzer;try{analyzer=new AudioAnalyzer(audio);analyzer.init()}catch(e){showError('Audio: '+e.message);generateBtn.disabled=false;progressEl.style.display='none';return}
+
+  let analyzer;
+  try{analyzer=new AudioAnalyzer(audio);analyzer.init();log('Audio analyzer pronto')}
+  catch(e){showError('Audio: '+e.message);generateBtn.disabled=false;progressEl.style.display='none';return}
+
   const particles=[];for(let i=0;i<60;i++)particles.push(new Particle(W,H));
   let startTime=null,curScene=0,kbx=0,kby=0,flashA=0;
 
   const canvasStream=canvas.captureStream(30);
   const audioDest=analyzer.ctx.createMediaStreamDestination();
-  const srcNode=analyzer.ctx.createMediaElementSource(audio);
-  srcNode.connect(audioDest);srcNode.connect(analyzer.ctx.destination);
+  analyzer.sourceNode.connect(audioDest);
+
   const aTrack=audioDest.stream.getAudioTracks()[0];
   if(aTrack)canvasStream.addTrack(aTrack);
 
@@ -381,8 +353,7 @@ async function generate(){
 
 generateBtn.addEventListener('click',generate);
 
-// === INIT ===
-log('App avviata (client-direct)');
+log('App avviata (client-direct v2)');
 renderLibrary();
 </script>
 </body>
