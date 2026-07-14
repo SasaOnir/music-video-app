@@ -134,7 +134,7 @@ var GK2='pC08mQLywzzuzye-dAbV0iSnw';
 var SUPABASE_URL=SU1;
 var SUPABASE_KEY=SK1+SK2;
 var GEMINI_KEY=GK1+GK2;
-var GEMINI_MODEL='gemini-1.5-flash-latest';
+var GEMINI_MODEL='gemini-2.0-flash';
 var GEMINI_IMG_MODEL='gemini-2.0-flash-preview-image-generation';
 
 var sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
@@ -413,24 +413,39 @@ async function analyzeWithGemini(lyrics,duration,style){
   var prompt='You are an expert music video director. Analyze these song lyrics deeply and create a detailed visual storyboard.\n\nSONG DURATION: '+Math.round(duration)+' seconds\nVISUAL STYLE: '+(style||'cinematic')+'\nNUMBER OF SCENES: '+sceneCount+'\n\nINSTRUCTIONS:\n- Understand the EMOTIONAL ARC of the song\n- Each scene must have a SPECIFIC visual that matches the lyrics meaning\n- Think about NARRATIVE CONTINUITY\n- Include CULTURAL CONTEXT if lyrics are in a specific language/dialect\n\nFor EACH scene provide:\n1. "text": the exact portion of lyrics this scene covers\n2. "prompt": a DETAILED visual prompt in English for AI image generation (40-60 words). Include: subject, setting, time of day, lighting, color palette, camera angle, mood, symbolic elements.\n3. "mood": one of: melancholic, energetic, romantic, dark, hopeful, aggressive, nostalgic, ethereal, intimate, epic\n4. "colors": array of 3 hex color codes for background gradient\n\nReturn ONLY a valid JSON array. No markdown, no explanation.\n\nLYRICS:\n'+lyrics;
 
   var modelUrl='https://generativelanguage.googleapis.com/v1beta/models/'+GEMINI_MODEL+':generateContent?key='+GEMINI_KEY;
-  var res=await fetch(modelUrl,{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.85}})
-  });
-  if(!res.ok){
-    var errData=await res.json().catch(function(){return{}});
-    throw new Error('Gemini: '+(errData.error&&errData.error.message?errData.error.message:res.status));
+
+  for(var attempt=0;attempt<5;attempt++){
+    if(attempt>0){
+      var waitTime=(attempt*15)+10;
+      log('Rate limit, attesa '+waitTime+'s... (tentativo '+(attempt+1)+'/5)');
+      statusEl.textContent='Rate limit Gemini, attesa '+waitTime+'s...';
+      await sleep(waitTime*1000);
+    }
+    var res=await fetch(modelUrl,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.85}})
+    });
+    if(res.status===429){
+      var errData=await res.json().catch(function(){return{}});
+      log('429: '+errData.error.message);
+      continue;
+    }
+    if(!res.ok){
+      var errData2=await res.json().catch(function(){return{}});
+      throw new Error('Gemini: '+(errData2.error&&errData2.error.message?errData2.error.message:res.status));
+    }
+    var data=await res.json();
+    var text=data.candidates[0].content.parts[0].text;
+    text=text.replace(/```json\s*/g,'').replace(/```\s*/g,'').trim();
+    var match=text.match(/\[[\s\S]*\]/);
+    if(!match)throw new Error('Gemini: JSON non valido');
+    var scenes=JSON.parse(match[0]);
+    log('Gemini: '+scenes.length+' scene');
+    var sceneDur=duration/scenes.length;
+    return scenes.map(function(s,i){return{text:s.text,prompt:s.prompt,mood:s.mood||'melancolico',colors:s.colors||['#0f0c29','#302b63','#24243e'],start:i*sceneDur,end:(i+1)*sceneDur}});
   }
-  var data=await res.json();
-  var text=data.candidates[0].content.parts[0].text;
-  text=text.replace(/```json\s*/g,'').replace(/```\s*/g,'').trim();
-  var match=text.match(/\[[\s\S]*\]/);
-  if(!match)throw new Error('Gemini: JSON non valido');
-  var scenes=JSON.parse(match[0]);
-  log('Gemini: '+scenes.length+' scene');
-  var sceneDur=duration/scenes.length;
-  return scenes.map(function(s,i){return{text:s.text,prompt:s.prompt,mood:s.mood||'melancolico',colors:s.colors||['#0f0c29','#302b63','#24243e'],start:i*sceneDur,end:(i+1)*sceneDur}});
+  throw new Error('Gemini: troppo rate limited, riprova tra qualche minuto');
 }
 
 async function generateImageGemini(prompt){
