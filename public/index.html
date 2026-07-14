@@ -462,7 +462,7 @@ async function generate(){
     if(vt<duration)requestAnimationFrame(render);else{rec.stop();audio.pause();log('Finita!')}
   }
   sEl.textContent='Registrazione...';rec.start(1000);audio.play();requestAnimationFrame(render);
-  var blob=await done;sEl.textContent='Salvataggio video su cloud...';
+  var blob=await done;sEl.textContent='Salvataggio video...';
   await saveVideo(blob,sT3.name,style,duration);
   var url=URL.createObjectURL(blob);pv.src=url;pW.style.display='block';dB.href=url;dB.style.display='inline-block';dB.download=sT3.name.replace(/\.[^.]+$/,'')+'-video.webm';
   pE.style.display='none';sEl.textContent='Video pronto!';gB.disabled=false;log('Video: '+fS(blob.size));
