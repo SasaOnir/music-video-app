@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Music Video Director v2</title>
+<title>AI Music Video Director</title>
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -88,11 +88,9 @@ video{width:100%;border-radius:8px;background:#000;pointer-events:auto}
 .timeline-info{display:flex;flex-direction:column;gap:2px}
 .timeline-section{font-size:.7rem;color:#888;text-transform:uppercase;letter-spacing:.5px}
 .timeline-mood{font-size:.72rem;color:#4cc9f0}
-.timeline-dir{font-size:.7rem;color:#aaa;font-family:monospace}
 .audio-analysis{margin-top:12px;padding:12px;background:#0a0a0f;border-radius:8px;font-family:monospace;font-size:.72rem;color:#0c0;max-height:200px;overflow-y:auto}
 .audio-analysis div{padding:2px 0}
 .audio-analysis .feat{color:#4cc9f0}
-.audio-analysis .event{color:#f72585}
 </style>
 </head>
 <body>
@@ -102,16 +100,16 @@ video{width:100%;border-radius:8px;background:#000;pointer-events:auto}
 
 <div id="loginScreen">
 <div class="login-box">
-<h1>AI Music Video Director v2</h1>
-<p>Audio Intelligence · Beat tracking · Onset detection · Structural segmentation</p>
+<h1>AI Music Video Director</h1>
+<p>Analisi audio · Beat sync · Director AI · Testo coerente</p>
 <button class="google" id="googleLogin"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google"> Accedi con Google</button>
 <p id="loginError" style="color:#f66;margin-top:16px;display:none"></p>
 </div>
 </div>
 
 <div class="container" id="appMain" style="display:none">
-<h1>AI Music Video Director v2</h1>
-<p class="subtitle">STFT spectral analysis · 7-band features · Vocal detection · Self-similarity segmentation · Event-aware Director AI</p>
+<h1>AI Music Video Director</h1>
+<p class="subtitle">Audio mutato durante generazione · Video persistente su F5 · Testo coerente · Director AI</p>
 
 <div class="panel">
 <h2>Libreria Audio</h2>
@@ -132,8 +130,8 @@ video{width:100%;border-radius:8px;background:#000;pointer-events:auto}
 </div>
 
 <div class="panel">
-<h2>Analisi Audio Intelligence</h2>
-<div style="color:#888;font-size:.82rem;margin-bottom:10px">Il motore analizza l'intera canzone con STFT (FFT 1024), estrae 7 bande spettrali, rileva onsets, traccia i beat via autocorrelazione, segmenta la struttura via self-similarity matrix, e identifica eventi musicali (buildup, drop, vocal entry, breakdown).</div>
+<h2>Analisi Audio</h2>
+<div style="color:#888;font-size:.82rem;margin-bottom:10px">Analizza BPM, beat e struttura della canzone (1-3 secondi).</div>
 <button class="sec" id="analyzeBtn" disabled>Avvia Analisi Audio</button>
 <div class="audio-analysis" id="audioAnalysis" style="display:none"></div>
 </div>
@@ -156,15 +154,15 @@ video{width:100%;border-radius:8px;background:#000;pointer-events:auto}
 <div class="mode-tab" data-charmode="builder">Character Builder</div>
 </div>
 <div id="charFree" style="display:none">
-<label>Descrizione personaggio (in inglese per migliori risultati AI)</label>
-<input type="text" id="charFreeInput" class="text-input" placeholder="es: tall man in black leather jacket, green eyes, curly black hair, 26 years old">
+<label>Descrizione personaggio (in inglese)</label>
+<input type="text" id="charFreeInput" class="text-input" placeholder="es: tall man in black leather jacket, green eyes, curly black hair">
 </div>
 <div id="charBuilder" style="display:none">
 <div class="char-grid">
 <div class="char-field"><label>Genere</label><select id="cbGender"><option value="">-</option><option value="male">Maschio</option><option value="female">Femmina</option><option value="androgynous">Androgino</option></select></div>
-<div class="char-field"><label>Età</label><select id="cbAge"><option value="">-</option><option value="young">Giovane (20s)</option><option value="adult">Adulto (30s)</option><option value="middle">Mezza età (40s)</option><option value="elder">Anziano (60+)</option></select></div>
+<div class="char-field"><label>Età</label><select id="cbAge"><option value="">-</option><option value="young">Giovane</option><option value="adult">Adulto</option><option value="middle">Mezza età</option><option value="elder">Anziano</option></select></div>
 <div class="char-field"><label>Capelli</label><select id="cbHair"><option value="">-</option><option value="short black hair">Corti neri</option><option value="long black hair">Lunghi neri</option><option value="curly black hair">Ricci neri</option><option value="blonde hair">Biondi</option><option value="brown hair">Castani</option><option value="red hair">Rossi</option><option value="gray hair">Grigi</option><option value="bald">Calvo</option></select></div>
-<div class="char-field"><label>Occhi</label><select id="cbEyes"><option value="">-</option><option value="blue eyes">Blu</option><option value="green eyes">Verdi</option><option value="brown eyes">Marroni</option><option value="hazel eyes">Nocciola</option><option value="dark eyes">Scuri</option></select></div>
+<div class="char-field"><label>Occhi</label><select id="cbEyes"><option value="">-</option><option value="blue eyes">Blu</option><option value="green eyes">Verdi</option><option value="brown eyes">Marroni</option><option value="hazel eyes">Nocciola</option></select></div>
 <div class="char-field"><label>Corpo</label><select id="cbBody"><option value="">-</option><option value="slim build">Magra</option><option value="athletic build">Atletica</option><option value="muscular build">Muscolosa</option><option value="curvy figure">Formosa</option><option value="average build">Media</option></select></div>
 <div class="char-field"><label>Abito</label><select id="cbClothing"><option value="">-</option><option value="black leather jacket">Giacca pelle nera</option><option value="white t-shirt and jeans">T-shirt bianca e jeans</option><option value="elegant black dress">Abito nero elegante</option><option value="hoodie and sneakers">Hoodie e sneaker</option><option value="vintage suit">Completo vintage</option><option value="flannel shirt">Camicia flanella</option><option value="denim jacket">Giacca jeans</option></select></div>
 <div class="char-field"><label>Etnia</label><select id="cbEthnicity"><option value="">-</option><option value="Mediterranean features">Mediterranea</option><option value="Nordic features">Nordica</option><option value="African features">Africana</option><option value="Asian features">Asiatica</option><option value="Latin features">Latina</option><option value="mixed features">Mista</option></select></div>
@@ -175,13 +173,13 @@ video{width:100%;border-radius:8px;background:#000;pointer-events:auto}
 </div>
 
 <div class="panel">
-<h2>Director AI v2 — Mode</h2>
+<h2>Director AI — Mode</h2>
 <div class="mode-tabs" id="directorModeTabs">
-<div class="mode-tab active" data-dirmode="auto">AUTO (event-aware)</div>
+<div class="mode-tab active" data-dirmode="auto">AUTO</div>
 <div class="mode-tab" data-dirmode="rules">RULES</div>
-<div class="mode-tab" data-dirmode="manual">MANUAL (timeline)</div>
+<div class="mode-tab" data-dirmode="manual">MANUAL</div>
 </div>
-<div id="directorAuto" style="color:#888;font-size:.85rem">Il Director AI v2 mappa eventi musicali reali (onset, beat, vocal entry, buildup, drop, breakdown) su decisioni cinematografiche: camera moves, lens, lighting, FX layers, transitions, cut duration, shake.</div>
+<div id="directorAuto" style="color:#888;font-size:.85rem">Il Director AI decide camera, lens, lighting, FX, transizioni in base a BPM, mood e sezione. Questi parametri controllano il RENDER (non il prompt AI).</div>
 <div id="directorRules" style="display:none"><div class="rules-grid" id="rulesGrid"></div></div>
 <div id="directorManual" style="display:none">
 <button class="sec" id="generateStoryboard" disabled>Genera Storyboard</button>
@@ -210,7 +208,7 @@ video{width:100%;border-radius:8px;background:#000;pointer-events:auto}
 <div class="success-toast" id="successToast"></div>
 
 <script>
-// ====================================================================
+  // ====================================================================
 // CONFIGURAZIONE SUPABASE
 // ====================================================================
 var SU1='https://jescfkahkgcyuhffyycw.supabase.co';
@@ -219,7 +217,24 @@ var SK2='2Qr5bu9w0mjaVik-FV4tLKF3bkAHuJTCmO5KaM6PWt4';
 var sb=window.supabase.createClient(SU1,SK1+SK2);
 
 // ====================================================================
-// SICUREZZA
+// INDEXEDDB — persistenza video su F5
+// ====================================================================
+var idb=null;
+function initIDB(){
+  return new Promise(function(resolve){
+    try{
+      var req=indexedDB.open('mvdb',1);
+      req.onupgradeneeded=function(e){var db=e.target.result;if(!db.objectStoreNames.contains('videos'))db.createObjectStore('videos');if(!db.objectStoreNames.contains('meta'))db.createObjectStore('meta');};
+      req.onsuccess=function(e){idb=e.target.result;resolve();};
+      req.onerror=function(){resolve();};
+    }catch(e){resolve();}
+  });
+}
+function idbSet(store,key,val){return new Promise(function(resolve){if(!idb)return resolve();try{var tx=idb.transaction(store,'readwrite');tx.objectStore(store).put(val,key);tx.oncomplete=resolve;tx.onerror=resolve;}catch(e){resolve();}});}
+function idbGet(store,key){return new Promise(function(resolve){if(!idb)return resolve(null);try{var tx=idb.transaction(store,'readonly');var req=tx.objectStore(store).get(key);req.onsuccess=function(){resolve(req.result);};req.onerror=function(){resolve(null);};}catch(e){resolve(null);}});}
+
+// ====================================================================
+// SICUREZZA / FINGERPRINT
 // ====================================================================
 function getFingerprint(){var c=document.createElement('canvas');var ctx=c.getContext('2d');ctx.textBaseline='top';ctx.font='14px Arial';ctx.fillText('fp',2,2);var parts=[navigator.language,screen.width+'x'+screen.height,screen.colorDepth,new Date().getTimezoneOffset(),navigator.platform||'',c.toDataURL().slice(-50)];var hash=0;var str=parts.join('|');for(var i=0;i<str.length;i++){hash=((hash<<5)-hash)+str.charCodeAt(i);hash|=0}return Math.abs(hash).toString(36);}
 var FP=getFingerprint();var isBlocked=false;var actionTS=[];
@@ -228,10 +243,20 @@ function checkRL(){var n=Date.now();actionTS=actionTS.filter(function(t){return 
 function blockU(){if(isBlocked)return;isBlocked=true;secLog('BLOCK');document.getElementById('appMain').style.display='none';document.getElementById('loginScreen').style.display='none';document.getElementById('blockedScreen').style.display='flex'}
 setInterval(function(){if(document.getElementById('hpField').value!==''){secLog('HP');blockU()}},2000);
 document.addEventListener('contextmenu',function(e){e.preventDefault();secLog('RC')});
-document.addEventListener('selectstart',function(e){if(!e.target.closest('.text-input,.debug-panel,.cinema-summary,.char-preview,.timeline-panel,.audio-analysis,.rules-grid'))e.preventDefault()});
+document.addEventListener('selectstart',function(e){if(!e.target.closest('.text-input,.debug-panel,.cinema-summary,.char-preview,.timeline-panel,.audio-analysis'))e.preventDefault()});
 document.addEventListener('copy',function(e){e.preventDefault();secLog('CP')});
 document.addEventListener('keydown',function(e){if(e.key==='F12'||(e.ctrlKey&&e.shiftKey&&(e.key==='I'||e.key==='J'||e.key==='C'))||(e.ctrlKey&&e.key==='u')){e.preventDefault();secLog('DT')}});
 secLog('LOAD',{ua:navigator.userAgent.substring(0,150)});
+
+// ====================================================================
+// UTILITY
+// ====================================================================
+function log(m){var e=document.getElementById('debugLog');e.style.display='block';e.innerHTML+='<div>['+new Date().toLocaleTimeString()+'] '+m+'</div>';e.scrollTop=e.scrollHeight}
+function fmtTime(s){if(!s||!isFinite(s))return'??:??';return Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0')}
+function fmtSize(b){if(b<1024)return b+' B';if(b<1048576)return(b/1024).toFixed(1)+' KB';return(b/1048576).toFixed(1)+' MB'}
+function sleep(ms){return new Promise(function(r){setTimeout(r,ms)})}
+var errorT=null;function showError(m){var t=document.getElementById('errorToast');t.textContent=m;t.style.display='block';clearTimeout(errorT);errorT=setTimeout(function(){t.style.display='none'},8000);log('ERR: '+m)}
+var succT=null;function showSuccess(m){var t=document.getElementById('successToast');t.textContent=m;t.style.display='block';clearTimeout(succT);succT=setTimeout(function(){t.style.display='none'},4000)}
 
 // ====================================================================
 // AUTENTICAZIONE
@@ -251,18 +276,9 @@ async function verifyAdmin(email){
   if(window.location.search.includes('auth=callback'))window.history.replaceState({},'',window.location.origin);
   document.getElementById('loginScreen').style.display='none';document.getElementById('appMain').style.display='block';
   log('Benvenuto');renderLibrary();initCinema();initCharacter();initDirector();renderVideoLibrary();
+  // Carica ultimo video da IndexedDB (persistenza F5)
+  await restoreLastVideo();
 }
-handleAuth();
-
-// ====================================================================
-// UTILITY
-// ====================================================================
-function log(m){var e=document.getElementById('debugLog');e.style.display='block';e.innerHTML+='<div>['+new Date().toLocaleTimeString()+'] '+m+'</div>';e.scrollTop=e.scrollHeight}
-function fmtTime(s){if(!s||!isFinite(s))return'??:??';return Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0')}
-function fmtSize(b){if(b<1024)return b+' B';if(b<1048576)return(b/1024).toFixed(1)+' KB';return(b/1048576).toFixed(1)+' MB'}
-function sleep(ms){return new Promise(function(r){setTimeout(r,ms)})}
-var errorT=null;function showError(m){var t=document.getElementById('errorToast');t.textContent=m;t.style.display='block';clearTimeout(errorT);errorT=setTimeout(function(){t.style.display='none'},8000);log('ERR: '+m)}
-var succT=null;function showSuccess(m){var t=document.getElementById('successToast');t.textContent=m;t.style.display='block';clearTimeout(succT);succT=setTimeout(function(){t.style.display='none'},4000)}
 
 // ====================================================================
 // LIBRERIA AUDIO
@@ -276,6 +292,7 @@ var progressBar=document.getElementById('progressBar');var statusEl=document.get
 var previewWrap=document.getElementById('previewWrap');var preview=document.getElementById('preview');
 var downloadBtn=document.getElementById('downloadBtn');
 var selectedTrack=null;var audioCache={};var audioStruct=null;
+
 uploadZone.addEventListener('click',function(){audioUpload.click()});
 uploadZone.addEventListener('dragover',function(e){e.preventDefault();uploadZone.classList.add('dragover')});
 uploadZone.addEventListener('dragleave',function(){uploadZone.classList.remove('dragover')});
@@ -315,485 +332,139 @@ async function delTrack(id){if(!confirm('Eliminare?'))return;var r=await sb.from
 var svT=null;lyricsInput.addEventListener('input',function(){if(!selectedTrack)return;autoSaveHint.textContent='...';clearTimeout(svT);svT=setTimeout(async function(){await sb.from('tracks').update({lyrics:lyricsInput.value}).eq('id',selectedTrack.id);autoSaveHint.textContent='salvato';setTimeout(function(){autoSaveHint.textContent=''},2000)},600)});
 
 // ====================================================================
-// AUDIO INTELLIGENCE ENGINE v2 — STFT + Features + Onset + Beat + Segmentation
+// ANALISI AUDIO — veloce (1-3 sec), onesta
 // ====================================================================
-
-// Custom FFT (radix-2 Cooley-Tukey). Re Im in-place su Float32Array.
-function fft(re,im){
-  var n=re.length;
-  if(n<=1)return;
-  // bit-reversal permutation
-  for(var i=1,j=0;i<n;i++){
-    var bit=n>>1;
-    for(;j&bit;bit>>=1){j^=bit}
-    j^=bit;
-    if(i<j){
-      var tr=re[i];re[i]=re[j];re[j]=tr;
-      var ti=im[i];im[i]=im[j];im[j]=ti;
-    }
-  }
-  // butterfly
-  for(var len=2;len<=n;len<<=1){
-    var ang=-2*Math.PI/len;
-    var wr=Math.cos(ang),wi=Math.sin(ang);
-    for(var i=0;i<n;i+=len){
-      var curR=1,curI=0;
-      for(var k=0;k<len/2;k++){
-        var uR=re[i+k],uI=im[i+k];
-        var vR=re[i+k+len/2]*curR-im[i+k+len/2]*curI;
-        var vI=re[i+k+len/2]*curI+im[i+k+len/2]*curR;
-        re[i+k]=uR+vR;im[i+k]=uI+vI;
-        re[i+k+len/2]=uR-vR;im[i+k+len/2]=uI-vI;
-        var newR=curR*wr-curI*wi;
-        curI=curR*wi+curI*wr;curR=newR;
-      }
-    }
-  }
-}
-
-// Hann window
-function makeHann(n){var w=new Float32Array(n);for(var i=0;i<n;i++)w[i]=0.5*(1-Math.cos(2*Math.PI*i/(n-1)));return w;}
-
-// Calcola STFT completa con progress callback
-async function computeSTFT(audioBuffer,progressCb){
-  var sr=audioBuffer.sampleRate;
-  var ch=audioBuffer.getChannelData(0);
-  var fftSize=1024;
-  var hop=512;
-  var nFrames=Math.floor((ch.length-fftSize)/hop);
-  var hann=makeHann(fftSize);
-  var re=new Float32Array(fftSize);
-  var im=new Float32Array(fftSize);
-  var spec=new Array(nFrames);
-  var binHz=sr/fftSize;
-
-  // Yields ogni 200 frame per non bloccare UI
-  var yieldEvery=200;
-  for(var f=0;f<nFrames;f++){
-    var start=f*hop;
-    for(var i=0;i<fftSize;i++){
-      re[i]=ch[start+i]*hann[i];
-      im[i]=0;
-    }
-    fft(re,im);
-    // Magnitudo (solo prima metà, spec simmetrico)
-    var mag=new Float32Array(fftSize/2);
-    for(var i=0;i<fftSize/2;i++){
-      mag[i]=Math.sqrt(re[i]*re[i]+im[i]*im[i]);
-    }
-    spec[f]=mag;
-    if(f%yieldEvery===0){
-      if(progressCb)progressCb(f/nFrames);
-      await new Promise(function(r){setTimeout(r,0)});
-    }
-  }
-  if(progressCb)progressCb(1);
-  return{spec:spec,nFrames:nFrames,fftSize:fftSize,hop:hop,sr:sr,binHz:binHz};
-}
-
-// Estrae 7 bande spettrali per ogni frame
-function extractBandEnergies(spec,binHz){
-  var nFrames=spec.length;
-  // Basse in Hz: sub-bass 20-60, bass 60-250, low-mid 250-500, mid 500-2000, high-mid 2000-4000, treble 4000-8000, brilliance 8000-22050
-  var bands=[
-    {name:'sub',lo:20,hi:60},
-    {name:'bass',lo:60,hi:250},
-    {name:'lowmid',lo:250,hi:500},
-    {name:'mid',lo:500,hi:2000},
-    {name:'highmid',lo:2000,hi:4000},
-    {name:'treble',lo:4000,hi:8000},
-    {name:'brilliance',lo:8000,hi:22050},
-    {name:'vocal',lo:300,hi:3400}
-  ];
-  var result={};
-  for(var b=0;b<bands.length;b++){
-    var band=bands[b];
-    var loBin=Math.max(1,Math.floor(band.lo/binHz));
-    var hiBin=Math.min(spec[0].length-1,Math.ceil(band.hi/binHz));
-    var arr=new Float32Array(nFrames);
-    for(var f=0;f<nFrames;f++){
-      var s=0;
-      for(var i=loBin;i<=hiBin;i++)s+=spec[f][i];
-      arr[f]=s/Math.max(1,hiBin-loBin+1);
-    }
-    result[band.name]=arr;
-  }
-  return result;
-}
-
-// Normalizza array 0-1
-function normalize(arr){
-  var max=0;
-  for(var i=0;i<arr.length;i++)if(arr[i]>max)max=arr[i];
-  if(max<=0)return arr;
-  var out=new Float32Array(arr.length);
-  for(var i=0;i<arr.length;i++)out[i]=arr[i]/max;
-  return out;
-}
-
-// Spectral flux (somma delle differenze positive tra frame consecutivi)
-function computeSpectralFlux(spec){
-  var nFrames=spec.length;
-  var nBins=spec[0].length;
-  var flux=new Float32Array(nFrames);
-  for(var f=1;f<nFrames;f++){
-    var s=0;
-    for(var i=0;i<nBins;i++){
-      var d=spec[f][i]-spec[f-1][i];
-      if(d>0)s+=d;
-    }
-    flux[f]=s/nBins;
-  }
-  return flux;
-}
-
-// Spectral centroid (brightness): Σ(f*m)/Σ(m)
-function computeCentroid(spec,binHz){
-  var nFrames=spec.length;
-  var nBins=spec[0].length;
-  var cent=new Float32Array(nFrames);
-  for(var f=0;f<nFrames;f++){
-    var num=0,den=0;
-    for(var i=0;i<nBins;i++){
-      var freq=i*binHz;
-      num+=freq*spec[f][i];
-      den+=spec[f][i];
-    }
-    cent[f]=den>0?num/den:0;
-  }
-  return cent;
-}
-
-// Onset detection via peak picking su spectral flux normalizzato
-function detectOnsets(flux){
-  var n=flux.length;
-  var norm=normalize(flux);
-  // Media mobile per threshold adattiva
-  var window=10;
-  var onsets=[];
-  for(var i=window;i<n-window;i++){
-    var avg=0;
-    for(var j=i-window;j<i+window;j++)avg+=norm[j];
-    avg/=(2*window);
-    var thr=avg*1.5+0.05;
-    if(norm[i]>thr&&norm[i]>=norm[i-1]&&norm[i]>norm[i+1]){
-      onsets.push(i);
-    }
-  }
-  return onsets;
-}
-
-// Beat tracking via autocorrelation su envelope dei bassi
-function detectBeats(bassArr,sr,hop){
-  // 1. Smooth envelope via cumulative sum + log compression
-  var n=bassArr.length;
-  var env=new Float32Array(n);
-  var acc=0;
-  for(var i=0;i<n;i++){
-    acc=acc*0.95+bassArr[i];
-    env[i]=Math.log(1+acc*100);
-  }
-  // 2. Autocorrelation su 5 secondi (intervallo BPM 60-180)
-  var frameRate=sr/hop;
-  var minLag=Math.floor(frameRate*60/180); // 180 BPM
-  var maxLag=Math.floor(frameRate*60/60);  // 60 BPM
-  var bestLag=-1,bestVal=0;
-  for(var lag=minLag;lag<=maxLag;lag++){
-    var s=0;
-    for(var i=0;i<n-lag;i+=2){s+=env[i]*env[i+lag];}
-    if(s>bestVal){bestVal=s;bestLag=lag;}
-  }
-  var bpm=bestLag>0?Math.round(60/(bestLag/frameRate)):120;
-  // 3. Refined beat positions: peak picking su env ai lag multipli del periodo
-  var beats=[];
-  var period=bestLag;
-  // Trova primo beat forte
-  var firstBeat=0,maxV=0;
-  for(var i=0;i<period*2&&i<n;i++){if(env[i]>maxV){maxV=env[i];firstBeat=i;}}
-  for(var b=firstBeat;b<n;b+=period){
-    // Snap al peak locale entro ±5 frame
-    var bestIdx=b,maxE=env[b]||0;
-    for(var k=-5;k<=5;k++){
-      var idx=b+k;
-      if(idx>=0&&idx<n&&env[idx]>maxE){maxE=env[idx];bestIdx=idx;}
-    }
-    beats.push(bestIdx*hop/sr);
-  }
-  return{bpm:bpm,beats:beats};
-}
-
-// Structural segmentation via self-similarity matrix (semplificata con chroma-like features)
-function segmentStructure(bands,centroid,nFrames,sr,hop){
-  // Feature vector per ogni secondo: 7 bande + centroid normalizzato
-  var frameRate=sr/hop;
-  var secHop=Math.floor(frameRate); // 1 secondo
-  var nSec=Math.floor(nFrames/secHop);
-  var features=[];
-  for(var s=0;s<nSec;s++){
-    var startIdx=s*secHop;
-    var endIdx=Math.min(startIdx+secHop,nFrames);
-    var fv=[];
-    var bandNames=['sub','bass','lowmid','mid','highmid','treble','brilliance'];
-    for(var b=0;b<bandNames.length;b++){
-      var arr=bands[bandNames[b]];
-      var avg=0;
-      for(var i=startIdx;i<endIdx;i++)avg+=arr[i];
-      avg/=(endIdx-startIdx);
-      fv.push(avg);
-    }
-    // centroid normalizzato 0-1 (max ~11000 Hz)
-    var cAvg=0;
-    for(var i=startIdx;i<endIdx;i++)cAvg+=centroid[i];
-    cAvg/=(endIdx-startIdx);
-    fv.push(Math.min(1,cAvg/11000));
-    // vocal band energy
-    var vAvg=0;
-    for(var i=startIdx;i<endIdx;i++)vAvg+=bands.vocal[i];
-    vAvg/=(endIdx-startIdx);
-    fv.push(vAvg);
-    features.push(fv);
-  }
-  // Normalizza features
-  var nFeat=features[0].length;
-  var maxFeat=new Array(nFeat).fill(0);
-  for(var s=0;s<nSec;s++)for(var f=0;f<nFeat;f++)if(features[s][f]>maxFeat[f])maxFeat[f]=features[s][f];
-  for(var s=0;s<nSec;s++)for(var f=0;f<nFeat;f++)features[s][f]/=Math.max(0.0001,maxFeat[f]);
-
-  // Self-similarity matrix: cosine similarity tra ogni coppia di secondi
-  function similarity(a,b){
-    var dot=0,nA=0,nB=0;
-    for(var f=0;f<nFeat;f++){dot+=a[f]*b[f];nA+=a[f]*a[f];nB+=b[f]*b[f];}
-    return dot/Math.max(0.0001,Math.sqrt(nA*nB));
-  }
-  // Novelty curve: kernel checkerboard lungo la diagonale
-  var novelty=new Float32Array(nSec);
-  var K=2; // kernel size ±2 secondi
-  for(var i=K;i<nSec-K;i++){
-    var n=0;
-    for(var a=-K;a<K;a++){
-      for(var b=-K;b<K;b++){
-        var sign=(a<0&&b>=0)||(a>=0&&b<0)?1:-1;
-        n+=sign*similarity(features[i+a],features[i+b]);
-      }
-    }
-    novelty[i]=n;
-  }
-  // Normalize novelty
-  var maxNov=0;
-  for(var i=0;i<nSec;i++)if(novelty[i]>maxNov)maxNov=novelty[i];
-  if(maxNov>0)for(var i=0;i<nSec;i++)novelty[i]/=maxNov;
-  // Peak picking con min distance 8 secondi
-  var boundaries=[0];
-  var lastPeak=0;
-  for(var i=K;i<nSec-K;i++){
-    if(novelty[i]>0.3&&novelty[i]>=novelty[i-1]&&novelty[i]>novelty[i+1]&&i-lastPeak>=8){
-      boundaries.push(i);
-      lastPeak=i;
-    }
-  }
-  boundaries.push(nSec);
-  // Crea sezioni e clusterizza per similarità
-  var sections=[];
-  for(var b=0;b<boundaries.length-1;b++){
-    var start=boundaries[b];
-    var end=boundaries[b+1];
-    // media features sezione
-    var avgFeat=new Array(nFeat).fill(0);
-    for(var s=start;s<end;s++)for(var f=0;f<nFeat;f++)avgFeat[f]+=features[s][f];
-    for(var f=0;f<nFeat;f++)avgFeat[f]/=(end-start);
-    // Etichetta in base a features
-    var energy=avgFeat[1]+avgFeat[2]+avgFeat[3]; // bass+lowmid+mid
-    var posRatio=b/(boundaries.length-1);
-    var label='verse';
-    if(b===0&&energy<0.4)label='intro';
-    else if(b===boundaries.length-2&&energy<0.45)label='outro';
-    else if(energy>0.6)label='chorus';
-    else if(energy<0.35&&b>0&&b<boundaries.length-2)label='bridge';
-    else label='verse';
-    if(posRatio>0.55&&posRatio<0.78&&label==='verse')label='bridge';
-    sections.push({
-      start:start*1.0, // secondi
-      end:end*1.0,
-      energy:energy,
-      label:label,
-      centroid:avgFeat[7],
-      vocal:avgFeat[8]
-    });
-  }
-  // Merge consecutive same label
-  var merged=[];
-  for(var i=0;i<sections.length;i++){
-    if(merged.length&&merged[merged.length-1].label===sections[i].label){
-      merged[merged.length-1].end=sections[i].end;
-      merged[merged.length-1].energy=(merged[merged.length-1].energy+sections[i].energy)/2;
-    }else{
-      merged.push(sections[i]);
-    }
-  }
-  return{sections:merged,novelty:novelty};
-}
-
-// Event detection: buildup, drop, breakdown, vocal entry/exit
-function detectEvents(bands,centroid,vocalArr,sr,hop){
-  var nFrames=vocalArr.length;
-  var frameRate=sr/hop;
-  var secFrame=Math.floor(frameRate);
-  var events=[];
-  // Vocal entry/exit: threshold dinamica
-  var vocalNorm=normalize(vocalArr);
-  var vocalThresh=0.25;
-  var wasVocal=false;
-  for(var i=secFrame;i<nFrames;i+=secFrame){
-    var v=vocalNorm[i];
-    if(!wasVocal&&v>vocalThresh){
-      events.push({time:i*hop/sr,type:'vocalIn'});
-      wasVocal=true;
-    }else if(wasVocal&&v<vocalThresh*0.6){
-      events.push({time:i*hop/sr,type:'vocalOut'});
-      wasVocal=false;
-    }
-  }
-  // Buildup: energia basso crescente per >8 sec
-  var bassNorm=normalize(bands.bass);
-  var winSec=8*secFrame;
-  for(var i=winSec;i<nFrames;i+=secFrame){
-    var before=bassNorm[i-winSec];
-    var after=bassNorm[i];
-    if(after>before*1.8&&after>0.4&&(after-before)>0.3){
-      events.push({time:i*hop/sr,type:'buildup',intensity:after-before});
-    }
-  }
-  // Drop: salto repentino >40% in energia totale
-  var totalNorm=new Float32Array(nFrames);
-  for(var i=0;i<nFrames;i++)totalNorm[i]=(bands.bass[i]+bands.mid[i]+bands.treble[i])/3;
-  totalNorm=normalize(totalNorm);
-  for(var i=secFrame;i<nFrames;i+=secFrame/2){
-    var delta=totalNorm[i]-totalNorm[i-secFrame/2];
-    if(delta>0.4&&totalNorm[i]>0.6){
-      events.push({time:i*hop/sr,type:'drop',intensity:delta});
-    }
-  }
-  // Breakdown: calo improvviso di centroid
-  var centNorm=normalize(centroid);
-  for(var i=secFrame;i<nFrames;i+=secFrame/2){
-    var deltaC=centNorm[i-secFrame/2]-centNorm[i];
-    if(deltaC>0.3&&centNorm[i]<0.4){
-      events.push({time:i*hop/sr,type:'breakdown'});
-    }
-  }
-  // Sort by time
-  events.sort(function(a,b){return a.time-b.time;});
-  // Dedupe vicini (<2 sec stesso tipo)
-  var deduped=[];
-  for(var i=0;i<events.length;i++){
-    if(deduped.length===0||deduped[deduped.length-1].type!==events[i].type||(events[i].time-deduped[deduped.length-1].time)>2){
-      deduped.push(events[i]);
-    }
-  }
-  return deduped;
-}
-
-// Main analysis entry point
 async function analyzeAudioIntelligence(audioUrl,progressCb){
-  log('Avvio Audio Intelligence Engine v2...');
-  var res=await fetch(audioUrl);
-  var buf=await res.arrayBuffer();
-  var tmpCtx=new(window.OfflineAudioContext||window.webkitOfflineAudioContext)(2,44100,44100);
-  var decoded=await tmpCtx.decodeAudioData(buf);
-  log('Audio decodificato: '+decoded.duration.toFixed(1)+'s @ '+decoded.sampleRate+'Hz');
+  log('Analisi audio...');
+  try{
+    if(progressCb)progressCb('Decodifica audio...',0);
+    var res=await fetch(audioUrl);
+    var buf=await res.arrayBuffer();
+    var tmpCtx=new(window.OfflineAudioContext||window.webkitOfflineAudioContext)(2,44100,44100);
+    var decoded=await tmpCtx.decodeAudioData(buf);
+    var ch=decoded.getChannelData(0);
+    var sr=decoded.sampleRate;
+    var dur=decoded.duration;
+    log('Audio: '+dur.toFixed(1)+'s @ '+sr+'Hz');
 
-  if(progressCb)progressCb('STFT in corso...',0);
-  var stft=await computeSTFT(decoded,function(p){if(progressCb)progressCb('STFT in corso...',p*0.5);});
-  log('STFT: '+stft.nFrames+' frame, '+stft.fftSize+'-pt FFT, bin='+stft.binHz.toFixed(1)+'Hz');
+    if(progressCb)progressCb('Calcolo energia...',0.3);
+    var hop=Math.floor(sr*0.02);
+    var nSamples=Math.floor(ch.length/hop);
+    var energy=new Float32Array(nSamples);
+    for(var i=0;i<nSamples;i++){
+      var s=0;var start=i*hop;
+      for(var j=0;j<hop&&start+j<ch.length;j++){var v=ch[start+j];s+=v*v;}
+      energy[i]=Math.sqrt(s/hop);
+    }
+    var maxE=0;for(var k=0;k<nSamples;k++)if(energy[k]>maxE)maxE=energy[k];
+    if(maxE>0)for(var kk=0;kk<nSamples;kk++)energy[kk]/=maxE;
 
-  if(progressCb)progressCb('Estrazione features...',0.5);
-  var bands=extractBandEnergies(stft.spec,stft.binHz);
-  var flux=computeSpectralFlux(stft.spec);
-  var centroid=computeCentroid(stft.spec,stft.binHz);
+    if(progressCb)progressCb('Beat detection...',0.55);
+    var frameRate=1/0.02;
+    var minLag=Math.floor(frameRate*60/180);
+    var maxLag=Math.floor(frameRate*60/60);
+    var env=new Float32Array(nSamples);
+    var acc=0;
+    for(var i=0;i<nSamples;i++){acc=acc*0.9+energy[i];env[i]=Math.log(1+acc*50);}
+    var bestLag=-1,bestVal=0;
+    for(var lag=minLag;lag<=maxLag;lag+=2){
+      var s=0;
+      for(var i=0;i<nSamples-lag;i+=3)s+=env[i]*env[i+lag];
+      if(s>bestVal){bestVal=s;bestLag=lag;}
+    }
+    var bpm=bestLag>0?Math.round(60/(bestLag/frameRate)):120;
+    bpm=Math.max(60,Math.min(180,bpm));
+    var beats=[];
+    var period=bestLag;
+    var firstBeat=0,maxV=0;
+    for(var i=0;i<period*2&&i<nSamples;i++){if(env[i]>maxV){maxV=env[i];firstBeat=i;}}
+    for(var b=firstBeat;b<nSamples;b+=period){
+      var bestIdx=b,maxE2=env[b]||0;
+      for(var k=-3;k<=3;k++){var idx=b+k;if(idx>=0&&idx<nSamples&&env[idx]>maxE2){maxE2=env[idx];bestIdx=idx;}}
+      beats.push(bestIdx*0.02);
+    }
+    log('BPM: '+bpm+', '+beats.length+' beat');
 
-  if(progressCb)progressCb('Onset detection...',0.65);
-  var onsets=detectOnsets(flux);
-  log('Onset: '+onsets.length+' eventi');
+    if(progressCb)progressCb('Segmentazione...',0.8);
+    var winSec=5*50;
+    var sections=[];
+    var prevAvg=-1;var secStart=0;
+    for(var i=0;i<nSamples;i+=winSec){
+      var sAvg=0,sCnt=0;
+      for(var j=i;j<i+winSec&&j<nSamples;j++){sAvg+=energy[j];sCnt++;}
+      sAvg/=Math.max(1,sCnt);
+      if(prevAvg>=0&&Math.abs(sAvg-prevAvg)>0.15&&(i*0.02-secStart)>8){
+        sections.push({start:secStart,end:i*0.02,energy:(prevAvg+sAvg)/2});
+        secStart=i*0.02;
+      }
+      prevAvg=sAvg;
+    }
+    if(secStart<dur)sections.push({start:secStart,end:dur,energy:prevAvg>=0?prevAvg:0.5});
+    var gAvg=0;for(var i=0;i<sections.length;i++)gAvg+=sections[i].energy;
+    gAvg/=Math.max(1,sections.length);
+    var labeled=[];
+    for(var i=0;i<sections.length;i++){
+      var s=sections[i];var posRatio=i/Math.max(1,sections.length-1);var label='verse';
+      if(i===0&&s.energy<gAvg*0.6)label='intro';
+      else if(i===sections.length-1&&s.energy<gAvg*0.7)label='outro';
+      else if(s.energy>gAvg*1.15)label='chorus';
+      else if(s.energy<gAvg*0.7&&i>0&&i<sections.length-1)label='bridge';
+      else label='verse';
+      if(posRatio>0.55&&posRatio<0.78&&label==='verse')label='bridge';
+      labeled.push({start:s.start,end:s.end,energy:s.energy,label:label,vocal:0,centroid:0});
+    }
+    var merged=[];
+    for(var i=0;i<labeled.length;i++){
+      if(merged.length&&merged[merged.length-1].label===labeled[i].label)merged[merged.length-1].end=labeled[i].end;
+      else merged.push(labeled[i]);
+    }
+    log('Sezioni: '+merged.length);
 
-  if(progressCb)progressCb('Beat tracking (autocorrelation)...',0.75);
-  var beatInfo=detectBeats(bands.bass,stft.sr,stft.hop);
-  log('Beat: BPM~'+beatInfo.bpm+', '+beatInfo.beats.length+' posizioni');
-
-  if(progressCb)progressCb('Segmentazione strutturale (self-similarity)...',0.85);
-  var seg=segmentStructure(bands,centroid,stft.nFrames,stft.sr,stft.hop);
-  log('Sezioni: '+seg.sections.length);
-
-  if(progressCb)progressCb('Event detection...',0.95);
-  var events=detectEvents(bands,centroid,bands.vocal,stft.sr,stft.hop);
-  log('Eventi: '+events.length);
-
-  // Build summary
-  var result={
-    bpm:beatInfo.bpm,
-    beats:beatInfo.beats,
-    onsets:onsets.map(function(o){return o*stft.hop/stft.sr;}),
-    sections:seg.sections,
-    events:events,
-    bands:bands,
-    centroid:centroid,
-    flux:flux,
-    novelty:seg.novelty,
-    duration:decoded.duration,
-    sr:stft.sr,
-    hop:stft.hop,
-    nFrames:stft.nFrames
-  };
-
-  if(progressCb)progressCb('Analisi completata',1);
-  return result;
+    if(progressCb)progressCb('Completato',1);
+    return{bpm:bpm,beats:beats,onsets:beats,sections:merged,events:[],energy:energy,duration:dur,sr:sr,hop:hop,nFrames:nSamples};
+  }catch(e){log('Analisi fallita: '+e.message);return null;}
 }
 
-// Renderizza il riepilogo analisi nel pannello UI
 function renderAudioAnalysis(struct){
   var el=document.getElementById('audioAnalysis');
   el.style.display='block';
   var h='';
-  h+='<div class="feat">BPM rilevato: <b>'+struct.bpm+'</b></div>';
-  h+='<div class="feat">Beats: '+struct.beats.length+' · Onsets: '+struct.onsets.length+'</div>';
-  h+='<div class="feat">Sezioni strutturali: '+struct.sections.length+'</div>';
+  h+='<div class="feat">BPM: <b>'+struct.bpm+'</b> · Beats: '+struct.beats.length+'</div>';
+  h+='<div class="feat">Sezioni: '+struct.sections.length+'</div>';
   for(var i=0;i<struct.sections.length;i++){
     var s=struct.sections[i];
-    h+='<div>  ['+s.label.toUpperCase()+'] '+fmtTime(s.start)+' - '+fmtTime(s.end)+' (E='+s.energy.toFixed(2)+' V='+(s.vocal||0).toFixed(2)+')</div>';
-  }
-  h+='<div class="event">Eventi musicali: '+struct.events.length+'</div>';
-  for(var j=0;j<Math.min(struct.events.length,20);j++){
-    var e=struct.events[j];
-    h+='<div>  ['+e.type+'] @ '+fmtTime(e.time)+(e.intensity?' int='+e.intensity.toFixed(2):'')+'</div>';
+    h+='<div>  ['+s.label.toUpperCase()+'] '+fmtTime(s.start)+' - '+fmtTime(s.end)+' (E='+s.energy.toFixed(2)+')</div>';
   }
   el.innerHTML=h;
 }
-  // ====================================================================
+
+// ====================================================================
 // CATEGORIE CINEMATOGRAFICHE
 // ====================================================================
 var CINEMATIC_PRESETS={
-  film:{label:'Pellicola',options:{'':'Auto',kodak250d:'Kodak Vision3 250D',kodak500t:'Kodak Vision3 500T',portra400:'Kodak Portra 400',fujiEterna:'Fujifilm Eterna',fuji400h:'Fujifilm Pro 400H',agfaVista:'Agfa Vista',ilfordHP5:'Ilford HP5 (B&N)',kodakTriX:'Kodak Tri-X (B&N)'}},
-  lighting:{label:'Illuminazione',options:{'':'Auto',goldenHour:'Golden Hour',blueHour:'Blue Hour',softStudio:'Soft Studio',hardLight:'Hard Light',rembrandt:'Rembrandt',split:'Split Lighting',butterfly:'Butterfly',loop:'Loop Lighting',neon:'Neon Cyberpunk',candle:'Candle Light',moonlight:'Moonlight',volumetric:'Volumetric Light',godRays:'God Rays',rim:'Rim Light',practical:'Practical Lighting'}},
-  lens:{label:'Obiettivo',options:{'':'Auto',mm24:'24mm',mm35:'35mm',mm50:'50mm',mm85:'85mm',mm135:'135mm',anamorphic:'Anamorphic',vintage:'Vintage Lens',tiltShift:'Tilt Shift',macro:'Macro',fisheye:'Fisheye'}},
-  shot:{label:'Inquadratura',options:{'':'Auto',ecu:'Extreme Close Up',cu:'Close Up',mcu:'Medium Close Up',ms:'Medium Shot',cowboy:'Cowboy Shot',full:'Full Body',wide:'Wide Shot',ewide:'Extreme Wide',ots:'Over Shoulder',pov:'POV',drone:'Drone',birdEye:'Bird Eye',wormEye:'Worm Eye'}},
-  movement:{label:'Movimento Camera',options:{'':'Auto',dollyIn:'Dolly In',dollyOut:'Dolly Out',craneUp:'Crane Up',craneDown:'Crane Down',orbit:'Orbit',handheld:'Handheld',steadicam:'Steadicam',gimbal:'Gimbal',whipPan:'Whip Pan',slowPush:'Slow Push',tracking:'Tracking',zoom:'Zoom',snapZoom:'Snap Zoom'}},
-  atmosphere:{label:'Atmosfera',options:{'':'Auto',fog:'Fog',rain:'Rain',snow:'Snow',dust:'Dust',smoke:'Smoke',embers:'Fire Embers',storm:'Storm',haze:'Haze',mist:'Mist'}},
-  grade:{label:'Color Grading',options:{'':'Auto',tealOrange:'Teal & Orange',blockbuster:'Hollywood Blockbuster',bleach:'Bleach Bypass',desaturated:'Desaturated',highContrast:'High Contrast',lowContrast:'Low Contrast',hdr:'HDR',warmVintage:'Warm Vintage',coldNordic:'Cold Nordic',matrix:'Matrix Green',sepia:'Sepia',noir:'Noir'}},
+  film:{label:'Pellicola',options:{'':'Auto',kodak250d:'Kodak Vision3 250D',kodak500t:'Kodak Vision3 500T',portra400:'Kodak Portra 400',fujiEterna:'Fujifilm Eterna',fuji400h:'Fujifilm Pro 400H',agfaVista:'Agfa Vista',ilfordHP5:'Ilford HP5',kodakTriX:'Kodak Tri-X'}},
+  lighting:{label:'Illuminazione',options:{'':'Auto',goldenHour:'Golden Hour',blueHour:'Blue Hour',softStudio:'Soft Studio',hardLight:'Hard Light',rembrandt:'Rembrandt',split:'Split',butterfly:'Butterfly',loop:'Loop',neon:'Neon',candle:'Candle',moonlight:'Moonlight',volumetric:'Volumetric',godRays:'God Rays',rim:'Rim',practical:'Practical'}},
+  lens:{label:'Obiettivo',options:{'':'Auto',mm24:'24mm',mm35:'35mm',mm50:'50mm',mm85:'85mm',mm135:'135mm',anamorphic:'Anamorphic',vintage:'Vintage',tiltShift:'Tilt Shift',macro:'Macro',fisheye:'Fisheye'}},
+  shot:{label:'Inquadratura',options:{'':'Auto',ecu:'Extreme CU',cu:'Close Up',mcu:'Medium CU',ms:'Medium',cowboy:'Cowboy',full:'Full Body',wide:'Wide',ewide:'Extreme Wide',ots:'Over Shoulder',pov:'POV',drone:'Drone',birdEye:'Bird Eye',wormEye:'Worm Eye'}},
+  movement:{label:'Movimento',options:{'':'Auto',dollyIn:'Dolly In',dollyOut:'Dolly Out',craneUp:'Crane Up',craneDown:'Crane Down',orbit:'Orbit',handheld:'Handheld',steadicam:'Steadicam',gimbal:'Gimbal',whipPan:'Whip Pan',slowPush:'Slow Push',tracking:'Tracking',zoom:'Zoom',snapZoom:'Snap Zoom'}},
+  atmosphere:{label:'Atmosfera',options:{'':'Auto',fog:'Fog',rain:'Rain',snow:'Snow',dust:'Dust',smoke:'Smoke',embers:'Embers',storm:'Storm',haze:'Haze',mist:'Mist'}},
+  grade:{label:'Color Grading',options:{'':'Auto',tealOrange:'Teal & Orange',blockbuster:'Blockbuster',bleach:'Bleach Bypass',desaturated:'Desaturated',highContrast:'High Contrast',lowContrast:'Low Contrast',hdr:'HDR',warmVintage:'Warm Vintage',coldNordic:'Cold Nordic',matrix:'Matrix',sepia:'Sepia',noir:'Noir'}},
   mood:{label:'Mood',options:{'':'Auto',epic:'Epic',dramatic:'Dramatic',horror:'Horror',romantic:'Romantic',thriller:'Thriller',documentary:'Documentary',scifi:'Sci-Fi',fantasy:'Fantasy',dystopian:'Dystopian',hopeful:'Hopeful',melancholic:'Melancholic',mysterious:'Mysterious'}},
-  director:{label:'Regista',options:{'':'Auto',nolan:'Nolan-like',villeneuve:'Villeneuve-like',fincher:'Fincher-like',spielberg:'Spielberg-like',scott:'Scott-like',cameron:'Cameron-like',tarantino:'Tarantino-like',wesanderson:'Wes Anderson-like',kurosawa:'Kurosawa-like'}},
-  optic:{label:'Effetti Ottici',options:{'':'Auto',lensFlare:'Lens Flare',bokeh:'Bokeh',bloom:'Bloom',filmGrain:'Film Grain',chromatic:'Chromatic Aberration',motionBlur:'Motion Blur',shallowDOF:'Shallow Depth of Field',deepFocus:'Deep Focus',lightLeak:'Light Leak',halation:'Halation'}}
+  director:{label:'Regista',options:{'':'Auto',nolan:'Nolan',villeneuve:'Villeneuve',fincher:'Fincher',spielberg:'Spielberg',scott:'Scott',cameron:'Cameron',tarantino:'Tarantino',wesanderson:'Wes Anderson',kurosawa:'Kurosawa'}},
+  optic:{label:'Effetti Ottici',options:{'':'Auto',lensFlare:'Lens Flare',bokeh:'Bokeh',bloom:'Bloom',filmGrain:'Film Grain',chromatic:'Chromatic',motionBlur:'Motion Blur',shallowDOF:'Shallow DOF',deepFocus:'Deep Focus',lightLeak:'Light Leak',halation:'Halation'}}
 };
 
 var CINEMATIC_PROMPTS={
-  film:{kodak250d:'shot on Kodak Vision3 250D film stock, daylight balanced, fine grain, natural color reproduction, cinematic 35mm texture',kodak500t:'shot on Kodak Vision3 500T film stock, tungsten balanced, low light cinematic grain, warm shadow tones',portra400:'shot on Kodak Portra 400 film, warm natural skin tones, fine grain, slightly oversaturated highlights',fujiEterna:'shot on Fujifilm Eterna film, muted cinematic colors, soft contrast, pastel shadows',fuji400h:'shot on Fujifilm Pro 400H film, cool tones, clean grain, pastel palette',agfaVista:'shot on Agfa Vista film, vibrant saturated colors, warm reds, vintage consumer film look',ilfordHP5:'shot on Ilford HP5 black and white film, classic grain, high contrast monochrome',kodakTriX:'shot on Kodak Tri-X black and white film, gritty grain, documentary feel, pushed contrast'},
-  lighting:{goldenHour:'golden hour lighting, warm sunset glow, long soft shadows, low sun angle',blueHour:'blue hour lighting, deep blue ambient sky, twilight atmosphere, cool tones',softStudio:'soft studio lighting, diffused key light, gentle wraparound shadows',hardLight:'hard directional light, sharp defined shadows, high contrast illumination',rembrandt:'Rembrandt lighting, triangle highlight on cheek, classic painterly portrait',split:'split lighting, half face in deep shadow, dramatic chiaroscuro contrast',butterfly:'butterfly lighting, symmetrical shadow under nose, glamorous Hollywood portrait',loop:'loop lighting, soft small nose shadow, natural flattering portrait',neon:'neon cyberpunk lighting, magenta and cyan glow, urban futuristic atmosphere',candle:'candlelight, warm flickering glow, intimate low-key chiaroscuro',moonlight:'moonlight, cool blue ambient, nocturnal atmosphere, silver highlights',volumetric:'volumetric lighting, visible light rays through atmosphere, god beam shafts',godRays:'god rays, shafts of sunlight through canopy or window, atmospheric haze',rim:'rim lighting, bright edge highlight separating subject from background',practical:'practical lighting, visible light sources in frame, motivated light sources'},
-  lens:{mm24:'24mm wide angle lens, expansive perspective, environmental framing, slight distortion',mm35:'35mm lens, natural perspective, classic documentary street photography feel',mm50:'50mm lens, normal perspective, classic cinematic look, natural depth',mm85:'85mm portrait lens, shallow depth of field, flattering subject compression',mm135:'135mm telephoto lens, strong background compression, very shallow depth',anamorphic:'anamorphic lens, oval bokeh, horizontal blue lens flares, 2.39:1 cinematic squeeze',vintage:'vintage lens character, soft edges, warm coating flare, dreamy rendering',tiltShift:'tilt-shift lens, miniature effect, selective focus plane, surreal scale',macro:'macro lens, extreme close detail, very shallow depth of field, intricate texture',fisheye:'fisheye lens, extreme wide distortion, 180 degree field of view, surreal curvature'},
-  shot:{ecu:'extreme close up shot, single detail filling the frame, intimate and intense',cu:'close up shot, head and shoulders filling frame, emotional focus on face',mcu:'medium close up, chest up framing, conversational intimacy',ms:'medium shot, waist up, balanced subject and environment',cowboy:'cowboy shot, mid-thigh up, western classic framing',full:'full body shot, head to toe visible, fashion and movement emphasis',wide:'wide shot, environment dominant, subject small in frame',ewide:'extreme wide shot, vast landscape, tiny subject, establishing scale',ots:'over the shoulder shot, back of head in foreground, dialogue framing',pov:'point of view shot, first person perspective, immersive camera',drone:'drone aerial shot, bird perspective from high above, sweeping view',birdEye:'bird eye view, directly overhead top-down, graphic composition',wormEye:"worm's eye view, extreme low angle looking up, imposing subject"},
-  movement:{dollyIn:'dolly in camera movement, smooth forward tracking, approaching subject',dollyOut:'dolly out camera movement, smooth backward tracking, retreating reveal',craneUp:'crane up shot, vertical rising movement, revealing scale and scope',craneDown:'crane down shot, descending movement, lowering perspective',orbit:'orbit shot, circular camera movement around subject, 360 degree reveal',handheld:'handheld camera with organic shake, documentary raw feel',steadicam:'steadicam shot, smooth floating movement, stabilized gliding',gimbal:'gimbal stabilized shot, fluid motion, precise tracking',whipPan:'whip pan, fast horizontal sweep with motion blur, energetic transition',slowPush:'slow push in, gradual zoom building tension',tracking:'tracking shot, lateral movement following subject parallel',zoom:'zoom lens movement, optical focal length change',snapZoom:'snap zoom, quick sudden focal change, dramatic punctuation'},
-  atmosphere:{fog:'thick fog atmosphere, low visibility, mysterious hazy depth',rain:'heavy rain, wet reflective surfaces, water droplets, moody weather',snow:'snowfall, white flakes drifting, cold winter atmosphere',dust:'dust particles in air, dry desert atmosphere, suspended dirt in light beams',smoke:'atmospheric smoke, hazy diffusion, mysterious layered depth',embers:'floating fire embers, glowing orange sparks, warm dangerous atmosphere',storm:'stormy weather, dark dramatic clouds, intense atmospheric tension',haze:'atmospheric haze, soft diffusion, dreamy faded background',mist:'light mist, gentle moisture, soft muted visibility'},
-  grade:{tealOrange:'teal and orange color grade, complementary contrast, modern blockbuster look',blockbuster:'Hollywood blockbuster color grade, high impact contrast, vivid saturation',bleach:'bleach bypass color grade, desaturated with retained high contrast',desaturated:'desaturated color palette, muted tones, melancholic flat look',highContrast:'high contrast color grade, deep blacks and bright highlights',lowContrast:'low contrast grade, flat faded look, vintage soft',hdr:'HDR enhanced grade, extended dynamic range, vivid detail',warmVintage:'warm vintage color grade, faded yellow tones, nostalgic film look',coldNordic:'cold Nordic grade, blue-gray palette, stark minimal',matrix:'Matrix-inspired green tint, monochromatic green digital grade',sepia:'sepia tone, brown monochrome, vintage photograph look',noir:'film noir grade, high contrast black and white, dramatic shadows'},
-  mood:{epic:'epic mood, grand scale, heroic atmosphere, monumental composition',dramatic:'dramatic mood, intense emotional tension, theatrical staging',horror:'horror atmosphere, creeping dread, unsettling unease, dark shadows',romantic:'romantic mood, tender intimate atmosphere, soft warm glow',thriller:'thriller tension, suspenseful unease, paranoid framing',documentary:'documentary realism, observational neutral, candid authenticity',scifi:'science fiction atmosphere, futuristic technology, speculative world',fantasy:'fantasy realm, magical ethereal, otherworldly dreamlike',dystopian:'dystopian atmosphere, decayed society, post-industrial ruin',hopeful:'hopeful mood, optimistic uplifting, warm bright dawn',melancholic:'melancholic mood, sorrowful pensive, muted introspective',mysterious:'mysterious atmosphere, enigmatic, hidden secrets, ambiguous'},
-  director:{nolan:'Nolan-inspired composition, IMAX scale, practical effects aesthetic, monumental architecture',villeneuve:'Villeneuve-inspired framing, monumental scale, stark minimal composition, brutalist aesthetic',fincher:'Fincher-inspired precision, locked-off camera, controlled desaturated palette, obsessive framing',spielberg:'Spielberg-inspired blocking, classic coverage, emotional close-ups, warm storytelling',scott:'Ridley Scott-inspired, painterly atmospheric framing, fog and haze, baroque lighting',cameron:'Cameron-inspired, technical precision, blue tone palette, immersive scale',tarantino:'Tarantino-inspired, dynamic dialogue framing, retro 70s aesthetic, bold primary colors',wesanderson:'Wes Anderson-inspired, symmetrical composition, pastel palette, dollhouse framing',kurosawa:'Kurosawa-inspired, elemental composition, telephoto compression, weather as character'},
-  optic:{lensFlare:'anamorphic lens flare, horizontal light streaks across frame',bokeh:'creamy bokeh, out of focus background blur, shallow depth rendering',bloom:'bloom effect, glowing highlights, soft light spill around bright areas',filmGrain:'film grain texture, analog noise, 35mm photochemical look',chromatic:'chromatic aberration, color fringing at edges, lens distortion',motionBlur:'motion blur, smooth movement streaks, temporal smoothing',shallowDOF:'shallow depth of field, razor thin focus plane, creamy background blur',deepFocus:'deep focus, everything sharp from foreground to background, deep depth of field',lightLeak:'light leak, orange and red exposure bleed, vintage analog artifact',halation:'halation effect, red glow around bright highlights, film bloom'}
+  film:{kodak250d:'shot on Kodak Vision3 250D film stock, fine grain',kodak500t:'shot on Kodak Vision3 500T film stock, low light grain',portra400:'shot on Kodak Portra 400 film, warm skin tones',fujiEterna:'shot on Fujifilm Eterna film, muted colors',fuji400h:'shot on Fujifilm Pro 400H film, cool tones',agfaVista:'shot on Agfa Vista film, vibrant colors',ilfordHP5:'shot on Ilford HP5 black and white film',kodakTriX:'shot on Kodak Tri-X black and white film'},
+  lighting:{goldenHour:'golden hour lighting, warm sunset glow',blueHour:'blue hour lighting, twilight atmosphere',softStudio:'soft studio lighting, diffused',hardLight:'hard directional light, sharp shadows',rembrandt:'Rembrandt lighting, triangle highlight',split:'split lighting, dramatic chiaroscuro',butterfly:'butterfly lighting, glamorous',loop:'loop lighting, flattering',neon:'neon cyberpunk lighting, magenta and cyan',candle:'candlelight, warm flickering glow',moonlight:'moonlight, cool blue ambient',volumetric:'volumetric lighting, visible light rays',godRays:'god rays, shafts of sunlight',rim:'rim lighting, edge highlight',practical:'practical lighting, visible sources'},
+  lens:{mm24:'24mm wide angle lens',mm35:'35mm lens, natural perspective',mm50:'50mm lens, classic cinematic',mm85:'85mm portrait lens, shallow depth',mm135:'135mm telephoto lens',anamorphic:'anamorphic lens, oval bokeh, blue flares',vintage:'vintage lens character, soft edges',tiltShift:'tilt-shift lens, miniature effect',macro:'macro lens, extreme close detail',fisheye:'fisheye lens, extreme distortion'},
+  shot:{ecu:'extreme close up shot',cu:'close up shot',mcu:'medium close up',ms:'medium shot',cowboy:'cowboy shot',full:'full body shot',wide:'wide shot',ewide:'extreme wide shot',ots:'over the shoulder shot',pov:'point of view shot',drone:'drone aerial shot',birdEye:'bird eye view',wormEye:"worm's eye view"},
+  movement:{dollyIn:'dolly in camera movement',dollyOut:'dolly out camera movement',craneUp:'crane up shot',craneDown:'crane down shot',orbit:'orbit shot, circular movement',handheld:'handheld camera, organic shake',steadicam:'steadicam smooth movement',gimbal:'gimbal stabilized shot',whipPan:'whip pan, fast sweep',slowPush:'slow push in',tracking:'tracking shot',zoom:'zoom movement',snapZoom:'snap zoom'},
+  atmosphere:{fog:'thick fog atmosphere',rain:'heavy rain',snow:'snowfall',dust:'dust particles in air',smoke:'atmospheric smoke',embers:'floating fire embers',storm:'stormy weather',haze:'atmospheric haze',mist:'light mist'},
+  grade:{tealOrange:'teal and orange color grade',blockbuster:'Hollywood blockbuster grade',bleach:'bleach bypass grade',desaturated:'desaturated palette',highContrast:'high contrast grade',lowContrast:'low contrast grade',hdr:'HDR enhanced',warmVintage:'warm vintage grade',coldNordic:'cold Nordic grade',matrix:'Matrix green tint',sepia:'sepia tone',noir:'film noir grade'},
+  mood:{epic:'epic mood',dramatic:'dramatic mood',horror:'horror atmosphere',romantic:'romantic mood',thriller:'thriller tension',documentary:'documentary realism',scifi:'science fiction atmosphere',fantasy:'fantasy realm',dystopian:'dystopian atmosphere',hopeful:'hopeful mood',melancholic:'melancholic mood',mysterious:'mysterious atmosphere'},
+  director:{nolan:'Nolan-inspired composition',villeneuve:'Villeneuve-inspired framing',fincher:'Fincher-inspired precision',spielberg:'Spielberg-inspired blocking',scott:'Ridley Scott-inspired atmosphere',cameron:'Cameron-inspired scale',tarantino:'Tarantino-inspired framing',wesanderson:'Wes Anderson-inspired symmetry',kurosawa:'Kurosawa-inspired composition'},
+  optic:{lensFlare:'lens flare',bokeh:'creamy bokeh',bloom:'bloom effect',filmGrain:'film grain texture',chromatic:'chromatic aberration',motionBlur:'motion blur',shallowDOF:'shallow depth of field',deepFocus:'deep focus',lightLeak:'light leak',halation:'halation effect'}
 };
 
 var cinemaState={film:'',lighting:'',lens:'',shot:'',movement:'',atmosphere:'',grade:'',mood:'',director:'',optic:''};
@@ -810,9 +481,7 @@ function initCinema(){
   }
   container.innerHTML=html;
   var sels=container.querySelectorAll('select[data-cat]');
-  for(var j=0;j<sels.length;j++){
-    sels[j].addEventListener('change',function(){cinemaState[this.dataset.cat]=this.value;updateCinemaSummary();});
-  }
+  for(var j=0;j<sels.length;j++){sels[j].addEventListener('change',function(){cinemaState[this.dataset.cat]=this.value;updateCinemaSummary();});}
   document.getElementById('cinemaRandom').addEventListener('click',randomizeCinema);
   document.getElementById('cinemaReset').addEventListener('click',resetCinema);
   document.getElementById('cinemaToggle').addEventListener('click',function(e){
@@ -838,8 +507,7 @@ function resetCinema(){
 function updateCinemaSummary(){
   var keys=Object.keys(CINEMATIC_PRESETS);var active=[];
   for(var i=0;i<keys.length;i++){var k=keys[i];var v=cinemaState[k];if(v)active.push(CINEMATIC_PRESETS[k].options[v]);}
-  var el=document.getElementById('cinemaSummary');
-  el.textContent=!active.length?'Tutto su Auto.':'Attivi: '+active.join(' · ');
+  document.getElementById('cinemaSummary').textContent=!active.length?'Tutto su Auto.':'Attivi: '+active.join(' · ');
 }
 function buildCinemaPromptFragment(){
   var parts=[];var keys=Object.keys(cinemaState);
@@ -868,7 +536,7 @@ function initCharacter(){
 }
 function updateCharDescription(){
   if(charMode==='none'){charDescription='';document.getElementById('charPreview').textContent='Personaggio disattivato.';return}
-  if(charMode==='free'){charDescription=document.getElementById('charFreeInput').value.trim();document.getElementById('charPreview').textContent=charDescription?'Prompt: '+charDescription:'Scrivi una descrizione...';return}
+  if(charMode==='free'){charDescription=document.getElementById('charFreeInput').value.trim();document.getElementById('charPreview').textContent=charDescription?'Prompt: '+charDescription:'Scrivi...';return}
   if(charMode==='builder'){
     var parts=[];
     var gender=document.getElementById('cbGender').value;var age=document.getElementById('cbAge').value;
@@ -878,23 +546,22 @@ function updateCharDescription(){
     if(gender)parts.push(gender);if(eth)parts.push(eth+' person');if(age)parts.push(age);if(body)parts.push(body);
     if(hair)parts.push(hair);if(eyes)parts.push(eyes);if(clothing)parts.push('wearing '+clothing);if(acc)parts.push('with '+acc);
     charDescription=parts.join(', ');
-    document.getElementById('charPreview').textContent=charDescription?'Prompt: '+charDescription:'Seleziona i tratti...';
+    document.getElementById('charPreview').textContent=charDescription?'Prompt: '+charDescription:'Seleziona tratti...';
   }
 }
 
 // ====================================================================
-// DIRECTOR AI v2 — EVENT-AWARE
+// DIRECTOR AI — decide SOLO render params (NON il prompt AI)
 // ====================================================================
 var DIRECTOR_PROFILES={
   intro:{camera:'slowPush',lens:'mm50',lighting:'softStudio',fx:['haze'],transition:'fade',cutDur:6,shake:0,colorGrade:'desaturated',motionSpeed:0.5},
   verse:{camera:'steadicam',lens:'mm35',lighting:'practical',fx:[],transition:'crossfade',cutDur:5,shake:0.1,colorGrade:'natural',motionSpeed:0.8},
-  prechorus:{camera:'gimbal',lens:'mm50',lighting:'volumetric',fx:['haze','embers'],transition:'crossfade',cutDur:4,shake:0.2,colorGrade:'warmVintage',motionSpeed:1.0},
+  prechorus:{camera:'gimbal',lens:'mm50',lighting:'volumetric',fx:['haze'],transition:'crossfade',cutDur:4,shake:0.2,colorGrade:'warmVintage',motionSpeed:1.0},
   chorus:{camera:'handheld',lens:'mm24',lighting:'neon',fx:['rain','lensFlare','bloom'],transition:'cutOnBeat',cutDur:2,shake:0.6,colorGrade:'tealOrange',motionSpeed:1.4},
-  bridge:{camera:'steadicam',lens:'mm85',lighting:'moonlight',fx:['fog','mist'],transition:'crossfade',cutDur:6,shake:0,colorGrade:'coldNordic',motionSpeed:0.4},
+  bridge:{camera:'steadicam',lens:'mm85',lighting:'moonlight',fx:['fog'],transition:'crossfade',cutDur:6,shake:0,colorGrade:'coldNordic',motionSpeed:0.4},
   outro:{camera:'slowPush',lens:'mm50',lighting:'goldenHour',fx:['haze'],transition:'fade',cutDur:7,shake:0,colorGrade:'warmVintage',motionSpeed:0.5}
 };
-
-var directorMode='auto';var directorRules={};var manualTimeline=[];
+var directorMode='auto';var directorRules={};
 
 function initDirector(){
   var tabs=document.querySelectorAll('#directorModeTabs .mode-tab');
@@ -911,8 +578,7 @@ function initDirector(){
   document.getElementById('generateStoryboard').addEventListener('click',generateStoryboard);
   document.getElementById('analyzeBtn').addEventListener('click',async function(){
     if(!selectedTrack)return showError('Seleziona una traccia');
-    var lyrics=lyricsInput.value.trim();var style=styleHint.value.trim();
-    this.disabled=true;this.textContent='Analisi in corso...';
+    this.disabled=true;this.textContent='Analisi...';
     try{
       var audioUrl=await getAU(selectedTrack.id);
       audioStruct=await analyzeAudioIntelligence(audioUrl,function(msg,p){
@@ -921,8 +587,8 @@ function initDirector(){
         progressEl.style.display=p>0&&p<1?'block':'none';
       });
       renderAudioAnalysis(audioStruct);
-      showSuccess('Analisi completata: BPM '+audioStruct.bpm);
-    }catch(e){showError('Analisi fallita: '+e.message);log('ERR: '+e.message);}
+      showSuccess('Analisi: BPM '+audioStruct.bpm);
+    }catch(e){showError('Analisi fallita: '+e.message);}
     this.disabled=false;this.textContent='Avvia Analisi Audio';
     progressEl.style.display='none';
   });
@@ -931,86 +597,31 @@ function initDirector(){
 function renderRulesGrid(){
   var container=document.getElementById('rulesGrid');
   var sections=['intro','verse','prechorus','chorus','bridge','outro'];
-  var cameras=['','slowPush','steadicam','gimbal','handheld','orbit','dollyIn','tracking','craneUp'];
-  var lenses=['','mm24','mm35','mm50','mm85','mm135','anamorphic','vintage'];
-  var lightings=['','softStudio','practical','volumetric','neon','goldenHour','moonlight','candle'];
-  var grades=['','natural','tealOrange','desaturated','warmVintage','coldNordic','noir','sepia'];
+  var cameras=['','slowPush','steadicam','gimbal','handheld','orbit','dollyIn','tracking'];
+  var lenses=['','mm24','mm35','mm50','mm85','mm135','anamorphic'];
+  var lightings=['','softStudio','practical','volumetric','neon','goldenHour','moonlight'];
+  var grades=['','natural','tealOrange','desaturated','warmVintage','coldNordic','noir'];
   var h='';
   for(var i=0;i<sections.length;i++){
     var s=sections[i];if(!directorRules[s])directorRules[s]={};
-    h+='<div class="rule-card"><label>'+s.toUpperCase()+'</label>';
-    h+='<select data-rule="'+s+'" data-field="camera"><option value="">Auto camera</option>';
+    h+='<div class="rule-card" style="background:#0a0a0f;border:1px solid #2a2a3a;border-radius:6px;padding:10px"><label style="font-size:.7rem;color:#888;text-transform:uppercase">'+s.toUpperCase()+'</label>';
+    h+='<select data-rule="'+s+'" data-field="camera" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3a;border-radius:4px;padding:5px;color:#e0e0e0;font-size:.78rem"><option value="">Auto camera</option>';
     for(var c=1;c<cameras.length;c++)h+='<option value="'+cameras[c]+'"'+(directorRules[s].camera===cameras[c]?' selected':'')+'>'+cameras[c]+'</option>';
-    h+='</select><select data-rule="'+s+'" data-field="lens"><option value="">Auto lens</option>';
+    h+='</select><select data-rule="'+s+'" data-field="lens" style="width:100%;background:#0a0a0f;border:1px solid #2a2a3a;border-radius:4px;padding:5px;color:#e0e0e0;font-size:.78rem;margin-top:3px"><option value="">Auto lens</option>';
     for(var c=1;c<lenses.length;c++)h+='<option value="'+lenses[c]+'"'+(directorRules[s].lens===lenses[c]?' selected':'')+'>'+lenses[c]+'</option>';
-    h+='</select><select data-rule="'+s+'" data-field="lighting"><option value="">Auto light</option>';
-    for(var c=1;c<lightings.length;c++)h+='<option value="'+lightings[c]+'"'+(directorRules[s].lighting===lightings[c]?' selected':'')+'>'+lightings[c]+'</option>';
-    h+='</select><select data-rule="'+s+'" data-field="colorGrade"><option value="">Auto grade</option>';
-    for(var c=1;c<grades.length;c++)h+='<option value="'+grades[c]+'"'+(directorRules[s].colorGrade===grades[c]?' selected':'')+'>'+grades[c]+'</option>';
     h+='</select></div>';
   }
   container.innerHTML=h;
   var sels=container.querySelectorAll('select[data-rule]');
   for(var j=0;j<sels.length;j++){
-    sels[j].addEventListener('change',function(){
-      var s=this.dataset.rule;var f=this.dataset.field;
-      if(!directorRules[s])directorRules[s]={};directorRules[s][f]=this.value;
-    });
+    sels[j].addEventListener('change',function(){var s=this.dataset.rule;var f=this.dataset.field;if(!directorRules[s])directorRules[s]={};directorRules[s][f]=this.value;});
   }
 }
 
-// Adjust per BPM
 function adjustForBPM(profile,bpm){
   var adj=JSON.parse(JSON.stringify(profile));
-  if(bpm>130){adj.cutDur=Math.max(1.2,adj.cutDur*0.7);adj.shake=Math.min(1,adj.shake*1.3);if(adj.camera==='steadicam')adj.camera='gimbal';}
+  if(bpm>130){adj.cutDur=Math.max(1.2,adj.cutDur*0.7);adj.shake=Math.min(1,adj.shake*1.3);}
   else if(bpm<90){adj.cutDur=Math.min(10,adj.cutDur*1.3);if(adj.motionSpeed>0.5)adj.motionSpeed*=0.8;}
-  return adj;
-}
-
-// Adjust per mood
-function adjustForMood(profile,mood){
-  var adj=JSON.parse(JSON.stringify(profile));
-  if(mood==='rabbia'){adj.shake=Math.min(1,adj.shake+0.3);adj.camera='handheld';adj.fx.push('embers');if(adj.cutDur>2)adj.cutDur=1.5;}
-  else if(mood==='amore'){if(adj.lighting==='neon')adj.lighting='goldenHour';adj.fx.push('bokeh');adj.motionSpeed*=0.85;}
-  else if(mood==='notte'){if(adj.lighting==='softStudio')adj.lighting='moonlight';adj.fx.push('halation');}
-  else if(mood==='solitudine'){adj.lens='mm35';adj.fx.push('fog');}
-  else if(mood==='gioia'){adj.fx.push('lensFlare','lightLeak');if(adj.colorGrade==='desaturated')adj.colorGrade='warmVintage';}
-  return adj;
-}
-
-// Adjust per eventi musicali (NUOVO v2)
-function adjustForEvents(profile,events,sceneStart,sceneEnd){
-  var adj=JSON.parse(JSON.stringify(profile));
-  // Controlla se ci sono eventi in questa scena
-  for(var i=0;i<events.length;i++){
-    var e=events[i];
-    if(e.time>=sceneStart&&e.time<sceneEnd){
-      if(e.type==='drop'){
-        // Drop = esplosione
-        adj.fx.push('lensFlare','bloom','chromatic');
-        adj.shake=Math.min(1,adj.shake+0.4);
-        adj.cutDur=Math.min(adj.cutDur,1.5);
-        if(adj.camera!=='handheld')adj.camera='gimbal';
-      }else if(e.type==='buildup'){
-        // Buildup = accelera
-        adj.motionSpeed=Math.min(1.5,adj.motionSpeed*1.2);
-        adj.fx.push('haze');
-      }else if(e.type==='breakdown'){
-        // Breakdown = rallenta, freddo
-        adj.motionSpeed=Math.max(0.3,adj.motionSpeed*0.5);
-        adj.colorGrade='coldNordic';
-        adj.fx.push('fog');
-        adj.camera='steadicam';
-        adj.shake=0;
-      }else if(e.type==='vocalIn'){
-        // Vocal entry = close-up
-        adj.lens='mm85';
-        adj.camera='slowPush';
-      }
-    }
-  }
-  // Dedupe fx
-  var seen={};adj.fx=adj.fx.filter(function(f){if(seen[f])return false;seen[f]=true;return true;});
   return adj;
 }
 
@@ -1020,67 +631,39 @@ function applyDirector(scene,audioStruct){
   if(directorMode==='rules'&&directorRules[section]){
     profile=Object.assign({},profile,directorRules[section]);
   }
-  if(directorMode==='manual'&&scene.director)return scene.director;
   if(audioStruct&&audioStruct.bpm)profile=adjustForBPM(profile,audioStruct.bpm);
-  profile=adjustForMood(profile,scene.mood);
-  if(audioStruct&&audioStruct.events){
-    profile=adjustForEvents(profile,audioStruct.events,scene.start,scene.end);
-  }
   return profile;
 }
 
-function directorToPromptFragment(d){
-  if(!d)return '';
-  var parts=[];
-  var cameraPrompts={slowPush:'slow push in camera movement, gradual zoom building tension',steadicam:'smooth steadicam floating movement, stabilized gliding',gimbal:'gimbal stabilized fluid motion, precise tracking',handheld:'handheld camera with organic shake, documentary raw feel',orbit:'orbit shot, circular camera movement around subject',dollyIn:'dolly in, smooth forward tracking',dollyOut:'dolly out, smooth backward tracking',craneUp:'crane up shot, vertical rising movement',tracking:'lateral tracking shot following subject'};
-  if(cameraPrompts[d.camera])parts.push(cameraPrompts[d.camera]);
-  if(CINEMATIC_PROMPTS.lens&&CINEMATIC_PROMPTS.lens[d.lens])parts.push(CINEMATIC_PROMPTS.lens[d.lens]);
-  if(CINEMATIC_PROMPTS.lighting&&CINEMATIC_PROMPTS.lighting[d.lighting])parts.push(CINEMATIC_PROMPTS.lighting[d.lighting]);
-  if(d.fx&&d.fx.length){
-    for(var i=0;i<d.fx.length;i++){
-      if(CINEMATIC_PROMPTS.atmosphere&&CINEMATIC_PROMPTS.atmosphere[d.fx[i]])parts.push(CINEMATIC_PROMPTS.atmosphere[d.fx[i]]);
-      if(CINEMATIC_PROMPTS.optic&&CINEMATIC_PROMPTS.optic[d.fx[i]])parts.push(CINEMATIC_PROMPTS.optic[d.fx[i]]);
-    }
-  }
-  if(CINEMATIC_PROMPTS.grade&&CINEMATIC_PROMPTS.grade[d.colorGrade])parts.push(CINEMATIC_PROMPTS.grade[d.colorGrade]);
-  if(d.motionSpeed<0.6)parts.push('slow motion, dreamlike temporal flow');
-  else if(d.motionSpeed>1.2)parts.push('fast motion, energetic rhythm');
-  return parts.join(', ');
-}
-
 // ====================================================================
-// MOTORE ANALISI TESTO
+// MOTORE ANALISI TESTO — mood detection
 // ====================================================================
 var MOOD_WORDS={
-  amore:['amore','ama','ami','t amo','ti amo','amami','amor','cuore','cuor','core','sentimento','passione','passion','bacio','baciam','abbraccia','abbracc','voglio bene','carezza','innamorat','desiderio','tesoro'],
-  dolore:['dolore','male','fa male','soffre','soffro','piangere','pianto','lacrime','piange','piango','ferita','ferito','sangue','piag','cicatrice','strapp','lutto','perdita','perso','persa'],
-  nostalgia:['ricordo','ricorda','memoria','memorie','rimpianto','manchi','manca','mancanza','vorrei','se fossi','una volta','prima','tempo fa','quando erav','infanzia','ricord','torno','ritorno'],
-  notte:['notte','notturno','buio','scuro','oscurit','luna','stelle','sogno','sognare','sogn','dormire','dormo','mezzanotte','ombra','ombre','silenzio','chiuso','finestra','balcone'],
-  rabbia:['rabbia','fury','odio','odi','furia','incazz','vendetta','guerra','distrugg','brucia','bruciam','fuoco','esplosi','urla','urlare','grida','sbatt','sbatte','rotto','spacca'],
-  gioia:['felice','felicita','ridere','ride','riso','sorride','sorrid','allegro','allegria','contento','contentezza','vita','vivere','balla','ballare','festa','celebra','liberta'],
-  solitudine:['solo','sola','solitudine','nessuno','nisciuno','abandonna','abbandonat','lontano','lontan','perduto','smarrito','isolat','vuoto','deserto','senza di te','mancanza','sparito','sparit'],
-  desiderio:['voglio','voglia','desiderio','aspetto','aspett','cerco','cerc','trovare','trov','ho bisogno','servo','necessit','fame','sete','ansia','bramo'],
-  mare:['mare','spiaggia','onda','onde','costa','riva','porto','barca','nave','vela','naufrag','isola','scoglio','profondit','sottomarin','pesca','pesc'],
-  citta:['citta','vicolo','vicoli','strada','strad','quartiere','palazzo','palazz','tetto','tetti','chiesa','piazza','mercato','neon','lampion','marciapied','asfalto','mur','muri','napoli','torino','roma','milano'],
-  urban:['rap','trap','beat','basso','flow','rhyme','rhythm','mic','microfono','dj','producer','strofa','ritornello','hook','verse','bar','club','street','ghetto','block']
+  amore:['amore','ama','ami','ti amo','amor','cuore','passione','bacio','abbraccia','carezza','innamorat','desiderio','tesoro'],
+  dolore:['dolore','male','soffre','piangere','pianto','lacrime','ferita','sangue','perdita','perso'],
+  nostalgia:['ricordo','memoria','rimpianto','manchi','vorrei','prima','tempo fa','infanzia','torno','ritorno'],
+  notte:['notte','buio','luna','stelle','sogno','mezzanotte','ombra','silenzio','finestra'],
+  rabbia:['rabbia','odio','furia','vendetta','guerra','distrugg','brucia','fuoco','urla','grida','rotto'],
+  gioia:['felice','ridere','sorride','allegro','contento','vita','balla','festa','celebra'],
+  solitudine:['solo','solitudine','nessuno','abbandona','lontano','vuoto','deserto','sparito'],
+  desiderio:['voglio','voglia','desiderio','cerco','trovare','bisogno','fame','sete'],
+  mare:['mare','spiaggia','onda','costa','porto','barca','isola','scoglio'],
+  citta:['citta','vicolo','strada','quartiere','palazzo','piazza','neon','napoli','roma','milano'],
+  urban:['rap','trap','beat','basso','flow','microfono','dj','strofa','ritornello','club','street']
 };
 
 var VISUAL_MAP={
-  amore:{prompt:'intimate close-up of hands intertwined, warm golden hour light through sheer curtains, soft bokeh background, shallow depth of field, rose petals scattered, skin tones, romantic atmosphere, anamorphic lens flare',colors:['#2d1b2e','#8b2252','#f4a261'],camera:'close-up'},
-  dolore:{prompt:'a solitary figure sitting on the edge of an empty bed, cold blue-gray tones, harsh side lighting from a window, dust particles in the air, minimalist room with bare walls, expression of grief, desaturated color palette, wide shot',colors:['#0a0f1a','#1a2a3a','#3a4a5a'],camera:'medium'},
-  nostalgia:{prompt:'old photographs scattered on a wooden table, warm sepia tones mixed with faded colors, soft afternoon light filtering through lace curtains, vintage objects, slight lens fog, shallow depth of field, nostalgic atmosphere, overhead shot',colors:['#2d1f0e','#6b4423','#d4a574'],camera:'overhead'},
-  notte:{prompt:'city rooftops at night with warm orange streetlights, a lone figure silhouetted against the sky, deep blue and purple tones, fog rolling between buildings, distant city glow, moonlight creating rim light, cinematic wide shot',colors:['#0a0a1a','#1a1a3e','#2d1b69'],camera:'wide'},
-  rabbia:{prompt:'shattered glass suspended in mid-air, red and orange dramatic lighting, smoke and debris, aggressive low angle shot looking up, high contrast, saturated red tones, concrete wall background, visceral raw energy, ultra-wide lens distortion',colors:['#1a0000','#8b0000','#ff4500'],camera:'low-angle'},
-  gioia:{prompt:'person dancing freely in an open field at golden hour, arms spread wide, sun flares, warm yellow and green tones, grass blowing in wind, lens flare through hair, joyful movement blur, shallow depth of field, low angle hero shot',colors:['#1a2e0a','#4a7c2e','#f4e04d'],camera:'low-angle'},
-  solitudine:{prompt:'single small figure in vast empty landscape, extreme wide shot, muted desaturated colors, overcast sky, fog or mist, sense of scale and isolation, negative space dominates frame, cold color temperature, still and silent',colors:['#0a0a0a','#2a2a2a','#4a4a4a'],camera:'extreme-wide'},
-  desiderio:{prompt:'hand reaching through a foggy glass window, condensation droplets, blurred figure behind the glass, warm amber light on one side cool blue on other, split lighting, intimate framing, yearning atmosphere, medium close-up',colors:['#1a0a2e','#4a2a5e','#d4a060'],camera:'medium-close'},
-  mare:{prompt:'dramatic sea waves crashing against dark rocks at twilight, long exposure water motion, deep blue and teal tones, white foam detail, moody overcast sky, powerful nature, cinematic widescreen composition, low camera near water level',colors:['#0a1a2e','#1a3a5e','#2a6a8e'],camera:'low'},
-  citta:{prompt:'narrow alley in an old Italian city at dusk, warm light spilling from doorways, clotheslines overhead, wet cobblestones reflecting golden light, deep shadows, figure walking away in distance, cinematic anamorphic look, tracking shot perspective',colors:['#1a0f0a','#3a2a1a','#d4874d'],camera:'tracking'},
-  urban:{prompt:'gritty urban rooftop at night, neon signs reflecting on wet concrete, smoke rising, figure leaning against railing with city skyline behind, teal and orange color grade, moody atmospheric haze, music video aesthetic, medium shot',colors:['#0a0a1a','#1a3a4a','#ff6b35'],camera:'medium'}
-};
-
-var NEAPOLITAN_MAP={
-  'vaseme':'come here to me, reaching out, intimate gesture, two hands reaching toward each other','accussi':'like this, showing something, gesture of demonstration',"'o mare":'the sea of Naples, gulf panorama, Castel dell Ovo in distance, Mediterranean blue',"'a luna":'the moon over Naples, moonlight on old buildings, Vesuvius silhouette','strobe':'strobe lights, club scene, flashing lights, dark with sudden bright flashes','scuro':'darkness, shadows, figure emerging from darkness, single light source','nzocca':'biting, sharp close-up on face, intense expression, high contrast','pazz':'crazy, chaotic scene, blurred motion, disorienting angles, Dutch tilt','guagliona':'young woman, confident pose, street style, urban setting, golden hour','guagli':'boys, group of young men on street corner, casual attitude, neighborhood','sfaccimm':'shameless, bold close-up, direct eye contact, unapologetic expression','torn':'return, coming back, figure at a distance approaching, doorway silhouette','spine':'thorns, pain imagery, close-up of roses with thorns, red on black','veleno':'poison, toxic green liquid, dramatic lighting, danger aesthetic','cazzimma':'attitude, swagger, figure walking with confidence, low angle','rota':'wheel, spinning, circular motion, blurred rotation, dizzy effect','scure':'darkness descending, fading light, silhouette against last light'
+  amore:{colors:['#2d1b2e','#8b2252','#f4a261'],camera:'close-up'},
+  dolore:{colors:['#0a0f1a','#1a2a3a','#3a4a5a'],camera:'medium'},
+  nostalgia:{colors:['#2d1f0e','#6b4423','#d4a574'],camera:'overhead'},
+  notte:{colors:['#0a0a1a','#1a1a3e','#2d1b69'],camera:'wide'},
+  rabbia:{colors:['#1a0000','#8b0000','#ff4500'],camera:'low-angle'},
+  gioia:{colors:['#1a2e0a','#4a7c2e','#f4e04d'],camera:'low-angle'},
+  solitudine:{colors:['#0a0a0a','#2a2a2a','#4a4a4a'],camera:'extreme-wide'},
+  desiderio:{colors:['#1a0a2e','#4a2a5e','#d4a060'],camera:'medium-close'},
+  mare:{colors:['#0a1a2e','#1a3a5e','#2a6a8e'],camera:'low'},
+  citta:{colors:['#1a0f0a','#3a2a1a','#d4874d'],camera:'tracking'},
+  urban:{colors:['#0a0a1a','#1a3a4a','#ff6b35'],camera:'medium'}
 };
 
 function analyzeMood(text){
@@ -1094,56 +677,94 @@ function analyzeMood(text){
   var sorted=Object.keys(scores).sort(function(a,b){return scores[b]-scores[a]});
   var primary=sorted.length>0?sorted[0]:'nostalgia';
   var intensity=Math.min(1,(sorted.length>0?scores[sorted[0]]:1)/4);
-  if(lower.match(/!\!/)||lower.match(/!!!/))intensity=Math.min(1,intensity+0.3);
-  if(lower.match(/\?\?/)||lower.match(/\.\.\./))intensity=Math.max(0,intensity-0.1);
-  return{primaryMood:primary,intensity:intensity,scores:scores};
+  if(lower.match(/!!!/))intensity=Math.min(1,intensity+0.3);
+  return{primaryMood:primary,intensity:intensity};
 }
 
-function findNeapolitanHints(text){
-  var lower=text.toLowerCase();var hints=[];var keys=Object.keys(NEAPOLITAN_MAP);
-  for(var i=0;i<keys.length;i++){if(lower.indexOf(keys[i])!==-1)hints.push(NEAPOLITAN_MAP[keys[i]]);}
-  return hints;
-}
-
-function buildPrompt(visual,hints,style,text,sceneIdx,total,director){
+// ====================================================================
+// PROMPT BUILDER — MINIMAL, focalizzato sul TESTO
+// ====================================================================
+function buildPrompt(sceneText,style,sceneIdx,total){
   var parts=[];
-  parts.push('cinematic music video still');
+  parts.push('cinematic film still, music video scene');
   if(style)parts.push(style+' style');
-  if(charDescription)parts.push('featuring '+charDescription+', consistent character throughout');
-  parts.push(visual.prompt);
+  // IL TESTO DELLA CANZONE È IL PROTAGONISTA
+  var cleanText=sceneText.trim().replace(/\n+/g,' ').replace(/\s+/g,' ').substring(0,200);
+  if(cleanText){
+    parts.push('the scene visually depicts the emotion and imagery of these lyrics: "'+cleanText+'"');
+  }
+  // Categories utente (solo se selezionate)
   var cinemaFrag=buildCinemaPromptFragment();
   if(cinemaFrag)parts.push(cinemaFrag);
-  if(director){var dirFrag=directorToPromptFragment(director);if(dirFrag)parts.push(dirFrag);}
-  if(hints.length>0)parts.push(hints[0]);
+  // Personaggio (se impostato)
+  if(charDescription)parts.push('featuring '+charDescription);
+  // Progressione narrativa
   var progress=sceneIdx/Math.max(1,total-1);
-  if(progress<0.2)parts.push('opening scene, establishing shot, building atmosphere');
-  else if(progress>0.4&&progress<0.6)parts.push('climactic moment, peak emotion, maximum visual intensity');
-  else if(progress>0.85)parts.push('closing scene, fading out, reflective mood, gentle resolution');
+  if(progress<0.15)parts.push('opening establishing shot');
+  else if(progress>0.85)parts.push('closing reflective shot');
   return parts.join(', ');
 }
 
+// ====================================================================
+// SCENE BUILDER — allinea scene alla struttura audio
+// ====================================================================
 function analyzeScenes(lyrics,duration,style){
-  log('Analisi testo...');
+  log('Analisi testo (fallback)...');
   var blocks=lyrics.split(/\n\s*\n/).filter(function(b){return b.trim()});
   if(!blocks.length)blocks=[lyrics];
-  var sceneCount=Math.max(12,Math.min(22,Math.round(duration/10)));
+  var sceneCount=Math.max(8,Math.min(15,Math.round(duration/12)));
   var sceneDur=duration/sceneCount;var scenes=[];
   for(var i=0;i<sceneCount;i++){
-    var startBlock=Math.floor(i*blocks.length/sceneCount);
-    var endBlock=Math.floor((i+1)*blocks.length/sceneCount);
-    var sceneText=blocks.slice(startBlock,endBlock).join('\n\n');
-    if(!sceneText.trim())sceneText=blocks[Math.min(i,blocks.length-1)]||'';
+    var blockIdx=Math.floor(i*blocks.length/sceneCount);
+    var sceneText=blocks[Math.min(blockIdx,blocks.length-1)]||'';
     var analysis=analyzeMood(sceneText);
     var visual=VISUAL_MAP[analysis.primaryMood]||VISUAL_MAP.nostalgia;
-    var hints=findNeapolitanHints(sceneText);
-    var sceneObj={text:sceneText.trim(),mood:analysis.primaryMood,colors:visual.colors,camera:visual.camera,intensity:analysis.intensity,start:i*sceneDur,end:(i+1)*sceneDur,section:'verse'};
+    var prompt=buildPrompt(sceneText,style,i,sceneCount);
+    var sceneObj={text:sceneText.trim(),prompt:prompt,mood:analysis.primaryMood,colors:visual.colors,camera:visual.camera,intensity:analysis.intensity,start:i*sceneDur,end:(i+1)*sceneDur,section:'verse'};
     sceneObj.director=applyDirector(sceneObj,null);
-    sceneObj.prompt=buildPrompt(visual,hints,style,sceneText,i,sceneCount,sceneObj.director);
-    var kbDirs=[{x:1,y:0,zoom:1},{x:-1,y:0,zoom:1},{x:0,y:1,zoom:1},{x:0,y:-1,zoom:1},{x:1,y:0,zoom:-1},{x:-1,y:0,zoom:-1},{x:0,y:1,zoom:-1},{x:0,y:-1,zoom:-1}];
-    sceneObj.kbDir=kbDirs[Math.floor(Math.random()*kbDirs.length)];
     scenes.push(sceneObj);
   }
-  log('Analisi: '+scenes.length+' scene');
+  log('Scene: '+scenes.length);
+  return scenes;
+}
+
+function buildScenesFromStructure(audioStruct,lyrics,style){
+  if(!audioStruct||!audioStruct.sections.length){
+    return analyzeScenes(lyrics,audioStruct?audioStruct.duration:180,style);
+  }
+  var sections=audioStruct.sections;var scenes=[];
+  var blocks=lyrics.split(/\n\s*\n/).filter(function(b){return b.trim()});
+  if(!blocks.length)blocks=[lyrics];
+  for(var s=0;s<sections.length;s++){
+    var sec=sections[s];var secDur=sec.end-sec.start;
+    var nScenes=2;
+    if(secDur>15)nScenes=3;
+    if(secDur>30)nScenes=4;
+    if(secDur>50)nScenes=5;
+    if(secDur>70)nScenes=6;
+    var scDur=secDur/nScenes;
+    for(var i=0;i<nScenes;i++){
+      var sceneStart=sec.start+i*scDur;
+      var blockIdx=Math.floor((s*nScenes+i)/(sections.length*nScenes)*blocks.length);
+      var sceneText=blocks[Math.min(blockIdx,blocks.length-1)]||'';
+      var analysis=analyzeMood(sceneText);
+      var visual=VISUAL_MAP[analysis.primaryMood]||VISUAL_MAP.nostalgia;
+      var prompt=buildPrompt(sceneText,style,scenes.length,Math.min(22,sections.length*nScenes));
+      var sceneObj={
+        text:sceneText.trim(),prompt:prompt,mood:analysis.primaryMood,colors:visual.colors,camera:visual.camera,
+        intensity:Math.max(0.2,Math.min(1,sec.energy+(sec.label==='chorus'?0.2:0))),
+        start:sceneStart,end:sceneStart+scDur,section:sec.label
+      };
+      sceneObj.director=applyDirector(sceneObj,audioStruct);
+      scenes.push(sceneObj);
+    }
+  }
+  log('Scene generate: '+scenes.length);
+  for(var j=0;j<Math.min(5,scenes.length);j++){
+    var sc=scenes[j];
+    log('  Scena '+(j+1)+': '+fmtTime(sc.start)+' ['+sc.section+'] mood='+sc.mood);
+    log('    Prompt: '+sc.prompt.substring(0,100)+'...');
+  }
   return scenes;
 }
 
@@ -1168,57 +789,14 @@ function syncLyricsToStructure(lyrics,audioStruct){
   }
   while(lineIdx<lines.length){
     var lastSec=audioStruct.sections[audioStruct.sections.length-1];
-    var lastLine=result[result.length-1];var perLine=2;
-    result.push({text:lines[lineIdx],start:lastLine?lastLine.end:lastSec.start,end:(lastLine?lastLine.end:lastSec.start)+perLine,section:lastSec.label});lineIdx++;
+    var lastLine=result[result.length-1];
+    result.push({text:lines[lineIdx],start:lastLine?lastLine.end:lastSec.start,end:(lastLine?lastLine.end:lastSec.start)+2,section:lastSec.label});lineIdx++;
   }
   return result;
 }
 
-// Genera scene allineate alla struttura Audio Intelligence v2
-function buildScenesFromStructure(audioStruct,lyrics,style){
-  if(!audioStruct||!audioStruct.sections.length){
-    return analyzeScenes(lyrics,audioStruct?audioStruct.duration:180,style);
-  }
-  var sections=audioStruct.sections;var scenes=[];
-  var lines=lyrics.split(/\n\s*\n/).filter(function(b){return b.trim()});
-  if(!lines.length)lines=[lyrics];
-  for(var s=0;s<sections.length;s++){
-    var sec=sections[s];var secDur=sec.end-sec.start;
-    var nScenes=2;
-    if(secDur>15)nScenes=3;
-    if(secDur>30)nScenes=4;
-    if(secDur>50)nScenes=5;
-    if(secDur>70)nScenes=6;
-    var scDur=secDur/nScenes;
-    for(var i=0;i<nScenes;i++){
-      var sceneStart=sec.start+i*scDur;
-      var blockIdx=Math.floor((s*2+i)/(sections.length*nScenes)*lines.length);
-      var sceneText=lines[Math.min(blockIdx,lines.length-1)]||'';
-      var analysis=analyzeMood(sceneText);
-      var visual=VISUAL_MAP[analysis.primaryMood]||VISUAL_MAP.nostalgia;
-      var hints=findNeapolitanHints(sceneText);
-      var sceneObj={
-        text:sceneText.trim(),mood:analysis.primaryMood,colors:visual.colors,camera:visual.camera,
-        intensity:Math.max(0.2,Math.min(1,sec.energy+(sec.label==='chorus'?0.2:0))),
-        start:sceneStart,end:sceneStart+scDur,section:sec.label
-      };
-      sceneObj.director=applyDirector(sceneObj,audioStruct);
-      sceneObj.prompt=buildPrompt(visual,hints,style,sceneText,scenes.length,Math.min(22,sections.length*2),sceneObj.director);
-      var kbDirs=[{x:1,y:0,zoom:1},{x:-1,y:0,zoom:1},{x:0,y:1,zoom:1},{x:0,y:-1,zoom:1},{x:1,y:0,zoom:-1},{x:-1,y:0,zoom:-1},{x:0,y:1,zoom:-1},{x:0,y:-1,zoom:-1}];
-      sceneObj.kbDir=kbDirs[Math.floor(Math.random()*kbDirs.length)];
-      scenes.push(sceneObj);
-    }
-  }
-  log('Scene generate con Director AI v2: '+scenes.length);
-  for(var j=0;j<Math.min(8,scenes.length);j++){
-    var sc=scenes[j];
-    log('  Scena '+(j+1)+': '+fmtTime(sc.start)+' ['+sc.section+'] mood='+sc.mood+' cam='+sc.director.camera+' lens='+sc.director.lens+' light='+sc.director.lighting+' fx='+sc.director.fx.join('+'));
-  }
-  return scenes;
-}
-
 // ====================================================================
-// STORYBOARD & TIMELINE
+// STORYBOARD
 // ====================================================================
 var currentStoryboard=[];
 async function generateStoryboard(){
@@ -1249,7 +827,6 @@ function renderTimeline(){
     h+='<div class="timeline-scene"><div class="timeline-time">'+fmtTime(sc.start)+'</div>'+
        '<div class="timeline-info"><div class="timeline-section">'+(sc.section||'verse').toUpperCase()+' · Scena '+(i+1)+'</div>'+
        '<div class="timeline-mood">Mood: '+sc.mood+' · Intensity: '+(sc.intensity*100).toFixed(0)+'%</div>'+
-       '<div class="timeline-dir">cam='+(dir.camera||'?')+' · lens='+(dir.lens||'?')+' · light='+(dir.lighting||'?')+' · grade='+(dir.colorGrade||'?')+' · fx='+(dir.fx?dir.fx.join('+'):'-')+'</div>'+
        '</div></div>';
   }
   panel.innerHTML=h;
@@ -1261,15 +838,15 @@ function renderTimeline(){
 async function loadImgPollinations(prompt){
   var clean=prompt.replace(/'/g,'').substring(0,350);
   var seed=Math.floor(Math.random()*999999);
-  var url='https://image.pollinations.ai/prompt/'+encodeURIComponent(clean)+'?width=1280&height=720&seed='+seed+'&nologo=true&referrer=music-video-director-v2.local';
+  var url='https://image.pollinations.ai/prompt/'+encodeURIComponent(clean)+'?width=1280&height=720&seed='+seed+'&nologo=true&referrer=mv-director.local';
   var res=await fetch(url,{method:'GET'});
   if(res.status===429){var err=new Error('429');err.isRateLimit=true;err.retryAfter=parseInt(res.headers.get('Retry-After')||'0',10);throw err;}
   if(!res.ok)throw new Error('HTTP '+res.status);
   var blob=await res.blob();
-  if(!blob.size||blob.size<1000)throw new Error('empty image');
+  if(!blob.size||blob.size<1000)throw new Error('empty');
   var objUrl=URL.createObjectURL(blob);
   return await new Promise(function(resolve,reject){
-    var img=new Image();img.onload=function(){resolve(img)};img.onerror=function(){reject(new Error('decode fail'))};img.src=objUrl;
+    var img=new Image();img.onload=function(){resolve(img)};img.onerror=function(){reject(new Error('decode'))};img.src=objUrl;
   });
 }
 async function loadImgRetry(prompt,maxRetries){
@@ -1301,14 +878,16 @@ async function generateAllImages(scenes){
   return images;
 }
   // ====================================================================
-// RENDERING v2 — Multi-layer · Camera moves · Transitions pro · FX
+// RENDERING — audio MUTATO durante generazione
 // ====================================================================
 function AudioAnalyzer(audio){this.audio=audio;this.ctx=null;this.analyser=null;this.data=null;this.sourceNode=null;this.bass=0;this.mid=0;this.high=0;this.energy=0;this.prevEnergy=0;this.beat=false;}
 AudioAnalyzer.prototype.init=function(){
   this.ctx=new(window.AudioContext||window.webkitAudioContext)();
   this.sourceNode=this.ctx.createMediaElementSource(this.audio);
   this.analyser=this.ctx.createAnalyser();this.analyser.fftSize=256;
-  this.sourceNode.connect(this.analyser);this.analyser.connect(this.ctx.destination);
+  // Collega analyzer ma NON le casse → audio non si sente
+  this.sourceNode.connect(this.analyser);
+  // NON connectiamo a ctx.destination → silenzio totale durante generazione
   this.data=new Uint8Array(this.analyser.frequencyBinCount);
 };
 AudioAnalyzer.prototype.update=function(){
@@ -1332,7 +911,6 @@ function drawFallback(ctx,W,H,colors,energy,t){
   for(var j=0;j<8;j++){var y=H*0.2+j*40;var amp=20+energy*80;ctx.beginPath();ctx.moveTo(0,y);for(var x=0;x<=W;x+=20){ctx.lineTo(x,y+Math.sin(x*0.02+t*0.003+j)*amp*(0.3+energy*0.7));}ctx.strokeStyle='rgba(255,255,255,'+(0.05+energy*0.15)+')';ctx.lineWidth=1.5;ctx.stroke();}
 }
 
-// FX atmosferici multi-layer
 function drawAtmosphereFX(ctx,W,H,fx,energy,t){
   if(!fx||!fx.length)return;
   for(var i=0;i<fx.length;i++){
@@ -1347,45 +925,25 @@ function drawAtmosphereFX(ctx,W,H,fx,energy,t){
     }else if(e==='fog'||e==='haze'||e==='mist'){
       var alpha=e==='fog'?0.15:e==='haze'?0.1:0.08;
       ctx.fillStyle='rgba(200,200,220,'+alpha+')';
-      for(var f=0;f<4;f++){
-        var fy=H*0.5+Math.sin(t*0.0005+f)*40+f*30;
-        ctx.fillRect(0,fy,W,80);
-      }
+      for(var f=0;f<4;f++){var fy=H*0.5+Math.sin(t*0.0005+f)*40+f*30;ctx.fillRect(0,fy,W,80);}
     }else if(e==='embers'){
       ctx.fillStyle='rgba(255,140,50,0.7)';
       for(var em=0;em<30;em++){
-        var ex=(em*131+t*0.1)%W;
-        var ey=(em*67-t*0.3)%H;
+        var ex=(em*131+t*0.1)%W;var ey=(em*67-t*0.3)%H;
         var es=2+Math.sin(t*0.01+em)*1;
         ctx.beginPath();ctx.arc(ex,ey,Math.max(0.5,es),0,Math.PI*2);ctx.fill();
       }
     }else if(e==='snow'){
       ctx.fillStyle='rgba(255,255,255,0.7)';
       for(var sn=0;sn<50;sn++){
-        var sx=(sn*89+Math.sin(sn+t*0.001)*30)%W;
-        var sy=(sn*41+t*0.15)%H;
+        var sx=(sn*89+Math.sin(sn+t*0.001)*30)%W;var sy=(sn*41+t*0.15)%H;
         ctx.beginPath();ctx.arc(sx,sy,1.5,0,Math.PI*2);ctx.fill();
       }
-    }else if(e==='smoke'){
-      ctx.globalCompositeOperation='screen';
-      for(var sm=0;sm<3;sm++){
-        var sx=W*(0.2+sm*0.3);var sy=H+Math.sin(t*0.0003+sm)*40;
-        var sg=ctx.createRadialGradient(sx,sy,0,sx,sy,200);
-        sg.addColorStop(0,'rgba(100,100,100,0.2)');sg.addColorStop(1,'rgba(100,100,100,0)');
-        ctx.fillStyle=sg;ctx.fillRect(0,0,W,H);
-      }
-      ctx.globalCompositeOperation='source-over';
     }else if(e==='lensFlare'){
       var lx=W*0.7,ly=H*0.3;
       var lg=ctx.createRadialGradient(lx,ly,0,lx,ly,200);
       lg.addColorStop(0,'rgba(255,200,100,'+(0.4+energy*0.3)+')');lg.addColorStop(1,'rgba(255,200,100,0)');
       ctx.fillStyle=lg;ctx.fillRect(0,0,W,H);
-      // Streak orizzontale
-      ctx.globalCompositeOperation='screen';
-      var slg=ctx.createLinearGradient(lx-300,ly,lx+300,ly);
-      slg.addColorStop(0,'rgba(255,200,100,0)');slg.addColorStop(0.5,'rgba(255,200,100,'+(0.3+energy*0.2)+')');slg.addColorStop(1,'rgba(255,200,100,0)');
-      ctx.fillStyle=slg;ctx.fillRect(lx-300,ly-3,600,6);
-      ctx.globalCompositeOperation='source-over';
     }else if(e==='bloom'){
       ctx.globalCompositeOperation='screen';
       ctx.fillStyle='rgba(255,255,255,'+(0.05+energy*0.1)+')';ctx.fillRect(0,0,W,H);
@@ -1398,17 +956,10 @@ function drawAtmosphereFX(ctx,W,H,fx,energy,t){
       ctx.globalCompositeOperation='screen';
       ctx.fillStyle='rgba(255,100,100,'+(0.08+energy*0.12)+')';ctx.fillRect(0,0,W,H);
       ctx.globalCompositeOperation='source-over';
-    }else if(e==='chromatic'){
-      ctx.globalCompositeOperation='screen';
-      ctx.globalAlpha=0.3;
-      ctx.fillStyle='rgba(255,0,0,0.3)';ctx.fillRect(-4,0,W,H);
-      ctx.fillStyle='rgba(0,255,255,0.3)';ctx.fillRect(4,0,W,H);
-      ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';
     }
   }
 }
 
-// Camera moves reali (NON solo Ken Burns)
 function applyCameraMove(ctx,W,H,camera,sceneProgress,intensity,beatPulse,shake,t){
   var cx=W/2,cy=H/2;
   var shakeX=0,shakeY=0;
@@ -1422,8 +973,7 @@ function applyCameraMove(ctx,W,H,camera,sceneProgress,intensity,beatPulse,shake,
   }else if(camera==='steadicam'){
     var drift=10*sceneProgress;
     ctx.translate(cx+Math.sin(t*0.001)*drift+shakeX,cy+Math.cos(t*0.0012)*drift*0.5+shakeY);
-    ctx.scale(1.08,cy);ctx.translate(-cx,-cy);ctx.scale(1,1);
-    ctx.translate(cx,cy);ctx.scale(1.08,1.08);ctx.translate(-cx,-cy);
+    ctx.scale(1.08,1.08);ctx.translate(-cx,-cy);
   }else if(camera==='gimbal'){
     var trackX=Math.sin(sceneProgress*Math.PI)*40;
     ctx.translate(cx+trackX+shakeX,cy+shakeY);ctx.scale(1.1,1.1);ctx.translate(-cx,-cy);
@@ -1433,11 +983,7 @@ function applyCameraMove(ctx,W,H,camera,sceneProgress,intensity,beatPulse,shake,
     ctx.translate(cx+hsx,cy+hsy);ctx.scale(1.05+beatPulse*0.05,1.05+beatPulse*0.05);ctx.translate(-cx,-cy);
   }else if(camera==='orbit'){
     var angle=sceneProgress*Math.PI*2;
-    var radius=30;
-    ctx.translate(cx+Math.cos(angle)*radius+shakeX,cy+Math.sin(angle)*radius*0.5+shakeY);
-    // Skew per simulare rotazione attorno al soggetto
-    var sk=Math.sin(angle)*0.05;
-    ctx.transform(1,0,sk,1,0,0);
+    ctx.translate(cx+Math.cos(angle)*30+shakeX,cy+Math.sin(angle)*15+shakeY);
     ctx.scale(1.1,1.1);ctx.translate(-cx,-cy);
   }else if(camera==='dollyIn'){
     var dz=1+sceneProgress*0.25+beatPulse*0.04;
@@ -1446,54 +992,29 @@ function applyCameraMove(ctx,W,H,camera,sceneProgress,intensity,beatPulse,shake,
     var ddz=1.25-sceneProgress*0.18;
     ctx.translate(cx+shakeX,cy+shakeY);ctx.scale(ddz,ddz);ctx.translate(-cx,-cy);
   }else if(camera==='craneUp'){
-    var cy2=cy+sceneProgress*60;
-    var cz=1.1+sceneProgress*0.1;
+    var cy2=cy+sceneProgress*60;var cz=1.1+sceneProgress*0.1;
     ctx.translate(cx+shakeX,cy2);ctx.scale(cz,cz);ctx.translate(-cx,-cy);
   }else if(camera==='tracking'){
     var tx=sceneProgress*80-40;
     ctx.translate(cx+tx+shakeX,cy+shakeY);ctx.scale(1.1,1.1);ctx.translate(-cx,-cy);
   }else{
-    // default Ken Burns
     var dz2=1+sceneProgress*0.15;
     ctx.translate(cx+shakeX,cy+shakeY);ctx.scale(dz2,dz2);ctx.translate(-cx,-cy);
   }
 }
 
-// Transizioni professionali
-function drawTransition(ctx,W,H,type,alpha,ts){
-  if(type==='cut'||alpha<=0)return;
-  if(type==='fade'){
-    ctx.fillStyle='rgba(0,0,0,'+alpha+')';ctx.fillRect(0,0,W,H);
-  }else if(type==='crossfade'){
-    // Gestito nel render principale (doppia immagine)
-  }else if(type==='whipPan'){
-    // Motion blur orizzontale
-    ctx.globalCompositeOperation='screen';
-    for(var i=0;i<5;i++){
-      var offset=(i-2)*alpha*80;
-      ctx.fillStyle='rgba(255,255,255,'+(0.1*alpha)+')';
-      ctx.fillRect(offset,0,W,H);
-    }
-    ctx.globalCompositeOperation='source-over';
-  }else if(type==='zoomBlur'){
-    ctx.globalCompositeOperation='screen';
-    ctx.globalAlpha=alpha*0.4;
-    ctx.fillStyle='rgba(255,255,255,0.3)';ctx.fillRect(0,0,W,H);
+function drawGlitch(intensity){
+  if(intensity<0.05)return;
+  var nSlices=Math.floor(intensity*4)+1;
+  for(var i=0;i<nSlices;i++){
+    var sy=Math.floor(Math.random()*H);var sh=Math.floor(10+Math.random()*40*intensity);var dx=(Math.random()-0.5)*60*intensity;
+    try{var data=ctx.getImageData(0,sy,W,Math.min(sh,H-sy));ctx.putImageData(data,dx,sy);}catch(e){}
+  }
+  if(intensity>0.3){
+    ctx.globalCompositeOperation='screen';ctx.globalAlpha=0.4*intensity;
+    ctx.fillStyle='rgba(255,0,0,0.3)';ctx.fillRect(-8*intensity,0,W,H);
+    ctx.fillStyle='rgba(0,255,255,0.3)';ctx.fillRect(8*intensity,0,W,H);
     ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';
-  }else if(type==='iris'){
-    var r=Math.max(0,(1-alpha)*Math.sqrt(W*W+H*H)/2);
-    ctx.fillStyle='rgba(0,0,0,1)';
-    ctx.beginPath();
-    ctx.rect(0,0,W,H);
-    ctx.arc(W/2,H/2,Math.max(1,r),0,Math.PI*2,true);
-    ctx.fill();
-  }else if(type==='glitch'){
-    for(var i=0;i<6;i++){
-      var sy=Math.floor(Math.random()*H);
-      var sh=Math.floor(10+Math.random()*40);
-      var dx=(Math.random()-0.5)*100*alpha;
-      try{var data=ctx.getImageData(0,sy,W,Math.min(sh,H-sy));ctx.putImageData(data,dx,sy);}catch(e){}
-    }
   }
 }
 
@@ -1503,22 +1024,22 @@ async function generate(){
   var style=styleHint.value.trim();
   generateBtn.disabled=true;progressEl.style.display='block';progressBar.style.width='0%';
   statusEl.textContent='Caricamento audio...';previewWrap.style.display='none';
-  log('=== GENERAZIONE VIDEO v2 ===');
+  log('=== GENERAZIONE VIDEO ===');
   var audioUrl;try{audioUrl=await getAU(selectedTrack.id);log('Audio OK')}catch(e){showError('Audio: '+e.message);generateBtn.disabled=false;progressEl.style.display='none';return}
-  var audio=new Audio();audio.crossOrigin='anonymous';audio.src=audioUrl;
+  // AUDIO MUTATO — non si sente durante la generazione
+  var audio=new Audio();audio.crossOrigin='anonymous';audio.src=audioUrl;audio.muted=true;audio.volume=0;
   try{await new Promise(function(r,j){audio.onloadedmetadata=r;audio.onerror=function(){j(new Error('Audio non caricabile'))}})}catch(e){showError(e.message);generateBtn.disabled=false;progressEl.style.display='none';return}
-  var duration=audio.duration;log('Durata: '+fmtTime(duration));
-  if(charDescription)log('Personaggio: '+charDescription.substring(0,80)+'...');
-  // Analisi audio (se non già fatta)
+  var duration=audio.duration;log('Durata: '+fmtTime(duration)+' (audio MUTATO)');
+  if(charDescription)log('Personaggio: '+charDescription.substring(0,60)+'...');
   if(!audioStruct){
-    statusEl.textContent='Audio Intelligence v2...';progressBar.style.width='3%';
+    statusEl.textContent='Analisi audio...';progressBar.style.width='3%';
     audioStruct=await analyzeAudioIntelligence(audioUrl,function(msg,p){
       statusEl.textContent=msg+(p>0?' '+Math.round(p*100)+'%':'');
       if(p>0)progressBar.style.width=(p*100)+'%';
     });
     renderAudioAnalysis(audioStruct);
   }
-  statusEl.textContent='Sincronizzazione scene con Director AI v2...';progressBar.style.width='7%';
+  statusEl.textContent='Sincronizzazione scene...';progressBar.style.width='7%';
   var scenes=audioStruct?buildScenesFromStructure(audioStruct,lyrics,style):analyzeScenes(lyrics,duration,style);
   currentStoryboard=scenes;renderTimeline();
   var syncedLines=syncLyricsToStructure(lyrics,audioStruct);
@@ -1527,7 +1048,7 @@ async function generate(){
   var images=await generateAllImages(scenes);
   statusEl.textContent='Preparazione rendering...';progressBar.style.width='60%';
   var W=1280,H=720;var canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;var ctx=canvas.getContext('2d');
-  var analyzer;try{analyzer=new AudioAnalyzer(audio);analyzer.init();log('Audio analyzer OK')}catch(e){showError('Audio: '+e.message);generateBtn.disabled=false;progressEl.style.display='none';return}
+  var analyzer;try{analyzer=new AudioAnalyzer(audio);analyzer.init();log('Audio analyzer OK (muto)')}catch(e){showError('Audio: '+e.message);generateBtn.disabled=false;progressEl.style.display='none';return}
   var particles=[];for(var i=0;i<80;i++)particles.push(new Particle(W,H));
   var grainCanvas=document.createElement('canvas');grainCanvas.width=W;grainCanvas.height=H;
   var grainCtx=grainCanvas.getContext('2d');
@@ -1548,6 +1069,7 @@ async function generate(){
   var beatPulse=0,glitchA=0,lastBeatTime=-1,sceneChangeFlash=0;
   var letterboxH=Math.floor(H*0.06);
   var canvasStream=canvas.captureStream(30);
+  // Audio track per il video finale — l'audio È nel video ma NON nelle casse durante generazione
   var audioDest=analyzer.ctx.createMediaStreamDestination();
   analyzer.sourceNode.connect(audioDest);
   var aTrack=audioDest.stream.getAudioTracks()[0];if(aTrack)canvasStream.addTrack(aTrack);
@@ -1606,21 +1128,6 @@ async function generate(){
     ctx.shadowBlur=0;ctx.globalAlpha=1;
   }
 
-  function drawGlitch(intensity){
-    if(intensity<0.05)return;
-    var nSlices=Math.floor(intensity*4)+1;
-    for(var i=0;i<nSlices;i++){
-      var sy=Math.floor(Math.random()*H);var sh=Math.floor(10+Math.random()*40*intensity);var dx=(Math.random()-0.5)*60*intensity;
-      try{var data=ctx.getImageData(0,sy,W,Math.min(sh,H-sy));ctx.putImageData(data,dx,sy);}catch(e){}
-    }
-    if(intensity>0.3){
-      ctx.globalCompositeOperation='screen';ctx.globalAlpha=0.4*intensity;
-      ctx.fillStyle='rgba(255,0,0,0.3)';ctx.fillRect(-8*intensity,0,W,H);
-      ctx.fillStyle='rgba(0,255,255,0.3)';ctx.fillRect(8*intensity,0,W,H);
-      ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';
-    }
-  }
-
   function render(ts){
     if(!startTime)startTime=ts;
     var elapsed=(ts-startTime)/1000;
@@ -1643,7 +1150,7 @@ async function generate(){
       ctx.shadowBlur=0;ctx.restore();
       ctx.font='15px -apple-system,sans-serif';ctx.fillStyle='rgba(200,200,200,'+tAlpha*0.7+')';
       ctx.textAlign='center';ctx.fillText('MUSIC VIDEO',W/2,H/2+30);
-      if(audioStruct){ctx.font='12px monospace';ctx.fillStyle='rgba(150,150,150,'+tAlpha*0.6+')';ctx.fillText('BPM '+audioStruct.bpm+' · '+audioStruct.sections.length+' sezioni · '+audioStruct.events.length+' eventi · Director AI v2',W/2,H/2+60);}
+      if(audioStruct){ctx.font='12px monospace';ctx.fillStyle='rgba(150,150,150,'+tAlpha*0.6+')';ctx.fillText('BPM '+audioStruct.bpm+' · '+audioStruct.sections.length+' sezioni',W/2,H/2+60);}
       ctx.globalAlpha=1;
       progressBar.style.width=(elapsed/titleDuration*10)+'%';
       statusEl.textContent='Titolo...';
@@ -1651,9 +1158,7 @@ async function generate(){
     }
     var videoTime=elapsed-titleDuration;
     for(var i=scenes.length-1;i>=0;i--){if(videoTime>=scenes[i].start){curScene=i;break}}
-    if(curScene!==prevScene){
-      prevScene=curScene;transitionA=1;sceneChangeFlash=1;glitchA=0.6;
-    }
+    if(curScene!==prevScene){prevScene=curScene;transitionA=1;sceneChangeFlash=1;glitchA=0.6;}
     transitionA*=0.92;sceneChangeFlash*=0.85;
     var scene=scenes[curScene];
     var colors=scene.colors;
@@ -1674,20 +1179,9 @@ async function generate(){
       }
     }
     if(analyzer.beat)beatHit=true;
-    // Check eventi musicali nella scena
-    var eventBoost=0;
-    if(audioStruct&&audioStruct.events){
-      for(var ev=0;ev<audioStruct.events.length;ev++){
-        var ev_=audioStruct.events[ev];
-        if(Math.abs(ev_.time-videoTime)<0.3){
-          if(ev_.type==='drop'){eventBoost=0.5;glitchA=Math.max(glitchA,0.6);}
-          else if(ev_.type==='buildup'){eventBoost=0.2;}
-        }
-      }
-    }
     kbx+=0.0003*(1+analyzer.energy*3);kby+=0.0002*(1+analyzer.energy*1.5);
     if(beatHit){
-      flashA=0.35*intensity+eventBoost*0.3;beatPulse=1;
+      flashA=0.35*intensity;beatPulse=1;
       if(scene.section==='chorus'&&intensity>0.6)glitchA=Math.max(glitchA,0.4);
     }
     flashA*=0.88;beatPulse*=0.85;glitchA*=0.82;
@@ -1743,13 +1237,8 @@ async function generate(){
     ctx.font='11px monospace';ctx.textAlign='right';ctx.textBaseline='top';
     ctx.fillStyle='rgba(255,255,255,0.5)';
     ctx.fillText(fmtTime(videoTime)+' / '+fmtTime(duration),W-30,letterboxH+15);
-    if(director.camera){
-      ctx.font='10px monospace';ctx.textAlign='left';ctx.textBaseline='bottom';
-      ctx.fillStyle='rgba(76,201,240,0.6)';
-      ctx.fillText('DIR: '+director.camera+' · '+director.lens+' · '+director.lighting+' · '+(director.fx||[]).join('+'),30,H-letterboxH-8);
-    }
     progressBar.style.width=(10+(videoTime/duration)*90)+'%';
-    statusEl.textContent='Registrazione... '+fmtTime(videoTime)+' / '+fmtTime(duration);
+    statusEl.textContent='Registrazione... '+fmtTime(videoTime)+' / '+fmtTime(duration)+' (audio muto)';
     if(videoTime<duration)requestAnimationFrame(render);
     else{
       var outroStart=ts;
@@ -1763,7 +1252,7 @@ async function generate(){
             ctx.fillStyle='#f72585';
             ctx.fillText(selectedTrack.name.replace(/\.[^.]+$/,''),W/2,H/2-20);
             ctx.font='14px -apple-system,sans-serif';ctx.fillStyle='#888';
-            ctx.fillText('AI Music Video Director v2',W/2,H/2+20);
+            ctx.fillText('AI Music Video Director',W/2,H/2+20);
             ctx.globalAlpha=1;
           }
           requestAnimationFrame(outro);
@@ -1773,33 +1262,59 @@ async function generate(){
     }
   }
 
-  statusEl.textContent='Registrazione...';recorder.start(1000);audio.play();requestAnimationFrame(render);
+  statusEl.textContent='Registrazione... (audio muto)';recorder.start(1000);audio.play();requestAnimationFrame(render);
   var blob=await done;var url=URL.createObjectURL(blob);
   preview.src=url;previewWrap.style.display='block';
   downloadBtn.href=url;downloadBtn.style.display='inline-block';
   downloadBtn.download=selectedTrack.name.replace(/\.[^.]+$/,'')+'-video.webm';
   progressEl.style.display='none';statusEl.textContent='Video pronto!';
   generateBtn.disabled=false;log('Video: '+fmtSize(blob.size));
+  // SALVA in IndexedDB per persistenza F5
+  try{
+    await idbSet('videos','lastBlob',blob);
+    await idbSet('meta','lastName',selectedTrack.name.replace(/\.[^.]+$/,'')+'-video.webm');
+    await idbSet('meta','lastSize',blob.size);
+    log('Video salvato in IndexedDB (persistente)');
+  }catch(e){log('IDB save fail: '+e.message);}
+  // Salva anche su Supabase
   await saveVideoToLibrary(blob,audioStruct?audioStruct.duration:duration);
 }
 
 // ====================================================================
-// LIBRERIA VIDEO
+// RIPRISTINO VIDEO dopo F5
+// ====================================================================
+async function restoreLastVideo(){
+  try{
+    var blob=await idbGet('videos','lastBlob');
+    var name=await idbGet('meta','lastName');
+    if(blob&&name){
+      var url=URL.createObjectURL(blob);
+      preview.src=url;previewWrap.style.display='block';
+      downloadBtn.href=url;downloadBtn.style.display='inline-block';
+      downloadBtn.download=name;
+      log('Video ripristinato da IndexedDB: '+name);
+      showSuccess('Video ripristinato');
+    }
+  }catch(e){log('Restore fail: '+e.message);}
+}
+
+// ====================================================================
+// LIBRERIA VIDEO (Supabase)
 // ====================================================================
 async function saveVideoToLibrary(blob,duration){
   try{
-    statusEl.textContent='Salvataggio video su libreria...';
+    statusEl.textContent='Salvataggio su libreria...';
     var trackName=selectedTrack.name.replace(/\.[^.]+$/,'');
     var path='videos/'+Date.now()+'-'+Math.random().toString(36).slice(2)+'.webm';
     var file=new File([blob],trackName+'.webm',{type:'video/webm'});
     var upRes=await sb.storage.from('audio').upload(path,file,{upsert:true,contentType:'video/webm'});
-    if(upRes.error){log('Upload video fallito: '+upRes.error.message);return}
+    if(upRes.error){log('Upload fail: '+upRes.error.message);return}
     var dbRes=await sb.from('videos').insert({track_id:selectedTrack.id,name:trackName,storage_path:path,size:blob.size,duration:duration}).select().single();
-    if(dbRes.error){log('Salvataggio DB fallito: '+dbRes.error.message);return}
-    log('Video salvato: '+dbRes.data.id);
+    if(dbRes.error){log('DB fail: '+dbRes.error.message);return}
+    log('Video salvato in libreria');
     showSuccess('Video salvato in libreria');
     await renderVideoLibrary();
-  }catch(e){log('Errore salvataggio: '+e.message);}
+  }catch(e){log('Save err: '+e.message);}
 }
 
 async function renderVideoLibrary(){
@@ -1809,7 +1324,7 @@ async function renderVideoLibrary(){
     var r=await sb.from('videos').select('*').order('created_at',{ascending:false});
     if(r.error)throw r.error;
     var videos=r.data;
-    log('Trovati '+videos.length+' video in libreria');
+    log('Trovati '+videos.length+' video');
     var countBadge=document.getElementById('videoCount');
     if(countBadge){if(videos.length){countBadge.textContent=videos.length;countBadge.style.display='inline-block';}else{countBadge.style.display='none';}}
     if(!videos.length){container.innerHTML='<div class="empty-library">Nessun video generato.</div>';return}
@@ -1835,7 +1350,6 @@ async function getVideoUrl(id){
   var s=await sb.storage.from('audio').createSignedUrl(r.data.storage_path,7200);
   return s.data.signedUrl;
 }
-
 async function playVideoFromLibrary(id){
   try{
     var url=await getVideoUrl(id);
@@ -1846,29 +1360,34 @@ async function playVideoFromLibrary(id){
     showSuccess('Video caricato');
   }catch(e){showError('Errore: '+e.message);}
 }
-
 async function downloadVideoFromLibrary(id){
   try{
     var url=await getVideoUrl(id);
     var r=await sb.from('videos').select('name').eq('id',id).single();
     var a=document.createElement('a');a.href=url;a.download=(r.data.name||'video')+'.webm';
     document.body.appendChild(a);a.click();document.body.removeChild(a);
-  }catch(e){showError('Errore download: '+e.message);}
+  }catch(e){showError('Errore: '+e.message);}
 }
-
 async function deleteVideoFromLibrary(id){
-  if(!confirm('Eliminare questo video?'))return;
+  if(!confirm('Eliminare?'))return;
   try{
     var r=await sb.from('videos').select('storage_path').eq('id',id).single();
     if(r.data)await sb.storage.from('audio').remove([r.data.storage_path]);
     await sb.from('videos').delete().eq('id',id);
-    showSuccess('Video eliminato');
+    showSuccess('Eliminato');
     await renderVideoLibrary();
   }catch(e){showError('Errore: '+e.message);}
 }
 
+// ====================================================================
+// AVVIO
+// ====================================================================
+(async function(){
+  await initIDB();
+  handleAuth();
+})();
 generateBtn.addEventListener('click',generate);
-log('App avviata (AI Music Video Director v2)');
+log('App caricata (AI Music Video Director v3)');
 </script>
 </body>
 </html>
