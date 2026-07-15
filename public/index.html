@@ -81,43 +81,6 @@ video{width:100%;border-radius:8px;background:#000;pointer-events:none}
 .video-name{font-weight:600;font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .video-meta{font-size:.73rem;color:#666;margin-top:2px}
 .video-actions{display:flex;gap:6px;align-items:center;flex-shrink:0}
-
-/* === SCROLLABLE PANELS === */
-.track-list{max-height:280px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#2a2a3a #0a0a0f}
-.track-list::-webkit-scrollbar{width:6px}
-.track-list::-webkit-scrollbar-track{background:#0a0a0f;border-radius:3px}
-.track-list::-webkit-scrollbar-thumb{background:#2a2a3a;border-radius:3px}
-.track-list::-webkit-scrollbar-thumb:hover{background:#3a3a4a}
-.video-list{max-height:280px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#2a2a3a #0a0a0f}
-.video-list::-webkit-scrollbar{width:6px}
-.video-list::-webkit-scrollbar-track{background:#0a0a0f;border-radius:3px}
-.video-list::-webkit-scrollbar-thumb{background:#2a2a3a;border-radius:3px}
-
-/* === TIMELINE EDITOR === */
-.tl-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px}
-.tl-actions{display:flex;gap:6px;flex-wrap:wrap}
-.tl-editor{max-height:500px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#2a2a3a #0a0a0f;scrollbar-gutter:stable}
-.tl-editor::-webkit-scrollbar{width:6px}
-.tl-editor::-webkit-scrollbar-track{background:#0a0a0f;border-radius:3px}
-.tl-editor::-webkit-scrollbar-thumb{background:#2a2a3a;border-radius:3px}
-.tl-row{display:grid;grid-template-columns:40px 1fr 90px 90px 70px 36px;gap:6px;align-items:center;padding:7px 8px;border-bottom:1px solid #1a1a2a;transition:background .15s}
-.tl-row:hover{background:rgba(247,37,133,.04)}
-.tl-row-num{font-size:.72rem;color:#555;text-align:center;font-family:monospace}
-.tl-row-text{font-size:.82rem;color:#ccc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;-webkit-user-select:text;user-select:text}
-.tl-row-text input{width:100%;background:transparent;border:1px solid transparent;color:#e0e0e0;font-size:.82rem;padding:3px 6px;border-radius:4px;font-family:inherit;-webkit-user-select:text;user-select:text}
-.tl-row-text input:focus{border-color:#f72585;outline:none;background:#0a0a0f}
-.tl-input{width:100%;background:#0a0a0f;border:1px solid #2a2a3a;border-radius:4px;padding:4px 6px;color:#e0e0e0;font-size:.78rem;font-family:monospace;text-align:center;-webkit-user-select:text;user-select:text}
-.tl-input:focus{border-color:#f72585;outline:none}
-.tl-dur{font-size:.72rem;color:#555;text-align:center;font-family:monospace}
-.tl-del{background:none;border:1px solid #3a2020;color:#f66;padding:3px 6px;border-radius:4px;cursor:pointer;font-size:.7rem}
-.tl-del:hover{background:#3a1515;border-color:#f66}
-.tl-empty{color:#555;font-size:.82rem;text-align:center;padding:20px;font-style:italic}
-.tl-add-row{display:flex;gap:8px;margin-top:10px;align-items:center}
-.tl-add-row input{flex:1}
-.tl-badge{display:inline-block;background:#4cc9f0;color:#000;padding:2px 8px;border-radius:4px;font-size:.68rem;margin-left:8px}
-.tl-mode-auto{color:#4cc9f0}
-.tl-mode-manual{color:#f72585}
-
 </style>
 </head>
 <body>
@@ -152,29 +115,8 @@ video{width:100%;border-radius:8px;background:#000;pointer-events:none}
 <label>Stile visivo base (opzionale)</label>
 <input type="text" id="styleHint" class="text-input" placeholder="es: cinematografico, anime, vintage, cyberpunk...">
 <button id="generateBtn" disabled>Genera Video</button>
-  <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
-    <button class="sec" id="tlToggleBtn" title="Apri/chiudi editor timing testi">Editor Timing Testi</button>
-  </div>
 <div class="progress" id="progress"><div class="progress-bar" id="progressBar"></div></div>
 <div class="status" id="status"></div>
-</div>
-
-
-<div class="panel" id="timelinePanel" style="display:none">
-  <div class="tl-header">
-    <h2>Editor Timing Testi <span id="tlMode" class="tl-badge tl-mode-auto">AUTO</span></h2>
-    <div class="tl-actions">
-      <button class="sec" id="tlAutoBtn" title="Ripristina timing automatico">Auto</button>
-      <button class="sec" id="tlDistributeBtn" title="Distribuisci uniformemente">Distribuisci</button>
-      <button class="sec" id="tlAddBtn" title="Aggiungi riga di testo personalizzata">+ Riga</button>
-    </div>
-  </div>
-  <p style="font-size:.75rem;color:#666;margin-bottom:10px">Imposta manualmente quando ogni riga di testo appare nel video. Usa formato mm:ss o secondi (es. 30 o 0:30).</p>
-  <div class="tl-editor" id="tlEditor"><div class="tl-empty">Seleziona una traccia e inserisci il testo per attivare l'editor.</div></div>
-  <div class="tl-add-row" id="tlAddRow" style="display:none">
-    <input type="text" id="tlNewText" class="text-input" placeholder="Testo della nuova riga..." style="margin-bottom:0;min-height:auto;padding:7px 10px">
-    <button class="sec" id="tlAddConfirm">Aggiungi</button>
-  </div>
 </div>
 
 <div class="panel cinema-toggle" id="cinemaToggle">
@@ -695,9 +637,6 @@ var MOOD_WORDS={
   mare:['mare','spiaggia','onda','onde','costa','riva','porto','barca','nave','vela','naufrag','isola','scoglio','profondit','sottomarin','pesca','pesc'],
   citta:['citta','vicolo','vicoli','strada','strad','quartiere','palazzo','palazz','tetto','tetti','chiesa','piazza','mercato','neon','lampion','marciapied','asfalto','mur','muri','napoli','torino','roma','milano'],
   urban:['rap','trap','beat','basso','flow','rhyme','rhythm','mic','microfono','dj','producer','strofa','ritornello','hook','verse','bar','club','street','ghetto','block']
-
-  electronic:['techno','electronic','bass','drop','kick','synth','synthesizer','beat','rhythm','club','dj','festival','rave','dance','edm','house','trance','minimal','progressive','loop','sample','vinyl','mix','mixing','turntable','controller','ableton','maschine','sp1200','808','909','303','kick drum','hi-hat','snare','clap','bassline','sub bass','pad','lead','arpeggio','sequence','sequencer','modular','analog','digital','plugin','vst','midi','bpm','tempo','groove','flow','vibe','energy','frequency','oscillator','filter','resonance','delay','reverb','distortion','compressor','limiter','sidechain','pump'],
-  nottetecnica:['notte','scuro','buio','neon','laser','strobo','stroboscopico','basso','potente','esplosivo','ritmico','macchina','sintetizzatore','frequenza','vibrazione','ondasonora','club','discoteca','pista','ballare','movimento','energia','oscurita','luce','colori','psichedelia','trance','ipnotico','ripetitivo','meccanico','industriale','urbano','metropoli'],
 };
 
 var VISUAL_MAP={
@@ -712,16 +651,6 @@ var VISUAL_MAP={
   mare:{prompt:'dramatic sea waves crashing against dark rocks at twilight, long exposure water motion, deep blue and teal tones, white foam detail, moody overcast sky, powerful nature, cinematic widescreen composition, low camera near water level',colors:['#0a1a2e','#1a3a5e','#2a6a8e'],camera:'low'},
   citta:{prompt:'narrow alley in an old Italian city at dusk, warm light spilling from doorways, clotheslines overhead, wet cobblestones reflecting golden light, deep shadows, figure walking away in distance, cinematic anamorphic look, tracking shot perspective',colors:['#1a0f0a','#3a2a1a','#d4874d'],camera:'tracking'},
   urban:{prompt:'gritty urban rooftop at night, neon signs reflecting on wet concrete, smoke rising, figure leaning against railing with city skyline behind, teal and orange color grade, moody atmospheric haze, music video aesthetic, medium shot',colors:['#0a0a1a','#1a3a4a','#ff6b35'],camera:'medium'}
-};,
-
-  // === ELECTRONIC / TECHNO VISUALS ===
-  techno:{prompt:'dark underground techno club, laser beams cutting through haze, strobe flashes, abstract geometric light projections on concrete walls, smoke machine atmosphere, bass speakers pulsing, neon grid floor, cyberpunk aesthetic, ultra wide angle, high contrast, cinematic club scene',colors:['#050008','#1a0030','#ff00ff'],camera:'wide'},
-  electro:{prompt:'futuristic electronic music environment, glowing circuit board patterns, holographic displays, electric blue and magenta neon lighting, digital rain, pulsing energy waves, clean dark surfaces with LED reflections, sci-fi laboratory aesthetic, medium shot',colors:['#000820','#001050','#00d4ff'],camera:'medium'},
-  house:{prompt:'sunset warehouse party, warm golden light through industrial windows, DJ booth silhouetted, crowd silhouettes with raised hands, warm color palette, dust particles in light beams, house music atmosphere, wide cinematic shot',colors:['#1a0a00','#3a1a00','#ff8800'],camera:'wide'},
-  trance:{prompt:'ethereal trance festival stage, massive LED screens with cosmic visuals, laser canopy, uplifting atmosphere, starfield projections, euphoric light show, deep space imagery, audience silhouettes, epic wide shot',colors:['#000520','#001040','#7b2fff'],camera:'wide'},
-  drumnbass:{prompt:'gritty urban drum and bass scene, rain-soaked alleyway with neon reflections, broken concrete, industrial textures, fast motion blur, dark moody atmosphere, bass-heavy visual weight, teal and orange street lights, low angle tracking shot',colors:['#0a0a0a','#0a1a2a','#00ff88'],camera:'low-angle'},
-  minimal:{prompt:'minimalist electronic environment, clean geometric shapes, monochrome with single accent color, subtle motion, abstract architectural space, soft shadows, refined aesthetic, medium shot with shallow depth of field',colors:['#0a0a0a','#1a1a1a','#ffffff'],camera:'medium'},
-
 };
 
 var NEAPOLITAN_MAP={
@@ -744,7 +673,7 @@ var NEAPOLITAN_MAP={
   'scure':'darkness descending, fading light, silhouette against last light'
 };
 
-function analyzeScenes(lyrics,duration,style,detectedGenre){
+function analyzeScenes(lyrics,duration,style){
   log('Analisi intelligente testo...');
   var blocks=lyrics.split(/\n\s*\n/).filter(function(b){return b.trim()});
   if(!blocks.length)blocks=[lyrics];
@@ -760,13 +689,7 @@ function analyzeScenes(lyrics,duration,style,detectedGenre){
     if(!sceneText.trim())sceneText=blocks[Math.min(i,blocks.length-1)]||'';
 
     var analysis=analyzeMood(sceneText);
-    // Se è electronic, usa visual map del genere
-    var visual;
-    if(detectedGenre && VISUAL_MAP[detectedGenre]){
-      visual = VISUAL_MAP[detectedGenre];
-    } else {
-      visual = VISUAL_MAP[analysis.primaryMood] || VISUAL_MAP.nostalgia;
-    }
+    var visual=VISUAL_MAP[analysis.primaryMood]||VISUAL_MAP.nostalgia;
     var neapolitanHints=findNeapolitanHints(sceneText);
 
     var prompt=buildPrompt(visual,neapolitanHints,style,sceneText,i,sceneCount);
@@ -825,80 +748,6 @@ function findNeapolitanHints(text){
   }
   return hints;
 }
-
-// ====================================================================
-// DETECTION GENERE ELECTRONIC DA AUDIO
-// ====================================================================
-function detectGenreFromAudio(audioStruct, lyrics){
-  if(!audioStruct) return null;
-
-  var bpm = audioStruct.bpm || 120;
-  var sections = audioStruct.sections || [];
-  var energy = audioStruct.energy;
-
-  // Calcola statistiche energia
-  var avgEnergy = 0, variance = 0, bassRatio = 0;
-  var nE = energy ? energy.length : 0;
-
-  if(nE > 0){
-    for(var i = 0; i < nE; i++) avgEnergy += energy[i];
-    avgEnergy /= nE;
-    for(var i = 0; i < nE; i++){
-      var d = energy[i] - avgEnergy;
-      variance += d * d;
-    }
-    variance /= nE;
-
-    // Rapporto energie: primi 20% (bassi) vs resto
-    var bassE = 0, totalE = 0;
-    var bassEnd = Math.floor(nE * 0.2);
-    for(var i = 0; i < nE; i++){
-      totalE += energy[i];
-      if(i < bassEnd) bassE += energy[i];
-    }
-    bassRatio = totalE > 0 ? bassE / totalE : 0;
-  }
-
-  // Consistenza del ritmo: varianza bassa = ritmo molto regolare (tipico electronic)
-  var rhythmConsistency = Math.max(0, 1 - variance * 8);
-
-  // Analisi testo per parole electronic
-  var lower = (lyrics || '').toLowerCase();
-  var eWords = ['techno','electronic','bass','drop','kick','synth','club','dj','rave','edm','house','trance','minimal','beat','loop','808','909','bpm','festival','dance'];
-  var eCount = 0;
-  for(var i = 0; i < eWords.length; i++){
-    if(lower.indexOf(eWords[i]) !== -1) eCount++;
-  }
-
-  // Parole napoletane techno
-  var nWords = ['basso','scuro','neon','laser','strobo','energia','club','discoteca','pista','ballare','sintetizzatore','frequenza','vibrazione'];
-  for(var i = 0; i < nWords.length; i++){
-    if(lower.indexOf(nWords[i]) !== -1) eCount++;
-  }
-
-  var textScore = Math.min(1, eCount / 4);
-  var bpmScore = 0;
-  if(bpm >= 125 && bpm <= 145) bpmScore = 0.8;      // Techno sweet spot
-  else if(bpm >= 120 && bpm <= 150) bpmScore = 0.5;  // Electronic range
-  else if(bpm >= 110 && bpm <= 180) bpmScore = 0.3;  // Broad electronic
-
-  // Punteggio combinato
-  var electronicScore = (bpmScore * 0.35) + (rhythmConsistency * 0.25) + (bassRatio > 0.3 ? 0.2 : 0) + (textScore * 0.2);
-
-  log('Genre detection: BPM='+bpm+' consistency='+rhythmConsistency.toFixed(2)+' bassRatio='+bassRatio.toFixed(2)+' textScore='+textScore.toFixed(2)+' => electronic='+electronicScore.toFixed(2));
-
-  if(electronicScore < 0.45) return null; // Non abbastanza electronic
-
-  // Sottogenere
-  if(bpm >= 128 && bpm <= 145 && bassRatio > 0.28) return 'techno';
-  if(bpm >= 125 && bpm <= 135 && rhythmConsistency > 0.7) return 'minimal';
-  if(bpm >= 120 && bpm <= 130 && textScore > 0.3) return 'house';
-  if(bpm >= 135 && bpm <= 150) return 'drumnbass';
-  if(bpm >= 110 && bpm <= 130) return 'trance';
-  if(bpm >= 118 && bpm <= 140) return 'electro';
-  return 'techno'; // Default per electronic
-}
-
 
 function buildPrompt(visual,hints,style,text,sceneIdx,total){
   var parts=[];
@@ -1229,7 +1078,7 @@ function syncLyricsToStructure(lyrics,audioStruct){
 }
 
 // Crea scene allineate ai boundary delle sezioni (non a tempo fisso)
-function buildScenesFromStructure(audioStruct,lyrics,style,detectedGenre){
+function buildScenesFromStructure(audioStruct,lyrics,style){
   if(!audioStruct||!audioStruct.sections.length){
     // Fallback: comportamento precedente
     return analyzeScenes(lyrics,audioStruct?audioStruct.duration:180,style);
@@ -1258,16 +1107,9 @@ function buildScenesFromStructure(audioStruct,lyrics,style,detectedGenre){
       var sceneText=lines[Math.min(blockIdx,lines.length-1)]||'';
 
       var analysis=analyzeMood(sceneText);
-      // Se è electronic, usa visual map del genere
-      var visual;
-      if(detectedGenre && VISUAL_MAP[detectedGenre]){
-        visual = VISUAL_MAP[detectedGenre];
-      } else {
-        visual = VISUAL_MAP[analysis.primaryMood] || VISUAL_MAP.nostalgia;
-      }
-      var hints = findNeapolitanHints(sceneText);
-      var effectiveStyle = detectedGenre ? (style ? style + ', ' + detectedGenre + ' music' : detectedGenre + ' music style') : style;
-      var prompt=buildPrompt(visual,hints,effectiveStyle,sceneText,scenes.length,Math.min(15,sections.length*2));
+      var visual=VISUAL_MAP[analysis.primaryMood]||VISUAL_MAP.nostalgia;
+      var hints=findNeapolitanHints(sceneText);
+      var prompt=buildPrompt(visual,hints,style,sceneText,scenes.length,Math.min(15,sections.length*2));
 
       // Intensità derivata dall'energia della sezione
       var sectionBoost=sec.label==='chorus'?0.2:sec.label==='bridge'?-0.1:0;
@@ -1360,16 +1202,10 @@ async function generate(){
 
   // === NUOVO: SCENE ALLINEATE ALLA STRUTTURA MUSICALE ===
   statusEl.textContent='Sincronizzazione scene...';progressBar.style.width='7%';
-    // === DETECTION GENERE ===
-  var detectedGenre = detectGenreFromAudio(audioStruct, lyrics);
-  if(detectedGenre) log('Genere rilevato: ' + detectedGenre.toUpperCase());
-
-  var scenes=audioStruct?buildScenesFromStructure(audioStruct,lyrics,style,detectedGenre):analyzeScenes(lyrics,duration,style,detectedGenre);
+  var scenes=audioStruct?buildScenesFromStructure(audioStruct,lyrics,style):analyzeScenes(lyrics,duration,style);
 
   // === NUOVO: RIGHE TESTO SINCRONIZZATE ===
-  // === MANUAL TIMING OVERRIDE ===
-  var manualLines = getManualSyncedLines();
-  var syncedLines = manualLines || syncLyricsToStructure(lyrics, audioStruct);
+  var syncedLines=syncLyricsToStructure(lyrics,audioStruct);
   log('Righe sincronizzate: '+syncedLines.length);
 
   statusEl.textContent='Generazione immagini...';progressBar.style.width='10%';
@@ -1889,247 +1725,7 @@ async function deleteVideoFromLibrary(id){
   }catch(e){showError('Errore: '+e.message)}
 }
 
-// Init timeline editor
-initTimelineEditor();
-
 generateBtn.addEventListener('click',generate);
-
-// ====================================================================
-// TIMELINE EDITOR - Controllo manuale timing testi
-// ====================================================================
-var manualTiming = []; // Array di {text, start, end} sovrascritti dall'utente
-var tlMode = 'auto'; // 'auto' o 'manual'
-
-function openTimelineEditor(){
-  var panel = document.getElementById('timelinePanel');
-  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-  if(panel.style.display === 'block') refreshTimelineEditor();
-}
-
-function refreshTimelineEditor(){
-  var editor = document.getElementById('tlEditor');
-  var lyrics = lyricsInput.value.trim();
-  var addRow = document.getElementById('tlAddRow');
-
-  if(!lyrics && manualTiming.length === 0){
-    editor.innerHTML = '<div class="tl-empty">Inserisci il testo della canzone o aggiungi righe manuali.</div>';
-    addRow.style.display = 'none';
-    return;
-  }
-
-  addRow.style.display = 'flex';
-
-  // Se siamo in modalità manuale, usa manualTiming; altrimenti genera da testo
-  var lines;
-  if(tlMode === 'manual' && manualTiming.length > 0){
-    lines = manualTiming.slice();
-  } else {
-    lines = lyrics.split('\n').map(function(l){ return l.trim(); }).filter(function(l){ return l.length > 0; });
-  }
-
-  if(!lines.length){
-    editor.innerHTML = '<div class="tl-empty">Nessuna riga di testo.</div>';
-    return;
-  }
-
-  var dur = selectedTrack ? selectedTrack.duration || 180 : 180;
-  var html = '';
-
-  for(var i = 0; i < lines.length; i++){
-    var line = typeof lines[i] === 'string' ? lines[i] : (lines[i].text || '');
-    var startSec = typeof lines[i] === 'object' && lines[i].start != null ? lines[i].start : (i * (dur / lines.length));
-    var endSec = typeof lines[i] === 'object' && lines[i].end != null ? lines[i].end : ((i + 1) * (dur / lines.length));
-
-    var startVal = formatTlTime(startSec);
-    var endVal = formatTlTime(endSec);
-    var durVal = (endSec - startSec).toFixed(1) + 's';
-
-    html += '<div class="tl-row" data-idx="'+i+'">' +
-      '<div class="tl-row-num">'+(i+1)+'</div>' +
-      '<div class="tl-row-text"><input type="text" value="'+escapeHtml(line)+'" data-role="text" data-idx="'+i+'"></div>' +
-      '<div><input type="text" class="tl-input" value="'+startVal+'" data-role="start" data-idx="'+i+'" title="Inizio (secondi o mm:ss)"></div>' +
-      '<div><input type="text" class="tl-input" value="'+endVal+'" data-role="end" data-idx="'+i+'" title="Fine (secondi o mm:ss)"></div>' +
-      '<div class="tl-dur">'+durVal+'</div>' +
-      '<button class="tl-del" data-idx="'+i+'" title="Rimuovi riga">&#10005;</button>' +
-      '</div>';
-  }
-
-  editor.innerHTML = html;
-
-  // Bind eventi
-  var inputs = editor.querySelectorAll('.tl-row input');
-  for(var j = 0; j < inputs.length; j++){
-    inputs[j].addEventListener('change', onTlInputChange);
-    inputs[j].addEventListener('input', onTlInputChange);
-  }
-
-  var delBtns = editor.querySelectorAll('.tl-del');
-  for(var k = 0; k < delBtns.length; k++){
-    delBtns[k].addEventListener('click', onTlDeleteRow);
-  }
-}
-
-function formatTlTime(sec){
-  if(sec == null || !isFinite(sec)) return '0:00';
-  var m = Math.floor(sec / 60);
-  var s = Math.floor(sec % 60);
-  return m + ':' + String(s).padStart(2, '0');
-}
-
-function parseTlTime(val){
-  if(val == null) return null;
-  val = String(val).trim();
-  if(!val) return null;
-  // Formato mm:ss
-  var match = val.match(/^(\d+):(\d+)$/);
-  if(match){
-    return parseInt(match[1]) * 60 + parseInt(match[2]);
-  }
-  // Formato secondi (anche decimali)
-  var num = parseFloat(val);
-  if(!isNaN(num) && num >= 0) return num;
-  return null;
-}
-
-function escapeHtml(str){
-  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-function onTlInputChange(e){
-  var idx = parseInt(e.target.dataset.idx);
-  var role = e.target.dataset.role;
-  rebuildManualTiming();
-  // Aggiorna durata visualizzata
-  if(role === 'start' || role === 'end'){
-    var row = e.target.closest('.tl-row');
-    if(row){
-      var durEl = row.querySelector('.tl-dur');
-      var sInput = row.querySelector('[data-role="start"]');
-      var eInput = row.querySelector('[data-role="end"]');
-      var s = parseTlTime(sInput.value) || 0;
-      var en = parseTlTime(eInput.value) || 0;
-      durEl.textContent = Math.max(0, en - s).toFixed(1) + 's';
-    }
-  }
-}
-
-function onTlDeleteRow(e){
-  var idx = parseInt(e.currentTarget.dataset.idx);
-  rebuildManualTiming();
-  manualTiming.splice(idx, 1);
-  tlMode = 'manual';
-  updateTlModeBadge();
-  refreshTimelineEditor();
-}
-
-function rebuildManualTiming(){
-  var editor = document.getElementById('tlEditor');
-  var rows = editor.querySelectorAll('.tl-row');
-  manualTiming = [];
-  for(var i = 0; i < rows.length; i++){
-    var textInput = rows[i].querySelector('[data-role="text"]');
-    var startInput = rows[i].querySelector('[data-role="start"]');
-    var endInput = rows[i].querySelector('[data-role="end"]');
-    manualTiming.push({
-      text: textInput ? textInput.value : '',
-      start: parseTlTime(startInput ? startInput.value : null),
-      end: parseTlTime(endInput ? endInput.value : null)
-    });
-  }
-}
-
-function setTlAutoMode(){
-  tlMode = 'auto';
-  manualTiming = [];
-  updateTlModeBadge();
-  refreshTimelineEditor();
-  showSuccess('Timing automatico ripristinato');
-}
-
-function setTlDistributeMode(){
-  var lyrics = lyricsInput.value.trim();
-  if(!lyrics){ showError('Inserisci prima il testo'); return; }
-  var lines = lyrics.split('\n').map(function(l){ return l.trim(); }).filter(function(l){ return l.length > 0; });
-  if(!lines.length){ showError('Nessuna riga di testo'); return; }
-  var dur = selectedTrack ? selectedTrack.duration || 180 : 180;
-  var perLine = dur / lines.length;
-  manualTiming = [];
-  for(var i = 0; i < lines.length; i++){
-    manualTiming.push({ text: lines[i], start: i * perLine, end: (i + 1) * perLine });
-  }
-  tlMode = 'manual';
-  updateTlModeBadge();
-  refreshTimelineEditor();
-  showSuccess('Distribuzione uniforme: ' + lines.length + ' righe, ' + perLine.toFixed(1) + 's ciascuna');
-}
-
-function addTlRow(){
-  var input = document.getElementById('tlNewText');
-  var text = input.value.trim();
-  if(!text){ showError('Inserisci il testo'); return; }
-  rebuildManualTiming();
-  var dur = selectedTrack ? selectedTrack.duration || 180 : 180;
-  var lastEnd = manualTiming.length > 0 ? (manualTiming[manualTiming.length - 1].end || 0) : 0;
-  manualTiming.push({ text: text, start: lastEnd, end: Math.min(lastEnd + 4, dur) });
-  tlMode = 'manual';
-  updateTlModeBadge();
-  refreshTimelineEditor();
-  input.value = '';
-  showSuccess('Riga aggiunta');
-}
-
-function updateTlModeBadge(){
-  var badge = document.getElementById('tlMode');
-  if(tlMode === 'manual'){
-    badge.textContent = 'MANUALE';
-    badge.className = 'tl-badge tl-mode-manual';
-  } else {
-    badge.textContent = 'AUTO';
-    badge.className = 'tl-badge tl-mode-auto';
-  }
-}
-
-function getManualSyncedLines(){
-  // Se l'utente ha impostato timing manuale, usalo
-  if(tlMode === 'manual' && manualTiming.length > 0){
-    var result = [];
-    for(var i = 0; i < manualTiming.length; i++){
-      var m = manualTiming[i];
-      if(m.text && m.text.trim()){
-        result.push({
-          text: m.text.trim(),
-          start: m.start || 0,
-          end: m.end || (m.start || 0) + 4,
-          section: 'verse'
-        });
-      }
-    }
-    if(result.length > 0) return result;
-  }
-  return null; // Fallback to auto
-}
-
-// Init timeline editor events (chiamato dopo login)
-function initTimelineEditor(){
-  var toggleBtn = document.getElementById('tlToggleBtn');
-  if(toggleBtn) toggleBtn.addEventListener('click', openTimelineEditor);
-  var autoBtn = document.getElementById('tlAutoBtn');
-  if(autoBtn) autoBtn.addEventListener('click', setTlAutoMode);
-  var distBtn = document.getElementById('tlDistributeBtn');
-  if(distBtn) distBtn.addEventListener('click', setTlDistributeMode);
-  var addBtn = document.getElementById('tlAddBtn');
-  if(addBtn) addBtn.addEventListener('click', function(){ document.getElementById('tlAddRow').style.display = 'flex'; });
-  var addConfirm = document.getElementById('tlAddConfirm');
-  if(addConfirm) addConfirm.addEventListener('click', addTlRow);
-  var newTextInput = document.getElementById('tlNewText');
-  if(newTextInput) newTextInput.addEventListener('keydown', function(e){ if(e.key === 'Enter') addTlRow(); });
-
-  // Aggiorna editor quando il testo cambia
-  lyricsInput.addEventListener('input', function(){
-    if(tlMode === 'auto') refreshTimelineEditor();
-  });
-}
-
 log('App avviata (Music Video Generator Pro v8 — sync + wow + library)');
 // initCinema e renderVideoLibrary verranno chiamati da verifyAdmin dopo login
 </script>
