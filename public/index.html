@@ -292,7 +292,7 @@ async function selTrack(id){var r=await sb.from('tracks').select('*').eq('id',id
 async function delTrack(id){if(!confirm('Eliminare?'))return;var r=await sb.from('tracks').select('storage_path').eq('id',id).single();if(r.data)await sb.storage.from('audio').remove([r.data.storage_path]);await sb.from('tracks').delete().eq('id',id);delete audioCache[id];if(selectedTrack&&selectedTrack.id===id){selectedTrack=null;lyricsInput.value='';generateBtn.disabled=true;document.getElementById('analyzeBtn').disabled=true;document.getElementById('generateStoryboard').disabled=true;selectedBadge.style.display='none';noTrackHint.classList.remove('hidden')}showSuccess('Eliminata');await renderLibrary()}
 var svT=null;lyricsInput.addEventListener('input',function(){if(!selectedTrack)return;autoSaveHint.textContent='...';clearTimeout(svT);svT=setTimeout(async function(){await sb.from('tracks').update({lyrics:lyricsInput.value}).eq('id',selectedTrack.id);autoSaveHint.textContent='salvato';setTimeout(function(){autoSaveHint.textContent=''},2000)},600)});
 
-// PULIZIA TESTO INTELLIGENTE — rimuove Verse/Intro/Outro/[Chorus] etc.
+// PULIZIA TESTO INTELLIGENTE
 function cleanLyrics(text){
   if(!text)return '';
   return text
@@ -467,30 +467,20 @@ var VISUAL_MAP={
 };
 function analyzeMood(text){var lower=text.toLowerCase();var scores={};var moodKeys=Object.keys(MOOD_WORDS);for(var i=0;i<moodKeys.length;i++){var mood=moodKeys[i];var words=MOOD_WORDS[mood];var score=0;for(var j=0;j<words.length;j++){if(lower.indexOf(words[j])!==-1)score++;}if(score>0)scores[mood]=score;}var sorted=Object.keys(scores).sort(function(a,b){return scores[b]-scores[a]});var primary=sorted.length>0?sorted[0]:'nostalgia';var intensity=Math.min(1,(sorted.length>0?scores[sorted[0]]:1)/4);if(lower.match(/!!!/))intensity=Math.min(1,intensity+0.3);return{primaryMood:primary,intensity:intensity};}
 
-// PROMPT BUILDER — il TESTO è il protagonista, mood aggiunge solo atmosfera
+// PROMPT BUILDER — testo protagonista
 function buildPrompt(sceneText,style,sceneIdx,total,mood){
-  // Pulisce il testo da Verse/Intro/Outro etc.
   var cleaned=cleanLyrics(sceneText);
   var lines=cleaned.split('\n').map(function(l){return l.trim();}).filter(function(l){return l.length>0;});
-  // Prende 1-2 righe significative
   var textForPrompt='';
   if(lines.length>=2&&lines[0].length+lines[1].length<120){textForPrompt=lines[0]+' / '+lines[1];}
   else if(lines.length>=1){textForPrompt=lines[0].substring(0,120);}
   var parts=[];
   parts.push('cinematic film still');
   if(style)parts.push(style+' style');
-  // IL TESTO È IL SOGGETTO PRINCIPALE
-  if(textForPrompt){
-    parts.push('depicting the scene described by these lyrics: "'+textForPrompt+'"');
-  }
-  // Mood aggiunge solo atmosfera (non override del testo)
-  if(mood&&VISUAL_MAP[mood]&&VISUAL_MAP[mood].atmos){
-    parts.push(VISUAL_MAP[mood].atmos);
-  }
-  // Categories utente (solo se selezionate)
+  if(textForPrompt){parts.push('depicting the scene described by these lyrics: "'+textForPrompt+'"');}
+  if(mood&&VISUAL_MAP[mood]&&VISUAL_MAP[mood].atmos){parts.push(VISUAL_MAP[mood].atmos);}
   var cinemaFrag=buildCinemaPromptFragment();
   if(cinemaFrag)parts.push(cinemaFrag);
-  // Personaggio
   if(charDescription)parts.push('featuring '+charDescription);
   return parts.join(', ');
 }
@@ -557,7 +547,7 @@ async function generateStoryboard(){
 }
 function renderTimeline(){var panel=document.getElementById('timelinePanel');if(!currentStoryboard.length){panel.innerHTML='<div style="color:#555;padding:10px">Nessuna scena.</div>';return}var h='';for(var i=0;i<currentStoryboard.length;i++){var sc=currentStoryboard[i];h+='<div class="timeline-scene"><div class="timeline-time">'+fmtTime(sc.start)+'</div><div class="timeline-info"><div class="timeline-section">'+(sc.section||'verse').toUpperCase()+' · Scena '+(i+1)+'</div><div class="timeline-mood">Mood: '+sc.mood+'</div></div></div>';}panel.innerHTML=h;}
 
-// GENERAZIONE IMMAGINI con cache IndexedDB per resume
+// GENERAZIONE IMMAGINI con cache per resume
 async function loadImgPollinations(prompt,cacheIndex){
   var clean=prompt.replace(/'/g,'').substring(0,350);
   var seed=Math.floor(Math.random()*999999);
@@ -566,7 +556,6 @@ async function loadImgPollinations(prompt,cacheIndex){
   if(res.status===429){var err=new Error('429');err.isRateLimit=true;err.retryAfter=parseInt(res.headers.get('Retry-After')||'0',10);throw err;}
   if(!res.ok)throw new Error('HTTP '+res.status);
   var blob=await res.blob();if(!blob.size||blob.size<1000)throw new Error('empty');
-  // Salva in cache per resume
   if(cacheIndex!==undefined&&cacheIndex!==null){try{await idbSet('videos','img_'+cacheIndex,blob);}catch(e){}}
   var objUrl=URL.createObjectURL(blob);
   return await new Promise(function(resolve,reject){var img=new Image();img.onload=function(){resolve(img)};img.onerror=function(){reject(new Error('decode'))};img.src=objUrl;});
@@ -587,21 +576,16 @@ async function generateAllImages(scenes){
   var images=new Array(scenes.length).fill(null);var okCount=0;
   for(var i=0;i<scenes.length;i++){
     statusEl.textContent='Immagine '+(i+1)+'/'+scenes.length+'...';progressBar.style.width=(10+((i+1)/scenes.length)*45)+'%';
-    // Controlla cache prima
     var cached=await getCachedImage(i);
     if(cached){images[i]=cached;okCount++;log('Img '+(i+1)+' dalla cache (resume)');continue;}
-    // Genera nuova
     var img=await loadImgRetry(scenes[i].prompt,4,i);
     images[i]=img;if(img){okCount++;log('Img '+(i+1)+' OK')}else{log('Img '+(i+1)+' fallback')}
-    // Salva stato per resume
     await saveGenState({trackId:selectedTrack.id,trackName:selectedTrack.name,lyrics:lyricsInput.value,style:styleHint.value,cinemaState:JSON.parse(JSON.stringify(cinemaState)),charDescription:charDescription,directorMode:directorMode,nextImage:i+1,totalScenes:scenes.length});
     if(i<scenes.length-1)await sleep(4000);
   }
   log('Immagini: '+okCount+'/'+scenes.length);
   return images;
 }
-
-// RESUME LOGIC
 async function saveGenState(state){try{await idbSet('meta','genState',state);}catch(e){}}
 async function getGenState(){try{return await idbGet('meta','genState');}catch(e){return null;}}
 async function clearGenState(){try{await idbSet('meta','genState',null);await idbClearImgCache();}catch(e){}}
@@ -609,18 +593,15 @@ async function checkResume(){
   var state=await getGenState();
   if(state&&state.trackId&&state.nextImage!==undefined&&state.nextImage<state.totalScenes){
     var banner=document.getElementById('resumeBanner');
-    document.getElementById('resumeText').textContent='Generazione interrotta all\'immagine '+state.nextImage+'/'+state.totalScenes+'. Le immagini già create sono salvate. Vuoi riprendere?';
+    document.getElementById('resumeText').textContent='Generazione interrotta all\'immagine '+state.nextImage+'/'+state.totalScenes+'. Vuoi riprendere?';
     banner.style.display='block';
     document.getElementById('resumeYes').onclick=async function(){
       banner.style.display='none';
-      // Ripristina traccia
       var r=await sb.from('tracks').select('*').eq('id',state.trackId).single();
       if(r.error){showError('Traccia non trovata');await clearGenState();return;}
       selectedTrack=r.data;lyricsInput.value=state.lyrics;styleHint.value=state.style||'';
       generateBtn.disabled=false;document.getElementById('analyzeBtn').disabled=false;selectedBadge.style.display='inline';noTrackHint.classList.add('hidden');
-      // Ripristina cinema state
       if(state.cinemaState){cinemaState=state.cinemaState;var sels=document.querySelectorAll('select[data-cat]');for(var i=0;i<sels.length;i++){if(state.cinemaState[sels[i].dataset.cat])sels[i].value=state.cinemaState[sels[i].dataset.cat];}updateCinemaSummary();}
-      // Ripristina character
       if(state.charDescription){charDescription=state.charDescription;document.getElementById('charFreeInput').value=state.charDescription;}
       await renderLibrary();
       log('Resume generazione da immagine '+state.nextImage);
@@ -629,14 +610,13 @@ async function checkResume(){
     document.getElementById('resumeNo').onclick=async function(){banner.style.display='none';await clearGenState();log('Stato resume scartato');};
   }
 }
-
-// RENDERING
+  // RENDERING
 function AudioAnalyzer(audio){this.audio=audio;this.ctx=null;this.analyser=null;this.data=null;this.sourceNode=null;this.bass=0;this.mid=0;this.high=0;this.energy=0;this.prevEnergy=0;this.beat=false;}
 AudioAnalyzer.prototype.init=function(){
   this.ctx=new(window.AudioContext||window.webkitAudioContext)();
   this.sourceNode=this.ctx.createMediaElementSource(this.audio);
   this.analyser=this.ctx.createAnalyser();this.analyser.fftSize=256;
-  this.sourceNode.connect(this.analyser); // NON collega a destination → audio muto
+  this.sourceNode.connect(this.analyser);
   this.data=new Uint8Array(this.analyser.frequencyBinCount);
 };
 AudioAnalyzer.prototype.update=function(){if(!this.analyser)return;this.analyser.getByteFrequencyData(this.data);var l=this.data.length;var b=0,m=0,h=0;var be=Math.floor(l*0.15);var me=Math.floor(l*0.5);for(var i=0;i<be;i++)b+=this.data[i];for(var i=be;i<me;i++)m+=this.data[i];for(var i=me;i<l;i++)h+=this.data[i];this.prevEnergy=this.energy;this.bass=b/(be*255);this.mid=m/((me-be)*255);this.high=h/((l-me)*255);this.energy=(this.bass+this.mid+this.high)/3;this.beat=this.energy-this.prevEnergy>0.12&&this.energy>0.25;};
@@ -658,6 +638,7 @@ async function generate(isResume){
   statusEl.textContent='Caricamento audio...';previewWrap.style.display='none';
   log('=== GENERAZIONE VIDEO '+(isResume?'(RESUME)':'')+' ===');
   var audioUrl;try{audioUrl=await getAU(selectedTrack.id);log('Audio OK')}catch(e){showError('Audio: '+e.message);generateBtn.disabled=false;genInProgress=false;progressEl.style.display='none';return}
+  // AUDIO MUTATO
   var audio=new Audio();audio.crossOrigin='anonymous';audio.src=audioUrl;audio.muted=true;audio.volume=0;
   try{await new Promise(function(r,j){audio.onloadedmetadata=r;audio.onerror=function(){j(new Error('Audio non caricabile'))}})}catch(e){showError(e.message);generateBtn.disabled=false;genInProgress=false;progressEl.style.display='none';return}
   var duration=audio.duration;log('Durata: '+fmtTime(duration)+' (audio MUTATO)');
@@ -669,10 +650,13 @@ async function generate(isResume){
   var syncedLines=syncLyricsToStructure(lyrics,audioStruct);log('Righe sincronizzate: '+syncedLines.length);
   statusEl.textContent='Generazione immagini AI...';progressBar.style.width='10%';
   var images=await generateAllImages(scenes);
-  // Pulisci stato resume (generazione immagini completata)
   await clearGenState();
   statusEl.textContent='Preparazione rendering...';progressBar.style.width='60%';
-  var W=1280,H=720;var canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;var ctx=canvas.getContext('2d',{willReadFrequently:true});  var analyzer;try{analyzer=new AudioAnalyzer(audio);analyzer.init();log('Audio analyzer OK (muto)')}catch(e){showError('Audio: '+e.message);generateBtn.disabled=false;genInProgress=false;progressEl.style.display='none';return}
+  var W=1280,H=720;
+  var canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;
+  // FIX: willReadFrequently per performance getImageData (drawGlitch)
+  var ctx=canvas.getContext('2d',{willReadFrequently:true});
+  var analyzer;try{analyzer=new AudioAnalyzer(audio);analyzer.init();log('Audio analyzer OK (muto)')}catch(e){showError('Audio: '+e.message);generateBtn.disabled=false;genInProgress=false;progressEl.style.display='none';return}
   var particles=[];for(var i=0;i<80;i++)particles.push(new Particle(W,H));
   var grainCanvas=document.createElement('canvas');grainCanvas.width=W;grainCanvas.height=H;var grainCtx=grainCanvas.getContext('2d');
   function updateGrain(){var id=grainCtx.createImageData(W,H);var d=id.data;for(var i=0;i<d.length;i+=4){var v=Math.random()*40;d[i]=v;d[i+1]=v;d[i+2]=v;d[i+3]=15}grainCtx.putImageData(id,0,0)}
@@ -737,15 +721,41 @@ async function generate(isResume){
   await saveVideoToLibrary(blob,audioStruct?audioStruct.duration:duration);
 }
 async function restoreLastVideo(){try{var blob=await idbGet('videos','lastBlob');var name=await idbGet('meta','lastName');if(blob&&name){var url=URL.createObjectURL(blob);preview.src=url;previewWrap.style.display='block';downloadBtn.href=url;downloadBtn.style.display='inline-block';downloadBtn.download=name;log('Video ripristinato: '+name);showSuccess('Video ripristinato');}}catch(e){}}
-async function saveVideoToLibrary(blob,duration){try{statusEl.textContent='Salvataggio su libreria...';var trackName=selectedTrack.name.replace(/\.[^.]+$/,'');var path='videos/'+Date.now()+'-'+Math.random().toString(36).slice(2)+'.webm';var file=new File([blob],trackName+'.webm',{type:'video/webm'});var upRes=await sb.storage.from('audio').upload(path,file,{upsert:true,contentType:'video/webm'});if(upRes.error){log('Upload fail: '+upRes.error.message);return}var dbRes=await sb.from('videos').insert({track_id:selectedTrack.id,name:trackName,storage_path:path,size:blob.size,duration:duration}).select().single();if(dbRes.error){log('DB fail: '+dbRes.error.message);return}log('Video salvato in libreria');showSuccess('Video salvato in libreria');await renderVideoLibrary();}catch(e){log('Save err: '+e.message);}}
+
+// LIBRERIA VIDEO con logging dettagliato
+async function saveVideoToLibrary(blob,duration){
+  try{
+    statusEl.textContent='Salvataggio su libreria...';
+    var trackName=selectedTrack.name.replace(/\.[^.]+$/,'');
+    var path='videos/'+Date.now()+'-'+Math.random().toString(36).slice(2)+'.webm';
+    var file=new File([blob],trackName+'.webm',{type:'video/webm'});
+    log('Upload video su storage: '+fmtSize(blob.size));
+    var upRes=await sb.storage.from('audio').upload(path,file,{upsert:true,contentType:'video/webm'});
+    if(upRes.error){log('Upload fail: '+JSON.stringify(upRes.error));return}
+    log('Upload OK, salvo in DB: track_id='+selectedTrack.id+' ('+typeof selectedTrack.id+')');
+    var dbRes=await sb.from('videos').insert({track_id:selectedTrack.id,name:trackName,storage_path:path,size:blob.size,duration:duration}).select().single();
+    if(dbRes.error){
+      // LOG DETTAGLIATO per debug
+      log('DB fail: '+JSON.stringify(dbRes.error));
+      log('Dati inviati: track_id='+selectedTrack.id+' ('+typeof selectedTrack.id+') name='+trackName+' size='+blob.size+' duration='+duration);
+      log('Suggerimento: verifica che track_id sia bigint e che la policy RLS sia attiva');
+      return;
+    }
+    log('Video salvato in libreria: '+dbRes.data.id);
+    showSuccess('Video salvato in libreria');
+    await renderVideoLibrary();
+  }catch(e){log('Save err: '+e.message+' / '+e.stack);}
+}
 async function renderVideoLibrary(){var container=document.getElementById('videoList');if(!container)return;try{var r=await sb.from('videos').select('*').order('created_at',{ascending:false});if(r.error)throw r.error;var videos=r.data;log('Trovati '+videos.length+' video');var countBadge=document.getElementById('videoCount');if(countBadge){if(videos.length){countBadge.textContent=videos.length;countBadge.style.display='inline-block';}else{countBadge.style.display='none';}}if(!videos.length){container.innerHTML='<div class="empty-library">Nessun video generato.</div>';return}var h='';for(var i=0;i<videos.length;i++){var v=videos[i];var date=new Date(v.created_at).toLocaleString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});h+='<div class="video-item" data-vid="'+v.id+'"><div class="video-info"><div class="video-name">'+v.name+'</div><div class="video-meta">'+date+' · '+fmtTime(v.duration)+' · '+fmtSize(v.size)+'</div></div><div class="video-actions"><button class="sec" data-vplay="'+v.id+'">Play</button><button class="sec" data-vdl="'+v.id+'">Scarica</button><button class="del" data-vdel="'+v.id+'">&#10005;</button></div></div>';}container.innerHTML=h;var playBtns=container.querySelectorAll('[data-vplay]');for(var j=0;j<playBtns.length;j++){playBtns[j].addEventListener('click',function(){playVideoFromLibrary(this.dataset.vplay);});}var dlBtns=container.querySelectorAll('[data-vdl]');for(var k=0;k<dlBtns.length;k++){dlBtns[k].addEventListener('click',function(){downloadVideoFromLibrary(this.dataset.vdl);});}var delBtns=container.querySelectorAll('[data-vdel]');for(var m=0;m<delBtns.length;m++){delBtns[m].addEventListener('click',function(){deleteVideoFromLibrary(this.dataset.vdel);});}}catch(e){container.innerHTML='<div class="empty-library" style="color:#f66">'+e.message+'</div>';}}
 async function getVideoUrl(id){var r=await sb.from('videos').select('storage_path').eq('id',id).single();if(r.error)throw r.error;var s=await sb.storage.from('audio').createSignedUrl(r.data.storage_path,7200);return s.data.signedUrl;}
 async function playVideoFromLibrary(id){try{var url=await getVideoUrl(id);preview.src=url;previewWrap.style.display='block';downloadBtn.href=url;downloadBtn.style.display='inline-block';downloadBtn.download='video.webm';preview.scrollIntoView({behavior:'smooth',block:'center'});showSuccess('Video caricato');}catch(e){showError('Errore: '+e.message);}}
 async function downloadVideoFromLibrary(id){try{var url=await getVideoUrl(id);var r=await sb.from('videos').select('name').eq('id',id).single();var a=document.createElement('a');a.href=url;a.download=(r.data.name||'video')+'.webm';document.body.appendChild(a);a.click();document.body.removeChild(a);}catch(e){showError('Errore: '+e.message);}}
 async function deleteVideoFromLibrary(id){if(!confirm('Eliminare?'))return;try{var r=await sb.from('videos').select('storage_path').eq('id',id).single();if(r.data)await sb.storage.from('audio').remove([r.data.storage_path]);await sb.from('videos').delete().eq('id',id);showSuccess('Eliminato');await renderVideoLibrary();}catch(e){showError('Errore: '+e.message);}}
+
+// AVVIO
 (async function(){await initIDB();handleAuth();})();
 generateBtn.addEventListener('click',function(){generate(false);});
-log('App caricata (AI Music Video Director v4)');
+log('App caricata (AI Music Video Director v5)');
 </script>
 </body>
 </html>
