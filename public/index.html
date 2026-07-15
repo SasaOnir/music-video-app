@@ -3,14 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Music Video Generator Pro</title>
+<title>AI Music Video Director</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script type="module">import * as TransformersJS from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';window.TransformersJS=TransformersJS;</script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0a0a0f;color:#e0e0e0;min-height:100vh;padding:20px}
-.container{max-width:1000px;margin:0 auto}
-h1{font-size:1.6rem;margin-bottom:6px;background:linear-gradient(90deg,#f72585,#4cc9f0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.container{max-width:1200px;margin:0 auto}
+h1{font-size:1.7rem;margin-bottom:6px;background:linear-gradient(90deg,#f72585,#4cc9f0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .subtitle{color:#888;margin-bottom:20px;font-size:.85rem}
 .panel{background:#14141c;border:1px solid #252535;border-radius:12px;padding:22px;margin-bottom:16px}
 h2{font-size:1.05rem;margin-bottom:12px;color:#ccc}
@@ -23,7 +25,6 @@ button:disabled{opacity:.4;cursor:not-allowed}
 button.sec{background:#2a2a3a;padding:8px 14px;font-size:.82rem}
 button.sec:hover:not(:disabled){background:#353548}
 button.del{background:#3a1515;padding:6px 11px;font-size:.78rem}
-button.del:hover:not(:disabled){background:#4a1a1a}
 button.google{background:#fff;color:#333;padding:12px 28px;font-size:1rem;border-radius:8px;display:flex;align-items:center;gap:12px;margin:20px auto 0;font-weight:500}
 button.google:hover{background:#f0f0f0}
 button.google img{width:20px;height:20px}
@@ -31,18 +32,19 @@ button.google img{width:20px;height:20px}
 .progress-bar{height:100%;background:linear-gradient(90deg,#f72585,#4cc9f0);width:0%;transition:width .3s}
 .status{margin-top:10px;font-size:.82rem;color:#888;min-height:18px}
 .preview-wrap{margin-top:16px;display:none}
-video{width:100%;border-radius:8px;background:#000;pointer-events:none}
-.upload-zone{border:2px dashed #2a2a3a;border-radius:8px;padding:22px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;margin-bottom:14px}
+video{width:100%;border-radius:8px;background:#000;pointer-events:auto}
+.upload-zone{border:2px dashed #2a2a3a;border-radius:8px;padding:22px;text-align:center;cursor:pointer;margin-bottom:14px}
 .upload-zone:hover,.upload-zone.dragover{border-color:#f72585;background:rgba(247,37,133,.05)}
 .upload-zone p{color:#888;font-size:.88rem}
 .upload-zone input{display:none}
-.track-list{display:flex;flex-direction:column;gap:8px}
-.track-item{background:#0a0a0f;border:1px solid #2a2a3a;border-radius:8px;padding:11px;display:flex;align-items:center;gap:11px;transition:border-color .2s,background .2s}
+.track-list,.video-list{display:flex;flex-direction:column;gap:8px}
+.track-item,.video-item{background:#0a0a0f;border:1px solid #2a2a3a;border-radius:8px;padding:11px;display:flex;align-items:center;gap:11px}
 .track-item.selected{border-color:#f72585;background:rgba(247,37,133,.08)}
-.track-info{flex:1;min-width:0}
-.track-name{font-weight:600;font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.track-meta{font-size:.73rem;color:#666;margin-top:2px}
-.track-actions{display:flex;gap:6px;align-items:center;flex-shrink:0}
+.video-item:hover{border-color:#4cc9f0;background:rgba(76,201,240,.05)}
+.track-info,.video-info{flex:1;min-width:0}
+.track-name,.video-name{font-weight:600;font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.track-meta,.video-meta{font-size:.73rem;color:#666;margin-top:2px}
+.track-actions,.video-actions{display:flex;gap:6px;align-items:center;flex-shrink:0}
 .track-actions audio{height:30px;max-width:180px}
 .empty-library{color:#555;font-size:.83rem;text-align:center;padding:18px;font-style:italic}
 .badge{display:inline-block;background:#f72585;color:#fff;padding:2px 8px;border-radius:4px;font-size:.68rem;margin-left:8px}
@@ -51,15 +53,13 @@ video{width:100%;border-radius:8px;background:#000;pointer-events:none}
 .no-track-hint.hidden{display:none}
 .error-toast{position:fixed;top:20px;right:20px;background:#3a1515;color:#f66;padding:12px 20px;border-radius:8px;font-size:.88rem;z-index:9999;display:none;max-width:400px;word-break:break-word}
 .success-toast{position:fixed;top:20px;right:20px;background:#1a3a1a;color:#4f4;padding:12px 20px;border-radius:8px;font-size:.88rem;z-index:9999;display:none;max-width:400px}
-.debug-panel{margin-top:16px;background:#0a0a0f;border:1px solid #2a2a3a;border-radius:8px;padding:12px;font-family:monospace;font-size:.72rem;color:#0f0;max-height:200px;overflow-y:auto;display:none;-webkit-user-select:text;user-select:text}
+.debug-panel{margin-top:16px;background:#0a0a0f;border:1px solid #2a2a3a;border-radius:8px;padding:12px;font-family:monospace;font-size:.72rem;color:#0f0;max-height:300px;overflow-y:auto;display:none;-webkit-user-select:text;user-select:text}
 #loginScreen{display:flex;align-items:center;justify-content:center;min-height:80vh}
 .login-box{text-align:center;max-width:400px}
 .login-box h1{margin-bottom:12px}
 .login-box p{color:#888;margin-bottom:24px}
 .blocked-screen{position:fixed;inset:0;background:#000;z-index:99999;color:#f66;font-size:1.2rem;display:none;align-items:center;justify-content:center;text-align:center;padding:40px}
 .honeypot{position:absolute;left:-9999px;top:-9999px;opacity:0;height:0;width:0;overflow:hidden;tabindex:-1}
-
-/* === CINEMATIC PANEL === */
 .cinema-toggle{cursor:pointer;user-select:none}
 .cinema-toggle h2:after{content:' \25BC';font-size:.7rem;color:#666;float:right;transition:transform .2s}
 .cinema-toggle.collapsed h2:after{transform:rotate(-90deg)}
@@ -72,41 +72,81 @@ video{width:100%;border-radius:8px;background:#000;pointer-events:none}
 .cinema-actions{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
 .cinema-actions button{padding:7px 14px;font-size:.78rem}
 .cinema-summary{margin-top:10px;padding:10px;background:#0a0a0f;border-radius:6px;font-size:.72rem;color:#0c0;line-height:1.5;max-height:80px;overflow-y:auto;font-family:monospace;-webkit-user-select:text;user-select:text}
-
-/* === VIDEO LIBRARY === */
-.video-list{display:flex;flex-direction:column;gap:8px}
-.video-item{background:#0a0a0f;border:1px solid #2a2a3a;border-radius:8px;padding:11px;display:flex;align-items:center;gap:11px;transition:border-color .2s,background .2s}
-.video-item:hover{border-color:#4cc9f0;background:rgba(76,201,240,.05)}
-.video-info{flex:1;min-width:0}
-.video-name{font-weight:600;font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.video-meta{font-size:.73rem;color:#666;margin-top:2px}
-.video-actions{display:flex;gap:6px;align-items:center;flex-shrink:0}
+.mode-tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.mode-tab{background:#2a2a3a;color:#aaa;padding:8px 16px;border-radius:6px;font-size:.82rem;cursor:pointer;transition:all .2s}
+.mode-tab.active{background:#f72585;color:#fff}
+.mode-tab:hover:not(.active){background:#353548}
+.char-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:12px}
+.char-field{display:flex;flex-direction:column;gap:3px}
+.char-field label{font-size:.72rem;color:#888;text-transform:uppercase}
+.char-field input,.char-field select{width:100%;background:#0a0a0f;border:1px solid #2a2a3a;border-radius:6px;padding:7px;color:#e0e0e0;font-size:.82rem;font-family:inherit}
+.char-field input:focus,.char-field select:focus{outline:none;border-color:#f72585}
+.char-preview{margin-top:10px;padding:10px;background:#0a0a0f;border-radius:6px;font-size:.75rem;color:#4cc9f0;line-height:1.5;font-family:monospace;-webkit-user-select:text;user-select:text}
+.audio-analysis{margin-top:12px;padding:12px;background:#0a0a0f;border-radius:8px;font-family:monospace;font-size:.72rem;color:#0c0;max-height:200px;overflow-y:auto}
+.audio-analysis div{padding:2px 0}
+.audio-analysis .feat{color:#4cc9f0}
+.resume-banner{background:rgba(247,37,133,.15);border:1px solid #f72585;border-radius:8px;padding:14px;margin-bottom:16px;display:none}
+.resume-banner h3{color:#f72585;font-size:.95rem;margin-bottom:8px}
+.resume-banner p{color:#ccc;font-size:.82rem;margin-bottom:10px}
+.whisper-config{margin-top:12px;padding:10px;background:#0a0a0f;border-radius:6px;font-size:.78rem}
+.whisper-config label{font-size:.7rem;color:#888;text-transform:uppercase;margin-bottom:4px;display:block}
+.whisper-config input{width:100%;background:#0a0a0f;border:1px solid #2a2a3a;border-radius:4px;padding:6px;color:#e0e0e0;font-size:.78rem;font-family:inherit;-webkit-user-select:text;user-select:text}
+.whisper-config input:focus{outline:none;border-color:#f72585}
+.whisper-status{margin-top:8px;padding:8px;background:#0a0a0f;border-radius:6px;font-size:.72rem;color:#4cc9f0;display:none;-webkit-user-select:text;user-select:text}
+.tl-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;padding:10px;background:#0a0a0f;border-radius:8px}
+.tl-toolbar button{padding:7px 14px;font-size:.8rem}
+.tl-time{font-family:monospace;font-size:.9rem;color:#f72585;font-weight:600;margin-left:auto}
+.tl-waveform-wrap{position:relative;background:#0a0a0f;border-radius:8px;overflow:hidden;margin-bottom:8px;border:1px solid #2a2a3a}
+.tl-waveform{display:block;width:100%;height:60px}
+.tl-playhead{position:absolute;top:0;bottom:0;width:2px;background:#f72585;pointer-events:none;z-index:5;box-shadow:0 0 8px #f72585}
+.tl-playhead::before{content:'';position:absolute;top:-4px;left:-5px;width:12px;height:8px;background:#f72585;border-radius:2px}
+.tl-scenes-wrap{position:relative;background:#0a0a0f;border-radius:8px;overflow:hidden;margin-bottom:12px;border:1px solid #2a2a3a;min-height:90px}
+.tl-scenes{position:relative;height:90px;display:flex}
+.tl-scene{position:absolute;height:80px;top:5px;background:#1a1a2e;border:1px solid #2a2a3a;border-radius:4px;overflow:hidden;cursor:pointer;transition:border-color .15s;display:flex;flex-direction:column}
+.tl-scene:hover{border-color:#4cc9f0}
+.tl-scene.selected{border-color:#f72585;box-shadow:0 0 8px rgba(247,37,133,.4)}
+.tl-scene img{width:100%;height:50px;object-fit:cover;flex-shrink:0}
+.tl-scene-label{font-size:.6rem;color:#888;padding:2px 4px;text-align:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.tl-scene-handle{position:absolute;top:0;bottom:0;width:8px;cursor:ew-resize;background:rgba(247,37,133,.3);z-index:6}
+.tl-scene-handle.left{left:0;border-radius:4px 0 0 4px}
+.tl-scene-handle.right{right:0;border-radius:0 4px 4px 0}
+.tl-scene-handle:hover{background:rgba(247,37,133,.6)}
+.tl-scene-empty{display:flex;align-items:center;justify-content:center;color:#555;font-size:.7rem;height:100%}
+.tl-preview-wrap{display:grid;grid-template-columns:200px 1fr;gap:12px;margin-bottom:12px}
+.tl-preview{width:200px;height:113px;background:#000;border-radius:6px;object-fit:cover}
+.tl-inspector{background:#0a0a0f;border:1px solid #2a2a3a;border-radius:6px;padding:10px;font-size:.8rem;display:flex;flex-direction:column;gap:6px}
+.tl-inspector label{font-size:.68rem;color:#888;text-transform:uppercase;margin:0}
+.tl-inspector input{width:100%;background:#0a0a0f;border:1px solid #2a2a3a;border-radius:4px;padding:5px;color:#e0e0e0;font-size:.78rem;font-family:inherit;-webkit-user-select:text;user-select:text}
+.tl-inspector input:focus{outline:none;border-color:#f72585}
+.tl-inspector-row{display:flex;gap:8px;flex-wrap:wrap}
+.tl-inspector-row button{padding:5px 10px;font-size:.72rem}
 </style>
 </head>
 <body>
-
 <input type="text" name="website" class="honeypot" id="hpField" tabindex="-1" autocomplete="off">
 <div class="blocked-screen" id="blockedScreen"><div><h1 style="color:#f66;margin-bottom:16px">Accesso Negato</h1><p>Attivita sospetta rilevata.</p></div></div>
-
 <div id="loginScreen">
 <div class="login-box">
-<h1>Music Video Generator</h1>
-<p>Accedi con Google per continuare</p>
+<h1>AI Music Video Director</h1>
+<p>Timeline Editor · Waveform · Cut & Sync</p>
 <button class="google" id="googleLogin"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google"> Accedi con Google</button>
 <p id="loginError" style="color:#f66;margin-top:16px;display:none"></p>
 </div>
 </div>
-
 <div class="container" id="appMain" style="display:none">
-<h1>Music Video Generator Pro</h1>
-<p class="subtitle">Analisi intelligente · Audio reattivo · Immagini AI · 10 categorie cinematografiche · Effetti visivi</p>
-
+<div class="resume-banner" id="resumeBanner">
+<h3>Riprendi generazione interrotta</h3>
+<p id="resumeText">È stata rilevata una generazione interrotta.</p>
+<button class="sec" id="resumeYes" style="background:#f72585;color:#fff">Riprendi</button>
+<button class="sec" id="resumeNo">Scarta</button>
+</div>
+<h1>AI Music Video Director</h1>
+<p class="subtitle">CapCut-style Timeline · Waveform · Drag-trim · Live preview</p>
 <div class="panel">
 <h2>Libreria Audio</h2>
 <div class="upload-zone" id="uploadZone"><p>Trascina qui i file audio o clicca per selezionarli</p><p style="font-size:.72rem;margin-top:5px">MP3, WAV, OGG, M4A</p><input type="file" id="audioUpload" accept="audio/*" multiple></div>
 <div id="trackList" class="track-list"></div>
 </div>
-
 <div class="panel">
 <h2>Genera Video <span id="selectedBadge" class="badge" style="display:none">Selezionata</span></h2>
 <span class="no-track-hint" id="noTrackHint">Prima carica un file audio sopra, poi clicca "Usa" sulla traccia.</span>
@@ -114,1624 +154,121 @@ video{width:100%;border-radius:8px;background:#000;pointer-events:none}
 <textarea id="lyrics" class="text-input" placeholder="Incolla qui il testo della canzone..."></textarea>
 <label>Stile visivo base (opzionale)</label>
 <input type="text" id="styleHint" class="text-input" placeholder="es: cinematografico, anime, vintage, cyberpunk...">
+<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
 <button id="generateBtn" disabled>Genera Video</button>
+<button class="sec" id="logoutBtn" style="background:#3a1515">Logout</button>
+</div>
 <div class="progress" id="progress"><div class="progress-bar" id="progressBar"></div></div>
 <div class="status" id="status"></div>
 </div>
 
+<div class="panel" id="timelinePanel" style="display:none;border-color:#f72585">
+<h2 style="color:#f72585">Timeline Editor</h2>
+<div style="color:#888;font-size:.82rem;margin-bottom:14px">Clicca Play per sentire l'audio. Trascina i bordi delle scene per tagliare. Clicca una scena per modificarla.</div>
+<div class="tl-toolbar">
+<button class="sec" id="tlPlay">▶ Play</button>
+<button class="sec" id="tlStop">⏹ Stop</button>
+<button class="sec" id="tlSplit">✂ Split qui</button>
+<button class="sec" id="tlDelete">🗑 Elimina scena</button>
+<label class="mode-tabs" style="margin:0;display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:.78rem;color:#ccc">
+<input type="checkbox" id="tlSubtitles" checked style="width:16px;height:16px"> Sottotitoli
+</label>
+<span class="tl-time" id="tlTime">00:00 / 00:00</span>
+</div>
+<div class="tl-waveform-wrap">
+<canvas class="tl-waveform" id="tlWaveform"></canvas>
+<div class="tl-playhead" id="tlPlayhead" style="left:0"></div>
+</div>
+<div class="tl-scenes-wrap" id="tlScenesWrap">
+<div class="tl-scenes" id="tlScenes"></div>
+<div class="tl-playhead" id="tlPlayhead2" style="left:0"></div>
+</div>
+<div class="tl-preview-wrap">
+<canvas class="tl-preview" id="tlPreview" width="320" height="180"></canvas>
+<div class="tl-inspector" id="tlInspector">
+<div style="color:#666;font-size:.78rem">Clicca una scena per ispezionarla</div>
+</div>
+</div>
+<div style="display:flex;gap:8px;justify-content:flex-end">
+<button class="sec" id="tlCancel">Annulla</button>
+<button id="tlConfirm">✓ Conferma e Render</button>
+</div>
+</div>
+
+<div class="panel">
+<h2>Analisi Audio & Trascrizione AI</h2>
+<div style="color:#888;font-size:.82rem;margin-bottom:10px">Analizza BPM/beat (1-3s) e trascrivi con Whisper AI.</div>
+<button class="sec" id="analyzeBtn" disabled>Avvia Analisi Audio</button>
+<button class="sec" id="transcribeBtn" disabled style="background:#4cc9f0;color:#000;margin-top:8px">Trascrivi con AI (Whisper)</button>
+<div class="whisper-status" id="whisperStatus"></div>
+<div class="audio-analysis" id="audioAnalysis" style="display:none"></div>
+<div class="whisper-config">
+<label>Backend Whisper (opzionale)</label>
+<input type="text" id="whisperApiInput" placeholder="https://tuo-backend.onrender.com">
+<div style="margin-top:6px;font-size:.72rem;color:#888">Se impostato usa backend Python. Altrimenti browser Whisper.</div>
+</div>
+</div>
 <div class="panel cinema-toggle" id="cinemaToggle">
 <h2>Opzioni Cinematografiche</h2>
 <div class="cinema-content" id="cinemaContent"></div>
 <div class="cinema-actions">
 <button class="sec" id="cinemaRandom">Randomizza tutto</button>
-<button class="sec" id="cinemaReset">Reset (tutto Auto)</button>
+<button class="sec" id="cinemaReset">Reset</button>
 </div>
-<div class="cinema-summary" id="cinemaSummary">Tutto su Auto — la selezione verra decisa dal motore di analisi in base al testo della canzone.</div>
+<div class="cinema-summary" id="cinemaSummary">Tutto su Auto.</div>
 </div>
-
+<div class="panel">
+<h2>Personaggio Coerente</h2>
+<div class="mode-tabs" id="charModeTabs">
+<div class="mode-tab active" data-charmode="none">Nessuno</div>
+<div class="mode-tab" data-charmode="free">Campo libero</div>
+<div class="mode-tab" data-charmode="builder">Builder</div>
+</div>
+<div id="charFree" style="display:none">
+<label>Descrizione personaggio (in inglese)</label>
+<input type="text" id="charFreeInput" class="text-input" placeholder="es: tall man in black leather jacket, green eyes, curly black hair">
+</div>
+<div id="charBuilder" style="display:none">
+<div class="char-grid">
+<div class="char-field"><label>Genere</label><select id="cbGender"><option value="">-</option><option value="male">Maschio</option><option value="female">Femmina</option><option value="androgynous">Androgino</option></select></div>
+<div class="char-field"><label>Età</label><select id="cbAge"><option value="">-</option><option value="young">Giovane</option><option value="adult">Adulto</option><option value="middle">Mezza età</option><option value="elder">Anziano</option></select></div>
+<div class="char-field"><label>Capelli</label><select id="cbHair"><option value="">-</option><option value="short black hair">Corti neri</option><option value="long black hair">Lunghi neri</option><option value="curly black hair">Ricci neri</option><option value="blonde hair">Biondi</option><option value="brown hair">Castani</option><option value="red hair">Rossi</option><option value="gray hair">Grigi</option><option value="bald">Calvo</option></select></div>
+<div class="char-field"><label>Occhi</label><select id="cbEyes"><option value="">-</option><option value="blue eyes">Blu</option><option value="green eyes">Verdi</option><option value="brown eyes">Marroni</option><option value="hazel eyes">Nocciola</option></select></div>
+<div class="char-field"><label>Corpo</label><select id="cbBody"><option value="">-</option><option value="slim build">Magra</option><option value="athletic build">Atletica</option><option value="muscular build">Muscolosa</option><option value="curvy figure">Formosa</option><option value="average build">Media</option></select></div>
+<div class="char-field"><label>Abito</label><select id="cbClothing"><option value="">-</option><option value="black leather jacket">Giacca pelle</option><option value="white t-shirt and jeans">T-shirt e jeans</option><option value="elegant black dress">Abito nero</option><option value="hoodie and sneakers">Hoodie</option><option value="vintage suit">Completo vintage</option><option value="flannel shirt">Flanella</option><option value="denim jacket">Giacca jeans</option></select></div>
+<div class="char-field"><label>Etnia</label><select id="cbEthnicity"><option value="">-</option><option value="Mediterranean features">Mediterranea</option><option value="Nordic features">Nordica</option><option value="African features">Africana</option><option value="Asian features">Asiatica</option><option value="Latin features">Latina</option><option value="mixed features">Mista</option></select></div>
+<div class="char-field"><label>Accessori</label><select id="cbAccessory"><option value="">-</option><option value="silver necklace">Collana</option><option value="sunglasses">Occhiali</option><option value="earrings">Orecchini</option><option value="watch">Orologio</option><option value="tattoo on arm">Tatuaggio</option><option value="beard">Barba</option></select></div>
+</div>
+<div class="char-preview" id="charPreview">Seleziona i tratti...</div>
+</div>
+</div>
+<div class="panel">
+<h2>Director AI — Mode</h2>
+<div class="mode-tabs" id="directorModeTabs">
+<div class="mode-tab active" data-dirmode="auto">AUTO</div>
+<div class="mode-tab" data-dirmode="rules">RULES</div>
+</div>
+<div id="directorAuto" style="color:#888;font-size:.85rem">Il Director AI decide camera, lens, lighting, FX in base a BPM, mood e sezione.</div>
+<div id="directorRules" style="display:none"><div class="rules-grid" id="rulesGrid"></div></div>
+</div>
 <div class="panel preview-wrap" id="previewWrap">
 <h2>Anteprima Video</h2>
 <video id="preview" controls></video>
 <a id="downloadBtn" class="button sec" style="display:none;margin-top:12px;text-decoration:none" download="music-video.webm">Scarica Video</a>
 </div>
-
 <div class="panel">
 <h2>Libreria Video <span id="videoCount" class="badge" style="display:none;background:#4cc9f0;color:#000">0</span></h2>
 <div id="videoList" class="video-list"><div class="empty-library">Nessun video generato.</div></div>
 </div>
-
 <div class="panel" style="cursor:pointer" onclick="document.getElementById('debugLog').style.display=document.getElementById('debugLog').style.display==='none'?'block':'none'">
 <h2 style="color:#666">Debug Log (clicca per aprire)</h2>
 <div class="debug-panel" id="debugLog"></div>
 </div>
 </div>
-
 <div class="error-toast" id="errorToast"></div>
 <div class="success-toast" id="successToast"></div>
-
 <script>
-// ====================================================================
-// CONFIGURAZIONE
-// ====================================================================
-var SU1='https://jescfkahkgcyuhffyycw.supabase.co';
-var SK1='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Implc2Nma2Foa2djeXVoZmZ5eWN3Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4Mzk4ODU5NywiZXhwIjoyMDk5NTY0NTk3fQ.';
-var SK2='2Qr5bu9w0mjaVik-FV4tLKF3bkAHuJTCmO5KaM6PWt4';
-var sb=window.supabase.createClient(SU1,SK1+SK2);
-
-// ====================================================================
-// SICUREZZA / FINGERPRINT
-// ====================================================================
-function getFingerprint(){
-  var c=document.createElement('canvas');var ctx=c.getContext('2d');ctx.textBaseline='top';ctx.font='14px Arial';ctx.fillText('fp',2,2);
-  var parts=[navigator.language,screen.width+'x'+screen.height,screen.colorDepth,new Date().getTimezoneOffset(),navigator.platform||'',c.toDataURL().slice(-50)];
-  var hash=0;var str=parts.join('|');for(var i=0;i<str.length;i++){hash=((hash<<5)-hash)+str.charCodeAt(i);hash|=0}return Math.abs(hash).toString(36);
-}
-var FP=getFingerprint();var isBlocked=false;var actionTS=[];
-async function secLog(t,d){try{await sb.from('security_logs').insert({event_type:t,details:d||{},fingerprint:FP})}catch(e){}}
-function checkRL(){var n=Date.now();actionTS=actionTS.filter(function(t){return n-t<60000});if(actionTS.length>60){secLog('RL');blockU();return false}actionTS.push(n);return true}
-function blockU(){if(isBlocked)return;isBlocked=true;secLog('BLOCK');document.getElementById('appMain').style.display='none';document.getElementById('loginScreen').style.display='none';document.getElementById('blockedScreen').style.display='flex'}
-setInterval(function(){if(document.getElementById('hpField').value!==''){secLog('HP');blockU()}},2000);
-document.addEventListener('contextmenu',function(e){e.preventDefault();secLog('RC')});
-document.addEventListener('selectstart',function(e){if(!e.target.closest('.text-input,.debug-panel,.cinema-summary'))e.preventDefault()});
-document.addEventListener('copy',function(e){e.preventDefault();secLog('CP')});
-document.addEventListener('keydown',function(e){if(e.key==='F12'||(e.ctrlKey&&e.shiftKey&&(e.key==='I'||e.key==='J'||e.key==='C'))||(e.ctrlKey&&e.key==='u')){e.preventDefault();secLog('DT')}});
-secLog('LOAD',{ua:navigator.userAgent.substring(0,150)});
-
-// ====================================================================
-// AUTENTICAZIONE
-// ====================================================================
-document.getElementById('googleLogin').addEventListener('click',async function(){
-  if(!checkRL())return;this.disabled=true;this.textContent='Accesso in corso...';
-  try{await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.origin+'/?auth=callback'}})}
-  catch(e){document.getElementById('loginError').textContent='Errore: '+e.message;document.getElementById('loginError').style.display='block';this.disabled=false;this.innerHTML='<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G"> Accedi con Google'}
-});
-
-async function handleAuth(){
-  var s=new URLSearchParams(window.location.search);var h=new URLSearchParams(window.location.hash.substring(1));
-  if(s.get('auth')==='callback'||h.get('access_token')){try{var r=await sb.auth.getSession();if(r.data.session){await verifyAdmin(r.data.session.user.email);return}}catch(e){window.location.href=window.location.origin;return}}
-  var r=await sb.auth.getSession();if(r.data.session&&r.data.session.user)await verifyAdmin(r.data.session.user.email);
-}
-async function verifyAdmin(email){
-  if(email!=='sasacaruso84@gmail.com'){await sb.auth.signOut();document.getElementById('loginError').textContent='Non autorizzato.';document.getElementById('loginError').style.display='block';return}
-  if(window.location.search.includes('auth=callback'))window.history.replaceState({},'',window.location.origin);
-  document.getElementById('loginScreen').style.display='none';document.getElementById('appMain').style.display='block';
-  log('Benvenuto');renderLibrary();initCinema();renderVideoLibrary();
-}
-handleAuth();
-
-// ====================================================================
-// UTILITY
-// ====================================================================
-function log(m){var e=document.getElementById('debugLog');e.style.display='block';e.innerHTML+='<div>['+new Date().toLocaleTimeString()+'] '+m+'</div>';e.scrollTop=e.scrollHeight}
-function fmtTime(s){if(!s||!isFinite(s))return'??:??';return Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0')}
-function fmtSize(b){if(b<1024)return b+' B';if(b<1048576)return(b/1024).toFixed(1)+' KB';return(b/1048576).toFixed(1)+' MB'}
-function sleep(ms){return new Promise(function(r){setTimeout(r,ms)})}
-var errorT=null;function showError(m){var t=document.getElementById('errorToast');t.textContent=m;t.style.display='block';clearTimeout(errorT);errorT=setTimeout(function(){t.style.display='none'},8000);log('ERR: '+m)}
-var succT=null;function showSuccess(m){var t=document.getElementById('successToast');t.textContent=m;t.style.display='block';clearTimeout(succT);succT=setTimeout(function(){t.style.display='none'},4000)}
-
-// ====================================================================
-// LIBRERIA AUDIO
-// ====================================================================
-var uploadZone=document.getElementById('uploadZone');var audioUpload=document.getElementById('audioUpload');
-var trackList=document.getElementById('trackList');var lyricsInput=document.getElementById('lyrics');
-var styleHint=document.getElementById('styleHint');var generateBtn=document.getElementById('generateBtn');
-var selectedBadge=document.getElementById('selectedBadge');var autoSaveHint=document.getElementById('autoSaveHint');
-var noTrackHint=document.getElementById('noTrackHint');var progressEl=document.getElementById('progress');
-var progressBar=document.getElementById('progressBar');var statusEl=document.getElementById('status');
-var previewWrap=document.getElementById('previewWrap');var preview=document.getElementById('preview');
-var downloadBtn=document.getElementById('downloadBtn');
-var selectedTrack=null;var audioCache={};
-
-uploadZone.addEventListener('click',function(){audioUpload.click()});
-uploadZone.addEventListener('dragover',function(e){e.preventDefault();uploadZone.classList.add('dragover')});
-uploadZone.addEventListener('dragleave',function(){uploadZone.classList.remove('dragover')});
-uploadZone.addEventListener('drop',function(e){e.preventDefault();uploadZone.classList.remove('dragover');handleFiles(e.dataTransfer.files)});
-audioUpload.addEventListener('change',function(e){handleFiles(e.target.files);audioUpload.value=''});
-
-async function handleFiles(files){
-  for(var i=0;i<files.length;i++){log('Upload: '+files[i].name);try{await uploadTrack(files[i]);showSuccess(files[i].name+' OK')}catch(e){showError(e.message)}}
-  await renderLibrary();
-}
-async function uploadTrack(file){
-  var dur=await getDur(file);var ext=file.name.split('.').pop()||'mp3';
-  var path='uploads/'+Date.now()+'-'+Math.random().toString(36).slice(2)+'.'+ext;
-  var r=await sb.storage.from('audio').upload(path,file,{upsert:true,contentType:file.type||'audio/mpeg'});
-  if(r.error)throw new Error(r.error.message);
-  var r2=await sb.from('tracks').insert({name:file.name,size:file.size,type:file.type||'audio/mpeg',duration:dur,storage_path:path}).select().single();
-  if(r2.error)throw new Error(r2.error.message);
-}
-function getDur(file){return new Promise(function(r){var u=URL.createObjectURL(file);var a=new Audio();a.preload='metadata';var d=false;var f=function(v){if(d)return;d=true;clearTimeout(t);URL.revokeObjectURL(u);r(v)};var t=setTimeout(function(){f(0)},6000);a.onloadedmetadata=function(){f(a.duration||0)};a.onerror=function(){f(0)};a.src=u})}
-
-async function renderLibrary(){
-  try{
-    var r=await sb.from('tracks').select('*');if(r.error)throw new Error(r.error.message);var tracks=r.data;
-    log('Trovate '+tracks.length+' tracce');
-    if(!tracks.length){trackList.innerHTML='<div class="empty-library">Nessuna traccia.</div>';return}
-    var h='';for(var i=0;i<tracks.length;i++){var t=tracks[i];var s=selectedTrack&&selectedTrack.id===t.id;
-      h+='<div class="track-item '+(s?'selected':'')+'"><div class="track-info"><div class="track-name">'+t.name+'</div><div class="track-meta">'+fmtTime(t.duration)+' · '+fmtSize(t.size)+'</div></div><div class="track-actions"><audio controls preload="metadata" data-tid="'+t.id+'"></audio><button class="sec" data-sel="'+t.id+'" style="'+(s?'background:#f72585;color:#fff':'')+'">'+(s?'OK':'Usa')+'</button><button class="del" data-del="'+t.id+'">&#10005;</button></div></div>'}
-    trackList.innerHTML=h;
-    var als=trackList.querySelectorAll('audio[data-tid]');for(var j=0;j<als.length;j++){(function(el){getAU(el.dataset.tid).then(function(u){el.src=u}).catch(function(){})})(als[j])}
-    var sbs=trackList.querySelectorAll('[data-sel]');for(var k=0;k<sbs.length;k++){(function(b){b.addEventListener('click',function(){selTrack(b.dataset.sel)})})(sbs[k])}
-    var dbs=trackList.querySelectorAll('[data-del]');for(var m=0;m<dbs.length;m++){(function(b){b.addEventListener('click',function(){delTrack(b.dataset.del)})})(dbs[m])}
-  }catch(e){trackList.innerHTML='<div class="empty-library" style="color:#f66">'+e.message+'</div>'}
-}
-async function getAU(id){if(audioCache[id])return audioCache[id];var t=selectedTrack&&selectedTrack.id===id?selectedTrack:(await sb.from('tracks').select('storage_path').eq('id',id).single()).data;if(!t)throw 0;var r=await sb.storage.from('audio').createSignedUrl(t.storage_path,7200);audioCache[id]=r.data.signedUrl;return r.data.signedUrl}
-async function selTrack(id){var r=await sb.from('tracks').select('*').eq('id',id).single();if(r.error)throw r.error;selectedTrack=r.data;lyricsInput.value=selectedTrack.lyrics||'';generateBtn.disabled=false;selectedBadge.style.display='inline';noTrackHint.classList.add('hidden');await renderLibrary()}
-async function delTrack(id){if(!confirm('Eliminare?'))return;var r=await sb.from('tracks').select('storage_path').eq('id',id).single();if(r.data)await sb.storage.from('audio').remove([r.data.storage_path]);await sb.from('tracks').delete().eq('id',id);delete audioCache[id];if(selectedTrack&&selectedTrack.id===id){selectedTrack=null;lyricsInput.value='';generateBtn.disabled=true;selectedBadge.style.display='none';noTrackHint.classList.remove('hidden')}showSuccess('Eliminata');await renderLibrary()}
-var svT=null;lyricsInput.addEventListener('input',function(){if(!selectedTrack)return;autoSaveHint.textContent='...';clearTimeout(svT);svT=setTimeout(async function(){await sb.from('tracks').update({lyrics:lyricsInput.value}).eq('id',selectedTrack.id);autoSaveHint.textContent='salvato';setTimeout(function(){autoSaveHint.textContent=''},2000)},600)});
-
-// ====================================================================
-// CATEGORIE CINEMATOGRAFICHE — 10 FAMIGLIE
-// ====================================================================
-var CINEMATIC_PRESETS={
-  film:{label:'Pellicola',options:{
-    '':'Auto (sceglie il motore)',
-    kodak250d:'Kodak Vision3 250D',
-    kodak500t:'Kodak Vision3 500T',
-    portra400:'Kodak Portra 400',
-    fujiEterna:'Fujifilm Eterna',
-    fuji400h:'Fujifilm Pro 400H',
-    agfaVista:'Agfa Vista',
-    ilfordHP5:'Ilford HP5 (B&N)',
-    kodakTriX:'Kodak Tri-X (B&N)'
-  }},
-  lighting:{label:'Illuminazione',options:{
-    '':'Auto',
-    goldenHour:'Golden Hour',
-    blueHour:'Blue Hour',
-    softStudio:'Soft Studio',
-    hardLight:'Hard Light',
-    rembrandt:'Rembrandt',
-    split:'Split Lighting',
-    butterfly:'Butterfly',
-    loop:'Loop Lighting',
-    neon:'Neon Cyberpunk',
-    candle:'Candle Light',
-    moonlight:'Moonlight',
-    volumetric:'Volumetric Light',
-    godRays:'God Rays',
-    rim:'Rim Light',
-    practical:'Practical Lighting'
-  }},
-  lens:{label:'Obiettivo',options:{
-    '':'Auto',
-    mm24:'24mm',
-    mm35:'35mm',
-    mm50:'50mm',
-    mm85:'85mm',
-    mm135:'135mm',
-    anamorphic:'Anamorphic',
-    vintage:'Vintage Lens',
-    tiltShift:'Tilt Shift',
-    macro:'Macro',
-    fisheye:'Fisheye'
-  }},
-  shot:{label:'Inquadratura',options:{
-    '':'Auto',
-    ecu:'Extreme Close Up',
-    cu:'Close Up',
-    mcu:'Medium Close Up',
-    ms:'Medium Shot',
-    cowboy:'Cowboy Shot',
-    full:'Full Body',
-    wide:'Wide Shot',
-    ewide:'Extreme Wide',
-    ots:'Over Shoulder',
-    pov:'POV',
-    drone:'Drone',
-    birdEye:'Bird Eye',
-    wormEye:'Worm Eye'
-  }},
-  movement:{label:'Movimento Camera',options:{
-    '':'Auto',
-    dollyIn:'Dolly In',
-    dollyOut:'Dolly Out',
-    craneUp:'Crane Up',
-    craneDown:'Crane Down',
-    orbit:'Orbit',
-    handheld:'Handheld',
-    steadicam:'Steadicam',
-    gimbal:'Gimbal',
-    whipPan:'Whip Pan',
-    slowPush:'Slow Push',
-    tracking:'Tracking',
-    zoom:'Zoom',
-    snapZoom:'Snap Zoom'
-  }},
-  atmosphere:{label:'Atmosfera',options:{
-    '':'Auto',
-    fog:'Fog',
-    rain:'Rain',
-    snow:'Snow',
-    dust:'Dust',
-    smoke:'Smoke',
-    embers:'Fire Embers',
-    storm:'Storm',
-    haze:'Haze',
-    mist:'Mist'
-  }},
-  grade:{label:'Color Grading',options:{
-    '':'Auto',
-    tealOrange:'Teal & Orange',
-    blockbuster:'Hollywood Blockbuster',
-    bleach:'Bleach Bypass',
-    desaturated:'Desaturated',
-    highContrast:'High Contrast',
-    lowContrast:'Low Contrast',
-    hdr:'HDR',
-    warmVintage:'Warm Vintage',
-    coldNordic:'Cold Nordic',
-    matrix:'Matrix Green',
-    sepia:'Sepia',
-    noir:'Noir'
-  }},
-  mood:{label:'Mood',options:{
-    '':'Auto',
-    epic:'Epic',
-    dramatic:'Dramatic',
-    horror:'Horror',
-    romantic:'Romantic',
-    thriller:'Thriller',
-    documentary:'Documentary',
-    scifi:'Sci-Fi',
-    fantasy:'Fantasy',
-    dystopian:'Dystopian',
-    hopeful:'Hopeful',
-    melancholic:'Melancholic',
-    mysterious:'Mysterious'
-  }},
-  director:{label:'Regista (stile ispirato)',options:{
-    '':'Auto',
-    nolan:'Nolan-like',
-    villeneuve:'Villeneuve-like',
-    fincher:'Fincher-like',
-    spielberg:'Spielberg-like',
-    scott:'Scott-like',
-    cameron:'Cameron-like',
-    tarantino:'Tarantino-like',
-    wesanderson:'Wes Anderson-like',
-    kurosawa:'Kurosawa-like'
-  }},
-  optic:{label:'Effetti Ottici',options:{
-    '':'Auto',
-    lensFlare:'Lens Flare',
-    bokeh:'Bokeh',
-    bloom:'Bloom',
-    filmGrain:'Film Grain',
-    chromatic:'Chromatic Aberration',
-    motionBlur:'Motion Blur',
-    shallowDOF:'Shallow Depth of Field',
-    deepFocus:'Deep Focus',
-    lightLeak:'Light Leak',
-    halation:'Halation'
-  }}
-};
-
-// Prompt fragment per ogni opzione
-var CINEMATIC_PROMPTS={
-  film:{
-    kodak250d:'shot on Kodak Vision3 250D film stock, daylight balanced, fine grain, natural color reproduction, cinematic 35mm texture',
-    kodak500t:'shot on Kodak Vision3 500T film stock, tungsten balanced, low light cinematic grain, warm shadow tones',
-    portra400:'shot on Kodak Portra 400 film, warm natural skin tones, fine grain, slightly oversaturated highlights',
-    fujiEterna:'shot on Fujifilm Eterna film, muted cinematic colors, soft contrast, pastel shadows',
-    fuji400h:'shot on Fujifilm Pro 400H film, cool tones, clean grain, pastel palette',
-    agfaVista:'shot on Agfa Vista film, vibrant saturated colors, warm reds, vintage consumer film look',
-    ilfordHP5:'shot on Ilford HP5 black and white film, classic grain, high contrast monochrome',
-    kodakTriX:'shot on Kodak Tri-X black and white film, gritty grain, documentary feel, pushed contrast'
-  },
-  lighting:{
-    goldenHour:'golden hour lighting, warm sunset glow, long soft shadows, low sun angle',
-    blueHour:'blue hour lighting, deep blue ambient sky, twilight atmosphere, cool tones',
-    softStudio:'soft studio lighting, diffused key light, gentle wraparound shadows',
-    hardLight:'hard directional light, sharp defined shadows, high contrast illumination',
-    rembrandt:'Rembrandt lighting, triangle highlight on cheek, classic painterly portrait',
-    split:'split lighting, half face in deep shadow, dramatic chiaroscuro contrast',
-    butterfly:'butterfly lighting, symmetrical shadow under nose, glamorous Hollywood portrait',
-    loop:'loop lighting, soft small nose shadow, natural flattering portrait',
-    neon:'neon cyberpunk lighting, magenta and cyan glow, urban futuristic atmosphere',
-    candle:'candlelight, warm flickering glow, intimate low-key chiaroscuro',
-    moonlight:'moonlight, cool blue ambient, nocturnal atmosphere, silver highlights',
-    volumetric:'volumetric lighting, visible light rays through atmosphere, god beam shafts',
-    godRays:'god rays, shafts of sunlight through canopy or window, atmospheric haze',
-    rim:'rim lighting, bright edge highlight separating subject from background',
-    practical:'practical lighting, visible light sources in frame, motivated light sources'
-  },
-  lens:{
-    mm24:'24mm wide angle lens, expansive perspective, environmental framing, slight distortion',
-    mm35:'35mm lens, natural perspective, classic documentary street photography feel',
-    mm50:'50mm lens, normal perspective, classic cinematic look, natural depth',
-    mm85:'85mm portrait lens, shallow depth of field, flattering subject compression',
-    mm135:'135mm telephoto lens, strong background compression, very shallow depth',
-    anamorphic:'anamorphic lens, oval bokeh, horizontal blue lens flares, 2.39:1 cinematic squeeze',
-    vintage:'vintage lens character, soft edges, warm coating flare, dreamy rendering',
-    tiltShift:'tilt-shift lens, miniature effect, selective focus plane, surreal scale',
-    macro:'macro lens, extreme close detail, very shallow depth of field, intricate texture',
-    fisheye:'fisheye lens, extreme wide distortion, 180 degree field of view, surreal curvature'
-  },
-  shot:{
-    ecu:'extreme close up shot, single detail filling the frame, intimate and intense',
-    cu:'close up shot, head and shoulders filling frame, emotional focus on face',
-    mcu:'medium close up, chest up framing, conversational intimacy',
-    ms:'medium shot, waist up, balanced subject and environment',
-    cowboy:'cowboy shot, mid-thigh up, western classic framing',
-    full:'full body shot, head to toe visible, fashion and movement emphasis',
-    wide:'wide shot, environment dominant, subject small in frame',
-    ewide:'extreme wide shot, vast landscape, tiny subject, establishing scale',
-    ots:'over the shoulder shot, back of head in foreground, dialogue framing',
-    pov:'point of view shot, first person perspective, immersive camera',
-    drone:'drone aerial shot, bird perspective from high above, sweeping view',
-    birdEye:'bird eye view, directly overhead top-down, graphic composition',
-    wormEye:"worm's eye view, extreme low angle looking up, imposing subject"
-  },
-  movement:{
-    dollyIn:'dolly in camera movement, smooth forward tracking, approaching subject',
-    dollyOut:'dolly out camera movement, smooth backward tracking, retreating reveal',
-    craneUp:'crane up shot, vertical rising movement, revealing scale and scope',
-    craneDown:'crane down shot, descending movement, lowering perspective',
-    orbit:'orbit shot, circular camera movement around subject,360 degree reveal',
-    handheld:'handheld camera, organic shake, documentary raw feel',
-    steadicam:'steadicam shot, smooth floating movement, stabilized gliding',
-    gimbal:'gimbal stabilized shot, fluid motion, precise tracking',
-    whipPan:'whip pan, fast horizontal sweep with motion blur, energetic transition',
-    slowPush:'slow push in, gradual zoom building tension',
-    tracking:'tracking shot, lateral movement following subject parallel',
-    zoom:'zoom lens movement, optical focal length change',
-    snapZoom:'snap zoom, quick sudden focal change, dramatic punctuation'
-  },
-  atmosphere:{
-    fog:'thick fog atmosphere, low visibility, mysterious hazy depth',
-    rain:'heavy rain, wet reflective surfaces, water droplets, moody weather',
-    snow:'snowfall, white flakes drifting, cold winter atmosphere',
-    dust:'dust particles in air, dry desert atmosphere, suspended dirt in light beams',
-    smoke:'atmospheric smoke, hazy diffusion, mysterious layered depth',
-    embers:'floating fire embers, glowing orange sparks, warm dangerous atmosphere',
-    storm:'stormy weather, dark dramatic clouds, intense atmospheric tension',
-    haze:'atmospheric haze, soft diffusion, dreamy faded background',
-    mist:'light mist, gentle moisture, soft muted visibility'
-  },
-  grade:{
-    tealOrange:'teal and orange color grade, complementary contrast, modern blockbuster look',
-    blockbuster:'Hollywood blockbuster color grade, high impact contrast, vivid saturation',
-    bleach:'bleach bypass color grade, desaturated with retained high contrast',
-    desaturated:'desaturated color palette, muted tones, melancholic flat look',
-    highContrast:'high contrast color grade, deep blacks and bright highlights',
-    lowContrast:'low contrast grade, flat faded look, vintage soft',
-    hdr:'HDR enhanced grade, extended dynamic range, vivid detail',
-    warmVintage:'warm vintage color grade, faded yellow tones, nostalgic film look',
-    coldNordic:'cold Nordic grade, blue-gray palette, stark minimal',
-    matrix:'Matrix-inspired green tint, monochromatic green digital grade',
-    sepia:'sepia tone, brown monochrome, vintage photograph look',
-    noir:'film noir grade, high contrast black and white, dramatic shadows'
-  },
-  mood:{
-    epic:'epic mood, grand scale, heroic atmosphere, monumental composition',
-    dramatic:'dramatic mood, intense emotional tension, theatrical staging',
-    horror:'horror atmosphere, creeping dread, unsettling unease, dark shadows',
-    romantic:'romantic mood, tender intimate atmosphere, soft warm glow',
-    thriller:'thriller tension, suspenseful unease, paranoid framing',
-    documentary:'documentary realism, observational neutral, candid authenticity',
-    scifi:'science fiction atmosphere, futuristic technology, speculative world',
-    fantasy:'fantasy realm, magical ethereal, otherworldly dreamlike',
-    dystopian:'dystopian atmosphere, decayed society, post-industrial ruin',
-    hopeful:'hopeful mood, optimistic uplifting, warm bright dawn',
-    melancholic:'melancholic mood, sorrowful pensive, muted introspective',
-    mysterious:'mysterious atmosphere, enigmatic, hidden secrets, ambiguous'
-  },
-  director:{
-    nolan:'Nolan-inspired composition, IMAX scale, practical effects aesthetic, monumental architecture',
-    villeneuve:'Villeneuve-inspired framing, monumental scale, stark minimal composition, brutalist aesthetic',
-    fincher:'Fincher-inspired precision, locked-off camera, controlled desaturated palette, obsessive framing',
-    spielberg:'Spielberg-inspired blocking, classic coverage, emotional close-ups, warm storytelling',
-    scott:'Ridley Scott-inspired, painterly atmospheric framing, fog and haze, baroque lighting',
-    cameron:'Cameron-inspired, technical precision, blue tone palette, immersive scale',
-    tarantino:'Tarantino-inspired, dynamic dialogue framing, retro 70s aesthetic, bold primary colors',
-    wesanderson:'Wes Anderson-inspired, symmetrical composition, pastel palette, dollhouse framing',
-    kurosawa:'Kurosawa-inspired, elemental composition, telephoto compression, weather as character'
-  },
-  optic:{
-    lensFlare:'anamorphic lens flare, horizontal light streaks across frame',
-    bokeh:'creamy bokeh, out of focus background blur, shallow depth rendering',
-    bloom:'bloom effect, glowing highlights, soft light spill around bright areas',
-    filmGrain:'film grain texture, analog noise, 35mm photochemical look',
-    chromatic:'chromatic aberration, color fringing at edges, lens distortion',
-    motionBlur:'motion blur, smooth movement streaks, temporal smoothing',
-    shallowDOF:'shallow depth of field, razor thin focus plane, creamy background blur',
-    deepFocus:'deep focus, everything sharp from foreground to background, deep depth of field',
-    lightLeak:'light leak, orange and red exposure bleed, vintage analog artifact',
-    halation:'halation effect, red glow around bright highlights, film bloom'
-  }
-};
-
-// Stato delle selezioni cinematografiche
-var cinemaState={film:'',lighting:'',lens:'',shot:'',movement:'',atmosphere:'',grade:'',mood:'',director:'',optic:''};
-
-function initCinema(){
-  var container=document.getElementById('cinemaContent');
-  var keys=Object.keys(CINEMATIC_PRESETS);
-  var html='';
-  for(var i=0;i<keys.length;i++){
-    var key=keys[i];var cat=CINEMATIC_PRESETS[key];var opts=cat.options;
-    html+='<div class="cinema-field"><label>'+cat.label+'</label><select data-cat="'+key+'">';
-    for(var k in opts){html+='<option value="'+k+'"'+(k===''?' selected':'')+'>'+opts[k]+'</option>'}
-    html+='</select></div>';
-  }
-  container.innerHTML=html;
-  var sels=container.querySelectorAll('select[data-cat]');
-  for(var j=0;j<sels.length;j++){
-    sels[j].addEventListener('change',function(){
-      cinemaState[this.dataset.cat]=this.value;
-      updateCinemaSummary();
-    });
-  }
-  document.getElementById('cinemaRandom').addEventListener('click',randomizeCinema);
-  document.getElementById('cinemaReset').addEventListener('click',resetCinema);
-  document.getElementById('cinemaToggle').addEventListener('click',function(e){
-    if(e.target.closest('select')||e.target.closest('button'))return;
-    var t=this;var c=document.getElementById('cinemaContent');
-    t.classList.toggle('collapsed');c.classList.toggle('collapsed');
-  });
-  updateCinemaSummary();
-}
-
-function randomizeCinema(){
-  var keys=Object.keys(CINEMATIC_PRESETS);
-  for(var i=0;i<keys.length;i++){
-    var key=keys[i];var opts=Object.keys(CINEMATIC_PRESETS[key].options);
-    var pool=opts.slice(1); // togli 'Auto'
-    cinemaState[key]=pool[Math.floor(Math.random()*pool.length)];
-    var sel=document.querySelector('select[data-cat="'+key+'"]');
-    if(sel)sel.value=cinemaState[key];
-  }
-  updateCinemaSummary();
-  showSuccess('Opzioni cinematografiche randomizzate');
-}
-
-function resetCinema(){
-  var keys=Object.keys(CINEMATIC_PRESETS);
-  for(var i=0;i<keys.length;i++){
-    var key=keys[i];cinemaState[key]='';
-    var sel=document.querySelector('select[data-cat="'+key+'"]');
-    if(sel)sel.value='';
-  }
-  updateCinemaSummary();
-  showSuccess('Tutte le opzioni su Auto');
-}
-
-function updateCinemaSummary(){
-  var keys=Object.keys(CINEMATIC_PRESETS);
-  var active=[];
-  for(var i=0;i<keys.length;i++){
-    var k=keys[i];var v=cinemaState[k];
-    if(v){active.push(CINEMATIC_PRESETS[k].options[v])}
-  }
-  var el=document.getElementById('cinemaSummary');
-  if(!active.length){el.textContent='Tutto su Auto — la selezione verra decisa dal motore di analisi in base al testo della canzone.'}
-  else{el.textContent='Attivi: '+active.join(' · ')}
-}
-
-// Costruisce il prompt fragment dalle selezioni cinematografiche
-function buildCinemaPromptFragment(){
-  var parts=[];
-  var keys=Object.keys(cinemaState);
-  for(var i=0;i<keys.length;i++){
-    var k=keys[i];var v=cinemaState[k];
-    if(v&&CINEMATIC_PROMPTS[k]&&CINEMATIC_PROMPTS[k][v]){
-      parts.push(CINEMATIC_PROMPTS[k][v]);
-    }
-  }
-  return parts.join(', ');
-}
-
-// ====================================================================
-// MOTORE DI ANALISI INTELLIGENTE CLIENT-SIDE
-// ====================================================================
-var MOOD_WORDS={
-  amore:['amore','ama','ami','t amo','ti amo','amami','amor','cuore','cuor','core','sentimento','passione','passion','bacio','baciam','abbraccia','abbracc','voglio bene','carezza','innamorat','desiderio','tesoro'],
-  dolore:['dolore','male','fa male','soffre','soffro','piangere','pianto','lacrime','piange','piango','ferita','ferito','sangue','piag','cicatrice','strapp','lutto','perdita','perso','persa'],
-  nostalgia:['ricordo','ricorda','memoria','memorie','rimpianto','manchi','manca','mancanza','vorrei','se fossi','una volta','prima','tempo fa','quando erav','infanzia','ricord','torno','ritorno'],
-  notte:['notte','notturno','buio','scuro','oscurit','luna','stelle','sogno','sognare','sogn','dormire','dormo','mezzanotte','ombra','ombre','silenzio','chiuso','finestra','balcone'],
-  rabbia:['rabbia','fury','odio','odi','furia','incazz','vendetta','guerra','distrugg','brucia','bruciam','fuoco','esplosi','urla','urlare','grida','sbatt','sbatte','rotto','spacca'],
-  gioia:['felice','felicita','ridere','ride','riso','sorride','sorrid','allegro','allegria','contento','contentezza','vita','vivere','balla','ballare','festa','celebra','liberta'],
-  solitudine:['solo','sola','solitudine','nessuno','nisciuno','abbandona','abbandonat','lontano','lontan','perduto','smarrito','isolat','vuoto','deserto','senza di te','mancanza','sparito','sparit'],
-  desiderio:['voglio','voglia','desiderio','aspetto','aspett','cerco','cerc','trovare','trov','ho bisogno','servo','necessit','fame','sete','ansia','bramo'],
-  mare:['mare','spiaggia','onda','onde','costa','riva','porto','barca','nave','vela','naufrag','isola','scoglio','profondit','sottomarin','pesca','pesc'],
-  citta:['citta','vicolo','vicoli','strada','strad','quartiere','palazzo','palazz','tetto','tetti','chiesa','piazza','mercato','neon','lampion','marciapied','asfalto','mur','muri','napoli','torino','roma','milano'],
-  urban:['rap','trap','beat','basso','flow','rhyme','rhythm','mic','microfono','dj','producer','strofa','ritornello','hook','verse','bar','club','street','ghetto','block']
-};
-
-var VISUAL_MAP={
-  amore:{prompt:'intimate close-up of hands intertwined, warm golden hour light through sheer curtains, soft bokeh background, shallow depth of field, rose petals scattered, skin tones, romantic atmosphere, anamorphic lens flare',colors:['#2d1b2e','#8b2252','#f4a261'],camera:'close-up'},
-  dolore:{prompt:'a solitary figure sitting on the edge of an empty bed, cold blue-gray tones, harsh side lighting from a window, dust particles in the air, minimalist room with bare walls, expression of grief, desaturated color palette, wide shot',colors:['#0a0f1a','#1a2a3a','#3a4a5a'],camera:'medium'},
-  nostalgia:{prompt:'old photographs scattered on a wooden table, warm sepia tones mixed with faded colors, soft afternoon light filtering through lace curtains, vintage objects, slight lens fog, shallow depth of field, nostalgic atmosphere, overhead shot',colors:['#2d1f0e','#6b4423','#d4a574'],camera:'overhead'},
-  notte:{prompt:'city rooftops at night with warm orange streetlights, a lone figure silhouetted against the sky, deep blue and purple tones, fog rolling between buildings, distant city glow, moonlight creating rim light, cinematic wide shot',colors:['#0a0a1a','#1a1a3e','#2d1b69'],camera:'wide'},
-  rabbia:{prompt:'shattered glass suspended in mid-air, red and orange dramatic lighting, smoke and debris, aggressive low angle shot looking up, high contrast, saturated red tones, concrete wall background, visceral raw energy, ultra-wide lens distortion',colors:['#1a0000','#8b0000','#ff4500'],camera:'low-angle'},
-  gioia:{prompt:'person dancing freely in an open field at golden hour, arms spread wide, sun flares, warm yellow and green tones, grass blowing in wind, lens flare through hair, joyful movement blur, shallow depth of field, low angle hero shot',colors:['#1a2e0a','#4a7c2e','#f4e04d'],camera:'low-angle'},
-  solitudine:{prompt:'single small figure in vast empty landscape, extreme wide shot, muted desaturated colors, overcast sky, fog or mist, sense of scale and isolation, negative space dominates frame, cold color temperature, still and silent',colors:['#0a0a0a','#2a2a2a','#4a4a4a'],camera:'extreme-wide'},
-  desiderio:{prompt:'hand reaching through a foggy glass window, condensation droplets, blurred figure behind the glass, warm amber light on one side cool blue on other, split lighting, intimate framing, yearning atmosphere, medium close-up',colors:['#1a0a2e','#4a2a5e','#d4a060'],camera:'medium-close'},
-  mare:{prompt:'dramatic sea waves crashing against dark rocks at twilight, long exposure water motion, deep blue and teal tones, white foam detail, moody overcast sky, powerful nature, cinematic widescreen composition, low camera near water level',colors:['#0a1a2e','#1a3a5e','#2a6a8e'],camera:'low'},
-  citta:{prompt:'narrow alley in an old Italian city at dusk, warm light spilling from doorways, clotheslines overhead, wet cobblestones reflecting golden light, deep shadows, figure walking away in distance, cinematic anamorphic look, tracking shot perspective',colors:['#1a0f0a','#3a2a1a','#d4874d'],camera:'tracking'},
-  urban:{prompt:'gritty urban rooftop at night, neon signs reflecting on wet concrete, smoke rising, figure leaning against railing with city skyline behind, teal and orange color grade, moody atmospheric haze, music video aesthetic, medium shot',colors:['#0a0a1a','#1a3a4a','#ff6b35'],camera:'medium'}
-};
-
-var NEAPOLITAN_MAP={
-  'vaseme':'come here to me, reaching out, intimate gesture, two hands reaching toward each other',
-  'accussi':'like this, showing something, gesture of demonstration',
-  "'o mare":'the sea of Naples, gulf panorama, Castel dell Ovo in distance, Mediterranean blue',
-  "'a luna":'the moon over Naples, moonlight on old buildings, Vesuvius silhouette',
-  'strobe':'strobe lights, club scene, flashing lights, dark with sudden bright flashes',
-  'scuro':'darkness, shadows, figure emerging from darkness, single light source',
-  'nzocca':'biting, sharp close-up on face, intense expression, high contrast',
-  'pazz':'crazy, chaotic scene, blurred motion, disorienting angles, Dutch tilt',
-  'guagliona':'young woman, confident pose, street style, urban setting, golden hour',
-  'guagli':'boys, group of young men on street corner, casual attitude, neighborhood',
-  'sfaccimm':'shameless, bold close-up, direct eye contact, unapologetic expression',
-  'torn':'return, coming back, figure at a distance approaching, doorway silhouette',
-  'spine':'thorns, pain imagery, close-up of roses with thorns, red on black',
-  'veleno':'poison, toxic green liquid, dramatic lighting, danger aesthetic',
-  'cazzimma':'attitude, swagger, figure walking with confidence, low angle',
-  'rota':'wheel, spinning, circular motion, blurred rotation, dizzy effect',
-  'scure':'darkness descending, fading light, silhouette against last light'
-};
-
-function analyzeScenes(lyrics,duration,style){
-  log('Analisi intelligente testo...');
-  var blocks=lyrics.split(/\n\s*\n/).filter(function(b){return b.trim()});
-  if(!blocks.length)blocks=[lyrics];
-
-  var sceneCount=Math.max(8,Math.min(15,Math.round(duration/18)));
-  var sceneDur=duration/sceneCount;
-  var scenes=[];
-
-  for(var i=0;i<sceneCount;i++){
-    var startBlock=Math.floor(i*blocks.length/sceneCount);
-    var endBlock=Math.floor((i+1)*blocks.length/sceneCount);
-    var sceneText=blocks.slice(startBlock,endBlock).join('\n\n');
-    if(!sceneText.trim())sceneText=blocks[Math.min(i,blocks.length-1)]||'';
-
-    var analysis=analyzeMood(sceneText);
-    var visual=VISUAL_MAP[analysis.primaryMood]||VISUAL_MAP.nostalgia;
-    var neapolitanHints=findNeapolitanHints(sceneText);
-
-    var prompt=buildPrompt(visual,neapolitanHints,style,sceneText,i,sceneCount);
-
-    scenes.push({
-      text:sceneText.trim(),
-      prompt:prompt,
-      mood:analysis.primaryMood,
-      colors:visual.colors,
-      camera:visual.camera,
-      intensity:analysis.intensity,
-      start:i*sceneDur,
-      end:(i+1)*sceneDur
-    });
-  }
-
-  log('Analisi completata: '+scenes.length+' scene');
-  for(var j=0;j<Math.min(3,scenes.length);j++){
-    log('Scena '+(j+1)+': mood='+scenes[j].mood+' intensity='+scenes[j].intensity.toFixed(2));
-  }
-  return scenes;
-}
-
-function analyzeMood(text){
-  var lower=text.toLowerCase();
-  var scores={};
-  var moodKeys=Object.keys(MOOD_WORDS);
-  for(var i=0;i<moodKeys.length;i++){
-    var mood=moodKeys[i];
-    var words=MOOD_WORDS[mood];
-    var score=0;
-    for(var j=0;j<words.length;j++){
-      if(lower.indexOf(words[j])!==-1)score++;
-    }
-    if(score>0)scores[mood]=score;
-  }
-
-  var sorted=Object.keys(scores).sort(function(a,b){return scores[b]-scores[a]});
-  var primary=sorted.length>0?sorted[0]:'nostalgia';
-  var intensity=Math.min(1,(sorted.length>0?scores[sorted[0]]:1)/4);
-
-  if(lower.match(/!\!/)||lower.match(/!!!/))intensity=Math.min(1,intensity+0.3);
-  if(lower.match(/\?\?/)||lower.match(/\.\.\./))intensity=Math.max(0,intensity-0.1);
-
-  return{primaryMood:primary,intensity:intensity,scores:scores};
-}
-
-function findNeapolitanHints(text){
-  var lower=text.toLowerCase();
-  var hints=[];
-  var keys=Object.keys(NEAPOLITAN_MAP);
-  for(var i=0;i<keys.length;i++){
-    if(lower.indexOf(keys[i])!==-1){
-      hints.push(NEAPOLITAN_MAP[keys[i]]);
-    }
-  }
-  return hints;
-}
-
-function buildPrompt(visual,hints,style,text,sceneIdx,total){
-  var parts=[];
-  parts.push('cinematic music video still');
-  if(style)parts.push(style+' style');
-  parts.push(visual.prompt);
-
-  // Aggiungi le selezioni cinematografiche dell'utente
-  var cinemaFrag=buildCinemaPromptFragment();
-  if(cinemaFrag)parts.push(cinemaFrag);
-
-  if(hints.length>0)parts.push(hints[0]);
-
-  var progress=sceneIdx/Math.max(1,total-1);
-  if(progress<0.2)parts.push('opening scene, establishing shot, building atmosphere');
-  else if(progress>0.4&&progress<0.6)parts.push('climactic moment, peak emotion, maximum visual intensity');
-  else if(progress>0.85)parts.push('closing scene, fading out, reflective mood, gentle resolution');
-
-  return parts.join(', ');
-}
-
-// ====================================================================
-// GENERAZIONE IMMAGINI (Pollinations con retry intelligente anti-429)
-// ====================================================================
-
-// Usa fetch invece di <img> per poter leggere lo status HTTP e Retry-After
-async function loadImgPollinations(prompt){
-  var clean=prompt.replace(/'/g,'').substring(0,350);
-  var seed=Math.floor(Math.random()*999999);
-  var url='https://image.pollinations.ai/prompt/'+encodeURIComponent(clean)+
-          '?width=1280&height=720&seed='+seed+'&nologo=true&referrer=music-video-generator.local';
-
-  var res=await fetch(url,{method:'GET'});
-
-  if(res.status===429){
-    var err=new Error('429');
-    err.isRateLimit=true;
-    err.retryAfter=parseInt(res.headers.get('Retry-After')||'0',10);
-    throw err;
-  }
-  if(!res.ok)throw new Error('HTTP '+res.status);
-
-  var blob=await res.blob();
-  if(!blob.size||blob.size<1000)throw new Error('empty image');
-
-  var objUrl=URL.createObjectURL(blob);
-  return await new Promise(function(resolve,reject){
-    var img=new Image();
-    img.onload=function(){resolve(img)};
-    img.onerror=function(){reject(new Error('decode fail'))};
-    img.src=objUrl;
-    // NON revocare objUrl qui: serve per canvas drawImage durante il rendering
-  });
-}
-
-// Backoff esponenziale: 5s, 10s, 20s, 40s
-async function loadImgRetry(prompt,maxRetries){
-  maxRetries=maxRetries||4;
-  var baseDelay=5000;
-  for(var i=0;i<=maxRetries;i++){
-    try{
-      if(i>0)log('Retry '+i+'/'+maxRetries+' tra '+(baseDelay/1000)+'s');
-      return await loadImgPollinations(prompt);
-    }catch(e){
-      if(i===maxRetries){
-        log('Img definitivamente fallita dopo '+maxRetries+' retry');
-        return null;
-      }
-      var wait=baseDelay;
-      if(e.isRateLimit){
-        wait=(e.retryAfter&&e.retryAfter>0)?e.retryAfter*1000+1000:baseDelay*Math.pow(2,i);
-        log('Rate limit 429 — attesa '+Math.round(wait/1000)+'s');
-      }
-      await sleep(wait);
-    }
-  }
-  return null;
-}
-
-// Generazione strettamente SEQUENZIALE (1 immagine per volta, evita 429)
-async function generateAllImages(scenes){
-  var images=new Array(scenes.length).fill(null);
-  var okCount=0;
-
-  for(var i=0;i<scenes.length;i++){
-    statusEl.textContent='Immagine '+(i+1)+'/'+scenes.length+'...';
-    progressBar.style.width=(10+((i+1)/scenes.length)*45)+'%';
-
-    var img=await loadImgRetry(scenes[i].prompt,4);
-    images[i]=img;
-    if(img){okCount++;log('Img '+(i+1)+' OK')}
-    else{log('Img '+(i+1)+' fallita — uso fallback gradiente')}
-
-    // Pausa OBBLIGATORIA tra una richiesta e l'altra (previene 429)
-    if(i<scenes.length-1)await sleep(4000);
-  }
-
-  log('Immagini: '+okCount+'/'+scenes.length+' ('+(scenes.length-okCount)+' fallback)');
-  return images;
-}
-
-// ====================================================================
-// RENDERING CINEMATOGRAFICO
-// ====================================================================
-function AudioAnalyzer(audio){
-  this.audio=audio;this.ctx=null;this.analyser=null;this.data=null;this.sourceNode=null;
-  this.bass=0;this.mid=0;this.high=0;this.energy=0;this.prevEnergy=0;this.beat=false;
-}
-AudioAnalyzer.prototype.init=function(){
-  this.ctx=new(window.AudioContext||window.webkitAudioContext)();
-  this.sourceNode=this.ctx.createMediaElementSource(this.audio);
-  this.analyser=this.ctx.createAnalyser();this.analyser.fftSize=256;
-  this.sourceNode.connect(this.analyser);this.analyser.connect(this.ctx.destination);
-  this.data=new Uint8Array(this.analyser.frequencyBinCount);
-};
-AudioAnalyzer.prototype.update=function(){
-  if(!this.analyser)return;this.analyser.getByteFrequencyData(this.data);
-  var l=this.data.length;var b=0,m=0,h=0;var be=Math.floor(l*0.15);var me=Math.floor(l*0.5);
-  for(var i=0;i<be;i++)b+=this.data[i];for(var i=be;i<me;i++)m+=this.data[i];for(var i=me;i<l;i++)h+=this.data[i];
-  this.prevEnergy=this.energy;this.bass=b/(be*255);this.mid=m/((me-be)*255);this.high=h/((l-me)*255);
-  this.energy=(this.bass+this.mid+this.high)/3;this.beat=this.energy-this.prevEnergy>0.12&&this.energy>0.25;
-};
-
-// ====================================================================
-// PRE-SCAN AUDIO — analizza l'intera canzone per identificare struttura
-// Usa OfflineAudioContext per velocizzare (nessun playback real-time)
-// ====================================================================
-async function prescanAudio(audioUrl){
-  log('Pre-scan audio per identificare struttura...');
-  try{
-    var res=await fetch(audioUrl);
-    var buf=await res.arrayBuffer();
-    var tmpCtx=new(window.OfflineAudioContext||window.webkitOfflineAudioContext)(2,44100,44100);
-    var decoded=await tmpCtx.decodeAudioData(buf);
-    var ch=decoded.getChannelData(0);
-    var sr=decoded.sampleRate;
-    var dur=decoded.duration;
-
-    // Campiona energia a 20Hz (50ms per campione)
-    var hop=Math.floor(sr*0.05);
-    var nSamples=Math.floor(ch.length/hop);
-    var energy=new Array(nSamples);
-    var bass=new Array(nSamples);
-    for(var i=0;i<nSamples;i++){
-      var s=0,bs=0;
-      var start=i*hop;
-      // Energia generale + energia bassa (primi ~250Hz = primi sr/4 samples per finestra)
-      for(var j=0;j<hop&&start+j<ch.length;j++){
-        var v=ch[start+j];
-        s+=v*v;
-      }
-      energy[i]=Math.sqrt(s/hop);
-    }
-
-    // Normalizza energia 0-1
-    var maxE=0;for(var k=0;k<nSamples;k++)if(energy[k]>maxE)maxE=energy[k];
-    if(maxE>0)for(var kk=0;kk<nSamples;kk++)energy[kk]/=maxE;
-
-    // Rileva beat: picchi di energia sopra la media locale
-    var beats=[];
-    var window=20; // 1 secondo
-    for(var i=window;i<nSamples-window;i++){
-      var avg=0;for(var j=i-window;j<i+window;j++)avg+=energy[j];
-      avg/=(2*window);
-      if(energy[i]>avg*1.35&&energy[i]>0.15&&(beats.length===0||(i-beats[beats.length-1])>6)){
-        beats.push(i*0.05); // converte in secondi
-      }
-    }
-
-    // Stima BPM dai primi 30 secondi di beat
-    var bpm=120;
-    if(beats.length>8){
-      var intervals=[];
-      for(var i=1;i<Math.min(beats.length,60);i++)intervals.push(beats[i]-beats[i-1]);
-      intervals.sort(function(a,b){return a-b});
-      var med=intervals[Math.floor(intervals.length/2)];
-      if(med>0)bpm=Math.round(60/med);
-      bpm=Math.max(60,Math.min(180,bpm));
-    }
-
-    // Identifica sezioni: cambia "character" dell'energia
-    // Usa una finestra più grande (5 secondi) per smoothing
-    var smoothWin=100; // 5s a 20Hz
-    var sections=[];
-    var prevAvg=-1;
-    var secStart=0;
-    for(var i=0;i<nSamples;i+=smoothWin){
-      var sAvg=0,sCnt=0;
-      for(var j=i;j<i+smoothWin&&j<nSamples;j++){sAvg+=energy[j];sCnt++;}
-      sAvg/=Math.max(1,sCnt);
-      if(prevAvg>=0){
-        // Transizione significativa: cambio > 0.2
-        if(Math.abs(sAvg-prevAvg)>0.18&&(i*0.05-secStart)>8){
-          sections.push({start:secStart,end:i*0.05,energy:(prevAvg+sAvg)/2});
-          secStart=i*0.05;
-        }
-      }
-      prevAvg=sAvg;
-    }
-    if(secStart<dur)sections.push({start:secStart,end:dur,energy:prevAvg>=0?prevAvg:0.5});
-
-    // Etichetta le sezioni in base a posizione + energia
-    var labeled=labelSections(sections,dur);
-
-    log('Pre-scan: '+beats.length+' beat, BPM~'+bpm+', '+labeled.length+' sezioni');
-    for(var s=0;s<Math.min(5,labeled.length);s++){
-      log('  Sezione '+labeled[s].label+': '+fmtTime(labeled[s].start)+'-'+fmtTime(labeled[s].end)+' E='+labeled[s].energy.toFixed(2));
-    }
-
-    return{
-      beats:beats,
-      bpm:bpm,
-      energy:energy,
-      sections:labeled,
-      duration:dur,
-      sampleRate:0.05
-    };
-  }catch(e){
-    log('Pre-scan fallito: '+e.message+' — uso fallback uniforme');
-    return null;
-  }
-}
-
-// Etichetta le sezioni: intro (silenzioso/pochi strumenti), verse (energia media),
-// chorus (energia alta), bridge (cambio), outro (calo finale)
-function labelSections(sections,dur){
-  if(!sections.length)return[{start:0,end:dur,label:'verse',energy:0.5}];
-
-  // Calcola energia media globale
-  var gAvg=0;for(var i=0;i<sections.length;i++)gAvg+=sections[i].energy;
-  gAvg/=sections.length;
-
-  var labeled=[];
-  for(var i=0;i<sections.length;i++){
-    var s=sections[i];
-    var posRatio=i/Math.max(1,sections.length-1);
-    var label='verse';
-
-    if(i===0&&s.energy<gAvg*0.6)label='intro';
-    else if(i===sections.length-1&&s.energy<gAvg*0.7)label='outro';
-    else if(s.energy>gAvg*1.15)label='chorus';
-    else if(s.energy<gAvg*0.7&&i>0&&i<sections.length-1)label='bridge';
-    else label='verse';
-
-    // Se è il punto centrale (~60-75% della canzone), spesso è un bridge/solo
-    if(posRatio>0.55&&posRatio<0.78&&label==='verse')label='bridge';
-
-    labeled.push({
-      start:s.start,
-      end:s.end,
-      energy:s.energy,
-      label:label
-    });
-  }
-
-  // Merge sezioni consecutive con stessa etichetta
-  var merged=[];
-  for(var i=0;i<labeled.length;i++){
-    if(merged.length&&merged[merged.length-1].label===labeled[i].label){
-      merged[merged.length-1].end=labeled[i].end;
-    }else{
-      merged.push(labeled[i]);
-    }
-  }
-
-  return merged;
-}
-
-// Sincronizza il testo alla struttura audio
-// Distribuisce le righe di lyrics sui boundary delle sezioni
-function syncLyricsToStructure(lyrics,audioStruct){
-  var lines=lyrics.split('\n').map(function(l){return l.trim();}).filter(function(l){return l.length>0;});
-  if(!lines.length)return [];
-
-  if(!audioStruct||!audioStruct.sections.length){
-    // Fallback: distribuzione uniforme
-    var dur=audioStruct?audioStruct.duration:180;
-    var perLine=dur/lines.length;
-    return lines.map(function(l,i){
-      return{text:l,start:i*perLine,end:(i+1)*perLine};
-    });
-  }
-
-  // Assegna righe alle sezioni in proporzione alla durata della sezione
-  // Verse: ~1 riga ogni 4s, Chorus: ~1 riga ogni 3s (più dense), Bridge: più lente
-  var result=[];
-  var lineIdx=0;
-
-  for(var s=0;s<audioStruct.sections.length;s++){
-    var sec=audioStruct.sections[s];
-    var secDur=sec.end-sec.start;
-    // Densità di righe per seconda in base al tipo di sezione
-    var density=0.25; // default 4s per riga
-    if(sec.label==='chorus')density=0.35;
-    else if(sec.label==='bridge')density=0.2;
-    else if(sec.label==='intro')density=0.1;
-    else if(sec.label==='outro')density=0.15;
-
-    var nLines=Math.max(1,Math.round(secDur*density));
-    var perLine=secDur/nLines;
-
-    for(var i=0;i<nLines&&lineIdx<lines.length;i++){
-      result.push({
-        text:lines[lineIdx],
-        start:sec.start+i*perLine,
-        end:sec.start+(i+1)*perLine,
-        section:sec.label
-      });
-      lineIdx++;
-    }
-  }
-
-  // Se ci sono righe avanzate, appendile nella sezione finale
-  while(lineIdx<lines.length){
-    var lastSec=audioStruct.sections[audioStruct.sections.length-1];
-    var lastLine=result[result.length-1];
-    var perLine=2;
-    result.push({
-      text:lines[lineIdx],
-      start:lastLine?lastLine.end:lastSec.start,
-      end:(lastLine?lastLine.end:lastSec.start)+perLine,
-      section:lastSec.label
-    });
-    lineIdx++;
-  }
-
-  return result;
-}
-
-// Crea scene allineate ai boundary delle sezioni (non a tempo fisso)
-function buildScenesFromStructure(audioStruct,lyrics,style){
-  if(!audioStruct||!audioStruct.sections.length){
-    // Fallback: comportamento precedente
-    return analyzeScenes(lyrics,audioStruct?audioStruct.duration:180,style);
-  }
-
-  var sections=audioStruct.sections;
-  var scenes=[];
-  var lines=lyrics.split(/\n\s*\n/).filter(function(b){return b.trim()});
-  if(!lines.length)lines=[lyrics];
-
-  // Per ogni sezione, crea 1-3 scene in base alla durata
-  for(var s=0;s<sections.length;s++){
-    var sec=sections[s];
-    var secDur=sec.end-sec.start;
-    var nScenes=1;
-    if(secDur>20)nScenes=2;
-    if(secDur>40)nScenes=3;
-    if(secDur>70)nScenes=4;
-
-    var scDur=secDur/nScenes;
-
-    for(var i=0;i<nScenes;i++){
-      var sceneStart=sec.start+i*scDur;
-      // Prendi testo proporzionale
-      var blockIdx=Math.floor((s*2+i)/(sections.length*nScenes)*lines.length);
-      var sceneText=lines[Math.min(blockIdx,lines.length-1)]||'';
-
-      var analysis=analyzeMood(sceneText);
-      var visual=VISUAL_MAP[analysis.primaryMood]||VISUAL_MAP.nostalgia;
-      var hints=findNeapolitanHints(sceneText);
-      var prompt=buildPrompt(visual,hints,style,sceneText,scenes.length,Math.min(15,sections.length*2));
-
-      // Intensità derivata dall'energia della sezione
-      var sectionBoost=sec.label==='chorus'?0.2:sec.label==='bridge'?-0.1:0;
-      var intensity=Math.max(0.2,Math.min(1,sec.energy+sectionBoost));
-
-      scenes.push({
-        text:sceneText.trim(),
-        prompt:prompt,
-        mood:analysis.primaryMood,
-        colors:visual.colors,
-        camera:visual.camera,
-        intensity:intensity,
-        start:sceneStart,
-        end:sceneStart+scDur,
-        section:sec.label
-      });
-    }
-  }
-
-  log('Scene generate da struttura: '+scenes.length);
-  for(var j=0;j<Math.min(scenes.length,scenes.length);j++){
-    log('  Scena '+(j+1)+': '+fmtTime(scenes[j].start)+'-'+fmtTime(scenes[j].end)+' ['+scenes[j].section+'] mood='+scenes[j].mood);
-  }
-  return scenes;
-}
-
-function Particle(w,h){this.reset(w,h)}
-Particle.prototype.reset=function(w,h){this.x=Math.random()*w;this.y=Math.random()*h;this.vx=(Math.random()-0.5)*1.5;this.vy=(Math.random()-0.5)*1.5;this.size=Math.random()*2.5+0.5;this.alpha=Math.random()*0.4+0.1;this.life=Math.random()*80+40;this.maxLife=this.life};
-Particle.prototype.update=function(w,h,e){this.x+=this.vx*(1+e*4);this.y+=this.vy*(1+e*4);this.life--;if(this.life<=0||this.x<0||this.x>w||this.y<0||this.y>h)this.reset(w,h)};
-Particle.prototype.draw=function(ctx){var a=this.alpha*(this.life/this.maxLife);ctx.beginPath();ctx.arc(this.x,this.y,this.size,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,'+a+')';ctx.fill()};
-
-// Disegna un fallback animato quando l'immagine AI manca
-function drawFallback(ctx,W,H,colors,energy,t){
-  // Gradiente animato
-  var g=ctx.createLinearGradient(0,0,W,H);
-  g.addColorStop(0,colors[0]);
-  g.addColorStop(0.5,colors[1]);
-  g.addColorStop(1,colors[2]);
-  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
-
-  // Cerchi fluttuanti reattivi al beat
-  var cx=W/2,cy=H/2;
-  for(var i=0;i<5;i++){
-    var r=80+i*60+Math.sin(t*0.001+i)*30+energy*100;
-    ctx.beginPath();
-    ctx.arc(cx,cy,Math.max(10,r),0,Math.PI*2);
-    ctx.fillStyle='rgba(255,255,255,'+(0.04+i*0.01+energy*0.05)+')';
-    ctx.fill();
-  }
-
-  // Linee orizzontali stile spettrogramma
-  for(var j=0;j<8;j++){
-    var y=H*0.2+j*40;
-    var amp=20+energy*80;
-    ctx.beginPath();
-    ctx.moveTo(0,y);
-    for(var x=0;x<=W;x+=20){
-      ctx.lineTo(x,y+Math.sin(x*0.02+t*0.003+j)*amp*(0.3+energy*0.7));
-    }
-    ctx.strokeStyle='rgba(255,255,255,'+(0.05+energy*0.15)+')';
-    ctx.lineWidth=1.5;
-    ctx.stroke();
-  }
-}
-
-async function generate(){
-  if(!selectedTrack)return showError('Seleziona una traccia');
-  var lyrics=lyricsInput.value.trim();if(!lyrics)return showError('Inserisci il testo');
-  var style=styleHint.value.trim();
-
-  generateBtn.disabled=true;progressEl.style.display='block';progressBar.style.width='0%';
-  statusEl.textContent='Caricamento audio...';previewWrap.style.display='none';
-  log('=== GENERAZIONE VIDEO ===');
-
-  var audioUrl;try{audioUrl=await getAU(selectedTrack.id);log('Audio OK')}catch(e){showError('Audio: '+e.message);generateBtn.disabled=false;progressEl.style.display='none';return}
-
-  var audio=new Audio();audio.crossOrigin='anonymous';audio.src=audioUrl;
-  try{await new Promise(function(r,j){audio.onloadedmetadata=r;audio.onerror=function(){j(new Error('Audio non caricabile'))}})}catch(e){showError(e.message);generateBtn.disabled=false;progressEl.style.display='none';return}
-
-  var duration=audio.duration;log('Durata: '+fmtTime(duration));
-
-  // Log delle selezioni cinematografiche attive
-  var cinemaFrag=buildCinemaPromptFragment();
-  if(cinemaFrag)log('Opzioni cinema attive: '+cinemaFrag.substring(0,150)+'...');
-  else log('Nessuna opzione cinema manuale — motore automatico');
-
-  // === NUOVO: PRE-SCAN AUDIO per identificare struttura canzone ===
-  statusEl.textContent='Analisi struttura audio...';progressBar.style.width='3%';
-  var audioStruct=await prescanAudio(audioUrl);
-
-  // === NUOVO: SCENE ALLINEATE ALLA STRUTTURA MUSICALE ===
-  statusEl.textContent='Sincronizzazione scene...';progressBar.style.width='7%';
-  var scenes=audioStruct?buildScenesFromStructure(audioStruct,lyrics,style):analyzeScenes(lyrics,duration,style);
-
-  // === NUOVO: RIGHE TESTO SINCRONIZZATE ===
-  var syncedLines=syncLyricsToStructure(lyrics,audioStruct);
-  log('Righe sincronizzate: '+syncedLines.length);
-
-  statusEl.textContent='Generazione immagini...';progressBar.style.width='10%';
-  var images=await generateAllImages(scenes);
-
-  statusEl.textContent='Preparazione rendering...';progressBar.style.width='60%';
-  var W=1280,H=720;var canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;var ctx=canvas.getContext('2d');
-
-  var analyzer;try{analyzer=new AudioAnalyzer(audio);analyzer.init();log('Audio analyzer OK')}catch(e){showError('Audio: '+e.message);generateBtn.disabled=false;progressEl.style.display='none';return}
-
-  var particles=[];for(var i=0;i<80;i++)particles.push(new Particle(W,H));
-
-  // Film grain
-  var grainCanvas=document.createElement('canvas');grainCanvas.width=W;grainCanvas.height=H;
-  var grainCtx=grainCanvas.getContext('2d');
-  function updateGrain(){var id=grainCtx.createImageData(W,H);var d=id.data;for(var i=0;i<d.length;i+=4){var v=Math.random()*40;d[i]=v;d[i+1]=v;d[i+2]=v;d[i+3]=15}grainCtx.putImageData(id,0,0)}
-
-  // Light leak overlay (pre-renderato, ruota nel tempo)
-  var leakCanvas=document.createElement('canvas');leakCanvas.width=W;leakCanvas.height=H;
-  var leakCtx=leakCanvas.getContext('2d');
-  function buildLeak(){
-    leakCtx.clearRect(0,0,W,H);
-    var g1=leakCtx.createRadialGradient(W*0.85,H*0.15,0,W*0.85,H*0.15,W*0.6);
-    g1.addColorStop(0,'rgba(255,180,80,0.35)');g1.addColorStop(1,'rgba(255,180,80,0)');
-    leakCtx.fillStyle=g1;leakCtx.fillRect(0,0,W,H);
-    var g2=leakCtx.createRadialGradient(W*0.1,H*0.9,0,W*0.1,H*0.9,W*0.4);
-    g2.addColorStop(0,'rgba(255,60,180,0.2)');g2.addColorStop(1,'rgba(255,60,180,0)');
-    leakCtx.fillStyle=g2;leakCtx.fillRect(0,0,W,H);
-  }
-  buildLeak();
-
-  var startTime=null,curScene=0,prevScene=-1,kbx=0,kby=0,flashA=0,transitionA=0;
-  var beatPulse=0,glitchA=0,lastBeatTime=-1,sceneChangeFlash=0;
-  var letterboxH=Math.floor(H*0.06); // 6% top + 6% bottom = cinematic 2.39:1 feel
-
-  var canvasStream=canvas.captureStream(30);
-  var audioDest=analyzer.ctx.createMediaStreamDestination();
-  analyzer.sourceNode.connect(audioDest);
-  var aTrack=audioDest.stream.getAudioTracks()[0];if(aTrack)canvasStream.addTrack(aTrack);
-
-  var mimeType='video/webm;codecs=vp9,opus';
-  if(!MediaRecorder.isTypeSupported(mimeType))mimeType='video/webm;codecs=vp8,opus';
-  if(!MediaRecorder.isTypeSupported(mimeType))mimeType='video/webm';
-
-  var recorder=new MediaRecorder(canvasStream,{mimeType:mimeType,videoBitsPerSecond:6000000});
-  var chunks=[];recorder.ondataavailable=function(e){if(e.data.size>0)chunks.push(e.data)};
-  var done=new Promise(function(r){recorder.onstop=function(){r(new Blob(chunks,{type:'video/webm'}))}});
-
-  var titleDuration=3.5;
-  var frameCount=0;
-
-  // === KINETIC TYPOGRAPHY ===
-  // Trova la riga corrente basata sul tempo audio
-  function getCurrentLine(videoTime){
-    for(var i=syncedLines.length-1;i>=0;i--){
-      if(videoTime>=syncedLines[i].start)return i;
-    }
-    return -1;
-  }
-
-  // Disegna testo con highlight parola-per-parola (karaoke-style)
-  function drawKineticLyrics(videoTime){
-    var li=getCurrentLine(videoTime);
-    if(li<0)return;
-    var line=syncedLines[li];
-    var lineDur=line.end-line.start;
-    var lineProg=Math.max(0,Math.min(1,(videoTime-line.start)/lineDur));
-    var words=line.text.split(/\s+/).filter(function(w){return w.length>0});
-    if(!words.length)return;
-
-    // Fade in/out della riga
-    var lineAlpha=1;
-    if(lineProg<0.1)lineAlpha=lineProg/0.1;
-    else if(lineProg>0.9)lineAlpha=(1-lineProg)/0.1;
-    lineAlpha=Math.max(0,Math.min(1,lineAlpha));
-
-    // Parola corrente evidenziata
-    var wordProg=lineProg*words.length;
-    var curWordIdx=Math.min(Math.floor(wordProg),words.length-1);
-
-    // Layout: calcola larghezza totale per centrare
-    var fontSize=38;
-    // Scala font in base alla lunghezza della riga (righe lunghe = font più piccolo)
-    if(words.length>10)fontSize=32;
-    if(words.length>14)fontSize=28;
-    ctx.font='bold '+fontSize+'px -apple-system,sans-serif';
-    ctx.textAlign='left';ctx.textBaseline='middle';
-
-    var spaceW=ctx.measureText(' ').width;
-    var totalW=0;
-    var wordWidths=[];
-    for(var i=0;i<words.length;i++){
-      var w=ctx.measureText(words[i]).width;
-      wordWidths.push(w);
-      totalW+=w+spaceW;
-    }
-    totalW-=spaceW;
-
-    var x=W/2-totalW/2;
-    var y=H-100;
-
-    // Sfondo semi-trasparente per leggibilità
-    if(lineAlpha>0.1){
-      ctx.fillStyle='rgba(0,0,0,'+(0.45*lineAlpha)+')';
-      ctx.fillRect(0,y-fontSize*0.9,W,fontSize*1.8);
-    }
-
-    ctx.globalAlpha=lineAlpha;
-
-    // Disegna ogni parola
-    for(var i=0;i<words.length;i++){
-      var isActive=i===curWordIdx;
-      var isPast=i<curWordIdx;
-
-      // Scala leggermente la parola attiva
-      var scale=isActive?1.12+Math.sin(videoTime*8)*0.03:1;
-      var alpha=isActive?1:isPast?0.6:0.4;
-
-      ctx.save();
-      ctx.translate(x+wordWidths[i]/2,y);
-      ctx.scale(scale,scale);
-
-      // Glow sulla parola attiva
-      if(isActive){
-        ctx.shadowColor='rgba(247,37,133,0.9)';
-        ctx.shadowBlur=25;
-        ctx.fillStyle='rgba(247,37,133,'+alpha+')';
-      }else if(isPast){
-        ctx.shadowColor='rgba(0,0,0,0.9)';
-        ctx.shadowBlur=6;
-        ctx.fillStyle='rgba(255,255,255,'+alpha+')';
-      }else{
-        ctx.shadowColor='rgba(0,0,0,0.9)';
-        ctx.shadowBlur=6;
-        ctx.fillStyle='rgba(220,220,220,'+alpha+')';
-      }
-      ctx.fillText(words[i],0,0);
-      ctx.restore();
-
-      x+=wordWidths[i]+spaceW;
-    }
-
-    ctx.shadowBlur=0;
-    ctx.globalAlpha=1;
-  }
-
-  // === EFFETTO GLITCH (su beat intensi) ===
-  function drawGlitch(intensity){
-    if(intensity<0.05)return;
-    var nSlices=Math.floor(intensity*4)+1;
-    for(var i=0;i<nSlices;i++){
-      var sy=Math.floor(Math.random()*H);
-      var sh=Math.floor(10+Math.random()*40*intensity);
-      var dx=(Math.random()-0.5)*60*intensity;
-      try{
-        var data=ctx.getImageData(0,sy,W,Math.min(sh,H-sy));
-        ctx.putImageData(data,dx,sy);
-      }catch(e){}
-    }
-    // RGB split
-    if(intensity>0.3){
-      ctx.globalCompositeOperation='screen';
-      ctx.globalAlpha=0.4*intensity;
-      ctx.fillStyle='rgba(255,0,0,0.3)';ctx.fillRect(-8*intensity,0,W,H);
-      ctx.fillStyle='rgba(0,255,255,0.3)';ctx.fillRect(8*intensity,0,W,H);
-      ctx.globalAlpha=1;
-      ctx.globalCompositeOperation='source-over';
-    }
-  }
-
-  function render(ts){
-    if(!startTime)startTime=ts;
-    var elapsed=(ts-startTime)/1000;
-    analyzer.update();
-    frameCount++;
-    if(frameCount%3===0)updateGrain();
-
-    // Titolo iniziale cinematografico
-    if(elapsed<titleDuration){
-      ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);
-
-      // Particelle di sfondo
-      for(var p=0;p<particles.length;p++){particles[p].update(W,H,0.3);particles[p].draw(ctx)}
-
-      var tAlpha=elapsed<1?elapsed:elapsed>titleDuration-1?(titleDuration-elapsed):1;
-      var trackName=selectedTrack.name.replace(/\.[^.]+$/,'');
-
-      // Linea orizzontale animata
-      ctx.globalAlpha=tAlpha*0.4;
-      ctx.strokeStyle='#f72585';ctx.lineWidth=2;
-      var lineW=W*0.4*Math.min(1,elapsed/1.5);
-      ctx.beginPath();ctx.moveTo(W/2-lineW,H/2-70);ctx.lineTo(W/2+lineW,H/2-70);ctx.stroke();
-
-      // Titolo con scale-in
-      ctx.globalAlpha=tAlpha;
-      var titleScale=1+(1-Math.min(1,elapsed/0.8))*0.5;
-      ctx.save();
-      ctx.translate(W/2,H/2-20);
-      ctx.scale(titleScale,titleScale);
-      ctx.font='bold 56px -apple-system,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
-      ctx.shadowColor='rgba(247,37,133,0.6)';ctx.shadowBlur=30;
-      ctx.fillStyle='rgba(247,37,133,'+tAlpha+')';ctx.fillText(trackName.substring(0,40),0,0);
-      ctx.shadowBlur=0;ctx.restore();
-
-      ctx.font='15px -apple-system,sans-serif';ctx.fillStyle='rgba(200,200,200,'+tAlpha*0.7+')';
-      ctx.textAlign='center';ctx.fillText('MUSIC VIDEO',W/2,H/2+30);
-
-      // BPM info se disponibile
-      if(audioStruct){
-        ctx.font='12px monospace';ctx.fillStyle='rgba(150,150,150,'+tAlpha*0.6+')';
-        ctx.fillText('BPM '+audioStruct.bpm+' · '+audioStruct.sections.length+' sezioni',W/2,H/2+60);
-      }
-
-      ctx.globalAlpha=1;
-      progressBar.style.width=(elapsed/titleDuration*10)+'%';
-      statusEl.textContent='Titolo...';
-      requestAnimationFrame(render);return;
-    }
-
-    var videoTime=elapsed-titleDuration;
-
-    // Trova scena corrente
-    for(var i=scenes.length-1;i>=0;i--){if(videoTime>=scenes[i].start){curScene=i;break}}
-
-    // Trigger glitch su cambio scena
-    if(curScene!==prevScene){
-      prevScene=curScene;transitionA=1;sceneChangeFlash=1;
-      glitchA=0.6;
-      log('Cut scena '+curScene+' @ '+fmtTime(videoTime)+' ['+scenes[curScene].section+']');
-    }
-    transitionA*=0.92;
-    sceneChangeFlash*=0.85;
-
-    var scene=scenes[curScene];
-    var colors=scene.colors;
-    var img=images[curScene];
-    var intensity=scene.intensity;
-
-    // === Beat detection da audioStruct per timing preciso ===
-    var beatHit=false;
-    if(audioStruct&&audioStruct.beats){
-      for(var b=0;b<audioStruct.beats.length;b++){
-        if(audioStruct.beats[b]>lastBeatTime&&audioStruct.beats[b]<=videoTime){
-          beatHit=true;lastBeatTime=audioStruct.beats[b];break;
-        }
-      }
-    }
-    if(analyzer.beat)beatHit=true;
-
-    kbx+=0.0003*(1+analyzer.energy*3);kby+=0.0002*(1+analyzer.energy*1.5);
-    if(beatHit){
-      flashA=0.35*intensity;
-      beatPulse=1;
-      // Glitch solo sui beat forti in sezioni chorus
-      if(scene.section==='chorus'&&intensity>0.6)glitchA=Math.max(glitchA,0.4);
-    }
-    flashA*=0.88;beatPulse*=0.85;glitchA*=0.82;
-
-    // Background
-    ctx.fillStyle=colors[0];ctx.fillRect(0,0,W,H);
-
-    // Immagine con Ken Burns + BASS REACTIVE ZOOM (effetto pump)
-    if(img){
-      ctx.save();
-      var bassZoom=1+analyzer.bass*0.08*intensity+beatPulse*0.04;
-      var scale=(1.1+Math.sin(kbx)*0.04)*bassZoom;
-      var ox=Math.sin(kby)*25*intensity;var oy=Math.cos(kbx*0.7)*15*intensity;
-      ctx.translate(W/2+ox,H/2+oy);ctx.scale(scale,scale);ctx.translate(-W/2,-H/2);
-      ctx.drawImage(img,0,0,W,H);ctx.restore();
-    }else{
-      drawFallback(ctx,W,H,colors,analyzer.energy,ts);
-    }
-
-    // Gradiente atmosferico
-    var grad=ctx.createLinearGradient(0,0,0,H);
-    grad.addColorStop(0,'rgba(0,0,0,'+(0.2+intensity*0.15)+')');
-    grad.addColorStop(0.5,'rgba(0,0,0,0.05)');
-    grad.addColorStop(1,'rgba(0,0,0,'+(0.4+intensity*0.2)+')');
-    ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);
-
-    // Particelle (più numerose nei chorus)
-    var nActive=scene.section==='chorus'?particles.length:Math.floor(particles.length*0.6);
-    for(var p=0;p<nActive;p++){particles[p].update(W,H,analyzer.energy*intensity);particles[p].draw(ctx)}
-
-    // Flash on beat
-    if(flashA>0.01){ctx.fillStyle='rgba(255,255,255,'+flashA+')';ctx.fillRect(0,0,W,H)}
-
-    // Transizione scena (flash bianco breve)
-    if(sceneChangeFlash>0.05){
-      ctx.fillStyle='rgba(255,255,255,'+sceneChangeFlash*0.4+')';ctx.fillRect(0,0,W,H);
-    }
-    if(transitionA>0.05){
-      ctx.fillStyle='rgba(0,0,0,'+transitionA*0.5+')';ctx.fillRect(0,0,W,H);
-    }
-
-    // Visualizzatore audio - barre stilizzate in basso
-    if(analyzer.data){
-      var bc=64;var bw=W/bc;
-      var vizY=H-letterboxH-10;
-      for(var i=0;i<bc;i++){
-        var v=(analyzer.data[i]||0)/255;
-        var barH=v*50*intensity;
-        var hue=320+i/bc*40;
-        ctx.fillStyle='hsla('+hue+',70%,55%,'+(0.15+v*0.55)+')';
-        ctx.fillRect(i*bw,vizY-barH,bw-0.5,barH);
-      }
-    }
-
-    // === LIGHT LEAK overlay (rotazione lenta) ===
-    ctx.globalAlpha=0.4+analyzer.energy*0.3;
-    ctx.globalCompositeOperation='screen';
-    var leakOffset=Math.sin(videoTime*0.3)*30;
-    ctx.drawImage(leakCanvas,leakOffset,0,W,H);
-    ctx.globalCompositeOperation='source-over';
-    ctx.globalAlpha=1;
-
-    // Vignettatura
-    var vg=ctx.createRadialGradient(W/2,H/2,W*0.3,W/2,H/2,W*0.8);
-    vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,0.55)');
-    ctx.fillStyle=vg;ctx.fillRect(0,0,W,H);
-
-    // Film grain
-    ctx.globalAlpha=0.06;ctx.drawImage(grainCanvas,0,0);ctx.globalAlpha=1;
-
-    // === GLITCH (su beat intensi) ===
-    drawGlitch(glitchA);
-
-    // === LETTERBOX BARS (cinematic 2.39:1) ===
-    ctx.fillStyle='#000';
-    ctx.fillRect(0,0,W,letterboxH);
-    ctx.fillRect(0,H-letterboxH,W,letterboxH);
-
-    // === KINETIC LYRICS (sopra le letterbox) ===
-    drawKineticLyrics(videoTime);
-
-    // === SECTION BADGE (es. "CHORUS") in alto a sinistra ===
-    if(scene.section){
-      ctx.font='bold 11px monospace';ctx.textAlign='left';ctx.textBaseline='top';
-      ctx.fillStyle='rgba(255,255,255,0.5)';
-      var badgeText=scene.section.toUpperCase();
-      ctx.fillText(badgeText,30,letterboxH+15);
-      // Linea sotto
-      ctx.strokeStyle='rgba(247,37,133,0.7)';ctx.lineWidth=2;
-      ctx.beginPath();ctx.moveTo(30,letterboxH+32);ctx.lineTo(30+ctx.measureText(badgeText).width,letterboxH+32);ctx.stroke();
-    }
-
-    // === TIMESTAMP in alto a destra ===
-    ctx.font='11px monospace';ctx.textAlign='right';ctx.textBaseline='top';
-    ctx.fillStyle='rgba(255,255,255,0.5)';
-    ctx.fillText(fmtTime(videoTime)+' / '+fmtTime(duration),W-30,letterboxH+15);
-
-    progressBar.style.width=(10+(videoTime/duration)*90)+'%';
-    statusEl.textContent='Registrazione... '+fmtTime(videoTime)+' / '+fmtTime(duration);
-
-    if(videoTime<duration)requestAnimationFrame(render);
-    else{
-      // OUTRO: fade to black con credits
-      var outroStart=ts;
-      function outro(oTs){
-        var oEl=(oTs-outroStart)/1000;
-        if(oEl<2){
-          ctx.fillStyle='rgba(0,0,0,'+(oEl/2)+')';ctx.fillRect(0,0,W,H);
-          if(oEl>0.5){
-            ctx.globalAlpha=(oEl-0.5)/1.5;
-            ctx.font='bold 36px -apple-system,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
-            ctx.fillStyle='#f72585';
-            ctx.fillText(selectedTrack.name.replace(/\.[^.]+$/,''),W/2,H/2-20);
-            ctx.font='14px -apple-system,sans-serif';ctx.fillStyle='#888';
-            ctx.fillText('Music Video Generator Pro',W/2,H/2+20);
-            ctx.globalAlpha=1;
-          }
-          requestAnimationFrame(outro);
-        }else{
-          recorder.stop();audio.pause();log('Finita!');
-        }
-      }
-      outro(ts);
-    }
-  }
-
-  statusEl.textContent='Registrazione...';recorder.start(1000);audio.play();requestAnimationFrame(render);
-  var blob=await done;var url=URL.createObjectURL(blob);
-  preview.src=url;previewWrap.style.display='block';
-  downloadBtn.href=url;downloadBtn.style.display='inline-block';
-  downloadBtn.download=selectedTrack.name.replace(/\.[^.]+$/,'')+'-video.webm';
-  progressEl.style.display='none';statusEl.textContent='Video pronto!';
-  generateBtn.disabled=false;log('Video: '+fmtSize(blob.size));
-
-  // === NUOVO: SALVA VIDEO SU SUPABASE ===
-  await saveVideoToLibrary(blob,audioStruct?audioStruct.duration:duration);
-}
-
-// ====================================================================
-// LIBRERIA VIDEO — save / list / play / download / delete su Supabase
-// ====================================================================
-async function saveVideoToLibrary(blob,duration){
-  try{
-    statusEl.textContent='Salvataggio video su libreria...';
-    var trackName=selectedTrack.name.replace(/\.[^.]+$/,'');
-    var path='videos/'+Date.now()+'-'+Math.random().toString(36).slice(2)+'.webm';
-    var file=new File([blob],trackName+'.webm',{type:'video/webm'});
-
-    var upRes=await sb.storage.from('audio').upload(path,file,{upsert:true,contentType:'video/webm'});
-    if(upRes.error){log('Upload video fallito: '+upRes.error.message);return}
-
-    var dbRes=await sb.from('videos').insert({
-      track_id:selectedTrack.id,
-      name:trackName,
-      storage_path:path,
-      size:blob.size,
-      duration:duration
-    }).select().single();
-
-    if(dbRes.error){log('Salvataggio DB fallito: '+dbRes.error.message);return}
-    log('Video salvato in libreria: '+dbRes.data.id);
-    showSuccess('Video salvato in libreria');
-    await renderVideoLibrary();
-  }catch(e){
-    log('Errore salvataggio video: '+e.message);
-  }
-}
-
-async function renderVideoLibrary(){
-  var container=document.getElementById('videoList');
-  if(!container)return;
-  try{
-    var r=await sb.from('videos').select('*').order('created_at',{ascending:false});
-    if(r.error)throw r.error;
-    var videos=r.data;
-    log('Trovati '+videos.length+' video in libreria');
-    var countBadge=document.getElementById('videoCount');
-    if(countBadge){
-      if(videos.length){
-        countBadge.textContent=videos.length;
-        countBadge.style.display='inline-block';
-      }else{countBadge.style.display='none'}
-    }
-    if(!videos.length){
-      container.innerHTML='<div class="empty-library">Nessun video generato.</div>';
-      return;
-    }
-    var h='';
-    for(var i=0;i<videos.length;i++){
-      var v=videos[i];
-      var date=new Date(v.created_at).toLocaleString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
-      h+='<div class="video-item" data-vid="'+v.id+'">'+
-        '<div class="video-info"><div class="video-name">'+v.name+'</div>'+
-        '<div class="video-meta">'+date+' · '+fmtTime(v.duration)+' · '+fmtSize(v.size)+'</div></div>'+
-        '<div class="video-actions">'+
-        '<button class="sec" data-vplay="'+v.id+'">Play</button>'+
-        '<button class="sec" data-vdl="'+v.id+'">Scarica</button>'+
-        '<button class="del" data-vdel="'+v.id+'">&#10005;</button>'+
-        '</div></div>';
-    }
-    container.innerHTML=h;
-
-    // Bind eventi
-    var playBtns=container.querySelectorAll('[data-vplay]');
-    for(var j=0;j<playBtns.length;j++){
-      playBtns[j].addEventListener('click',function(){
-        playVideoFromLibrary(this.dataset.vplay);
-      });
-    }
-    var dlBtns=container.querySelectorAll('[data-vdl]');
-    for(var k=0;k<dlBtns.length;k++){
-      dlBtns[k].addEventListener('click',function(){
-        downloadVideoFromLibrary(this.dataset.vdl);
-      });
-    }
-    var delBtns=container.querySelectorAll('[data-vdel]');
-    for(var m=0;m<delBtns.length;m++){
-      delBtns[m].addEventListener('click',function(){
-        deleteVideoFromLibrary(this.dataset.vdel);
-      });
-    }
-  }catch(e){
-    container.innerHTML='<div class="empty-library" style="color:#f66">'+e.message+'</div>';
-  }
-}
-
-async function getVideoUrl(id){
-  var r=await sb.from('videos').select('storage_path').eq('id',id).single();
-  if(r.error)throw r.error;
-  var s=await sb.storage.from('audio').createSignedUrl(r.data.storage_path,7200);
-  return s.data.signedUrl;
-}
-
-async function playVideoFromLibrary(id){
-  try{
-    var url=await getVideoUrl(id);
-    preview.src=url;previewWrap.style.display='block';
-    downloadBtn.href=url;downloadBtn.style.display='inline-block';
-    downloadBtn.download='video.webm';
-    preview.scrollIntoView({behavior:'smooth',block:'center'});
-    showSuccess('Video caricato');
-  }catch(e){showError('Errore: '+e.message)}
-}
-
-async function downloadVideoFromLibrary(id){
-  try{
-    var url=await getVideoUrl(id);
-    var r=await sb.from('videos').select('name').eq('id',id).single();
-    var a=document.createElement('a');
-    a.href=url;a.download=(r.data.name||'video')+'.webm';
-    document.body.appendChild(a);a.click();document.body.removeChild(a);
-  }catch(e){showError('Errore download: '+e.message)}
-}
-
-async function deleteVideoFromLibrary(id){
-  if(!confirm('Eliminare questo video?'))return;
-  try{
-    var r=await sb.from('videos').select('storage_path').eq('id',id).single();
-    if(r.data)await sb.storage.from('audio').remove([r.data.storage_path]);
-    await sb.from('videos').delete().eq('id',id);
-    showSuccess('Video eliminato');
-    await renderVideoLibrary();
-  }catch(e){showError('Errore: '+e.message)}
-}
-
-generateBtn.addEventListener('click',generate);
-log('App avviata (Music Video Generator Pro v8 — sync + wow + library)');
-// initCinema e renderVideoLibrary verranno chiamati da verifyAdmin dopo login
-</script>
-</body>
-</html>
-var SU1='https://jescfkahkgcyuhffyycw.supabase.co';
+  var SU1='https://jescfkahkgcyuhffyycw.supabase.co';
 var SK1='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Implc2Nma2Foa2djeXVoZmZ5eWN3Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4Mzk4ODU5NywiZXhwIjoyMDk5NTY0NTk3fQ.';
 var SK2='2Qr5bu9w0mjaVik-FV4tLKF3bkAHuJTCmO5KaM6PWt4';
 var sb=window.supabase.createClient(SU1,SK1+SK2);
@@ -2518,7 +1055,7 @@ function updateInspector(){
     renderTimelineScenes();
   });
 }
-    // === RENDERING ===
+  // === RENDERING ===
 function AudioAnalyzer(audio){this.audio=audio;this.ctx=null;this.analyser=null;this.data=null;this.sourceNode=null;this.bass=0;this.mid=0;this.high=0;this.energy=0;this.prevEnergy=0;this.beat=false;}
 AudioAnalyzer.prototype.init=function(){
   this.ctx=new(window.AudioContext||window.webkitAudioContext)();
